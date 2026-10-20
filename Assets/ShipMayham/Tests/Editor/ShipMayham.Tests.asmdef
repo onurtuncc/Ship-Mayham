@@ -1,0 +1,6 @@
+{
+  "name": "ShipMayham.Tests",
+  "references": ["ShipMayham.Runtime", "Unity.Netcode.Runtime"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

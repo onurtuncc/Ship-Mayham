@@ -6,18 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="e9ef8b40-a0e7-4940-8668-49a80a33ddc3" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Ship Mayham/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Ship Mayham/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core MultiplayerSession.scenetemplate" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core MultiplayerSession.scenetemplate.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core MultiplayerSession.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core MultiplayerSession.unity.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core.scenetemplate" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core.scenetemplate.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Core/TestScenes/[BB] Core.unity.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/DynamicsManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/DynamicsManager.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/TagManager.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/GameScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/GameScene.unity" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -120,7 +109,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1786390477386</updated>
-      <workItem from="1786390480202" duration="2269000" />
+      <workItem from="1786390480202" duration="3300000" />
     </task>
     <servers />
   </component>

@@ -1,0 +1,95 @@
+using UnityEngine;
+
+namespace ShipMayham
+{
+    /// <summary>Bounded port-local movement and atomic, host-owned preparation purchases.</summary>
+    public sealed partial class VoyageSimulation
+    {
+        public const int SupplyPrice = 12, SupplyAmount = 8, SupplyCap = 32, MaintenancePrice = 30;
+        public const float MaxHullShield = 20, ShoreHeight = .3f;
+        public readonly bool HarborEnabled;
+        public static readonly Vector2 ShipGangway = new Vector2(-5, -6);
+        public static Vector2 HarborPoint(HarborAction action)
+        {
+            switch (action)
+            {
+                case HarborAction.GoAshore: return ShipGangway;
+                case HarborAction.BoardShip: return new Vector2(5, -6);
+                case HarborAction.BuyFood: return new Vector2(0, -7);
+                case HarborAction.BuyDrink: return Vector2.zero;
+                case HarborAction.MaintainHull: return new Vector2(0, 7);
+                default: return Vector2.zero;
+            }
+        }
+
+        public static Vector3 HarborOrigin(VoyageState state) => new Vector3(-14, 0, state.Phase == VoyagePhase.Arrived ? 220 : 0);
+        public bool HarborOpen => HarborEnabled && (State.Phase == VoyagePhase.Boarding || State.Phase == VoyagePhase.Arrived);
+        public int CrewAshore
+        {
+            get { int count = 0; foreach (var crew in Crew) if (crew.Active && crew.OnShore) count++; return count; }
+        }
+
+        private void MoveShoreCrew(int slot, Vector2 movement)
+        {
+            Vector2 p = Crew[slot].Position;
+            Vector2 candidate = new Vector2(Mathf.Clamp(p.x + movement.x, .2f, 5.2f), p.y);
+            if (ShoreWalkable(candidate)) p = candidate;
+            candidate = new Vector2(p.x, Mathf.Clamp(p.y + movement.y, -10, 10));
+            if (ShoreWalkable(candidate)) p = candidate;
+            Crew[slot].Position = p;
+        }
+
+        private static bool ShoreWalkable(Vector2 p)
+        {
+            for (int a = (int)HarborAction.BuyFood; a <= (int)HarborAction.MaintainHull; a++)
+                if (Vector2.Distance(p, HarborPoint((HarborAction)a)) < .9f) return false;
+            return true;
+        }
+
+        public string HarborCommand(ulong clientId, HarborAction action)
+        {
+            int slot = FindCrew(clientId);
+            if (slot < 0 || !HarborOpen || (int)action > (int)HarborAction.MaintainHull) return "Harbor is closed.";
+            ref var crew = ref Crew[slot];
+            if (crew.AtHelm || crew.AtCannon) return "Release your station first.";
+            if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) return "Land before interacting.";
+            if (crew.Carrying != ServiceItem.None || CarriedPassenger(slot) >= 0) return "Return your item or put the passenger down first.";
+            if (crew.OnShore == (action == HarborAction.GoAshore)) return "Use the gangway to change areas first.";
+            if (Vector2.Distance(crew.Position, HarborPoint(action)) > InteractionRange) return "Move closer to the harbor station.";
+            if (clock < interactionReady[slot]) return string.Empty;
+            interactionReady[slot] = clock + .35f;
+            if (action == HarborAction.GoAshore || action == HarborAction.BoardShip)
+            {
+                crew.OnShore = action == HarborAction.GoAshore;
+                crew.Position = crew.OnShore ? HarborPoint(HarborAction.BoardShip) : ShipGangway;
+                inputs[slot] = Vector2.zero;
+                return crew.OnShore ? "Welcome ashore! Supplies and hull protection use the shared wallet." : "Back aboard. All crew must board before departure.";
+            }
+            if (action == HarborAction.MaintainHull)
+            {
+                if (State.HullShield > 0) return "Hull protection is already fitted. Use the remaining shield first.";
+                if (State.Wallet < MaintenancePrice) return "Hull protection costs 30 coins.";
+                State.Wallet -= MaintenancePrice;
+                State.HullShield = MaxHullShield;
+                return "Hull protected: absorbs the next 20 damage, including leaks and pirate fire.";
+            }
+            bool food = action == HarborAction.BuyFood;
+            int stock = food ? State.FoodStock : State.DrinkStock;
+            // Include items held aboard so returning them cannot exceed the storage cap.
+            foreach (var member in Crew)
+                if (member.Active && member.Carrying == (food ? ServiceItem.Food : ServiceItem.Drink)) stock++;
+            if (stock + SupplyAmount > SupplyCap) return "Not enough storage for 8 items (maximum 32, including held items).";
+            if (State.Wallet < SupplyPrice) return "An 8-item supply pack costs 12 coins.";
+            State.Wallet -= SupplyPrice;
+            if (food) State.FoodStock += SupplyAmount; else State.DrinkStock += SupplyAmount;
+            return food ? "+8 food stored aboard. Unused supplies carry over to the next voyage." : "+8 drinks stored aboard. Unused supplies carry over to the next voyage.";
+        }
+
+        private void DamageHull(float damage)
+        {
+            float absorbed = Mathf.Min(State.HullShield, damage);
+            State.HullShield -= absorbed;
+            State.Health = Mathf.Max(0, State.Health - (damage - absorbed));
+        }
+    }
+}

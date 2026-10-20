@@ -26,5 +26,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/GameScene.unity
     guid: 9065a02590a844d4db46a269114bdb9c
+  - enabled: 1
+    path: Assets/ShipMayham/Scenes/ShipPrototype.unity
+    guid: dbef1b7d407336844a555a07d14d25b7
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

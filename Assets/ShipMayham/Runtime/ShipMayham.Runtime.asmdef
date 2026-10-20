@@ -1,0 +1,5 @@
+{
+  "name": "ShipMayham.Runtime",
+  "rootNamespace": "ShipMayham",
+  "references": ["Unity.Netcode.Runtime", "Unity.InputSystem", "Unity.Collections"]
+}

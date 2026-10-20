@@ -1,0 +1,62 @@
+using System.Collections;
+using NUnit.Framework;
+using Unity.Netcode;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+
+namespace ShipMayham.Tests
+{
+    public class HostStartupTests
+    {
+        [UnityTest]
+        public IEnumerator SerializedSceneCanStartHostWithoutPlayerPrefab() => StartHost(false);
+
+        [UnityTest]
+        public IEnumerator DestroyedPlayerReferenceCannotBreakHostStartup() => StartHost(true);
+
+        private static IEnumerator StartHost(bool destroyedReference)
+        {
+            // The bug is Editor-specific: a standalone player does not reproduce Unity fake-null.
+            yield return new EnterPlayMode();
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                "Assets/ShipMayham/Scenes/ShipPrototype.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            Assert.IsNotNull(hud);
+            var manager = hud.Manager;
+            if (destroyedReference)
+            {
+                var stalePrefab = new GameObject("Test_DestroyedPlayerPrefab");
+                manager.NetworkConfig.PlayerPrefab = stalePrefab;
+                Object.DestroyImmediate(stalePrefab);
+                Assert.IsTrue(manager.NetworkConfig.PlayerPrefab == null);
+                Assert.IsFalse(ReferenceEquals(manager.NetworkConfig.PlayerPrefab, null));
+            }
+
+            hud.Connect(true);
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.IsTrue(manager.IsHost, "Host must start through the same Connect path as the HUD button.");
+            Assert.IsTrue(hud.Session.IsSpawned);
+            Assert.AreEqual(0, hud.Session.LocalCrewIndex);
+            Assert.IsNull(manager.LocalClient.PlayerObject, "Crew slots are scene objects, not spawned player prefabs.");
+            LogAssert.NoUnexpectedReceived();
+            manager.Shutdown();
+            deadline = Time.realtimeSinceStartup + 5;
+            while ((manager.IsListening || manager.ShutdownInProgress) && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.IsFalse(manager.IsListening || manager.ShutdownInProgress);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTearDown]
+        public IEnumerator Cleanup()
+        {
+            if (Application.isPlaying)
+            {
+                if (NetworkManager.Singleton != null) NetworkManager.Singleton.Shutdown();
+                yield return new ExitPlayMode();
+            }
+        }
+    }
+}
