@@ -139,6 +139,24 @@ class Builder:
                 bm.faces.new([v[i] for i in f])
         self._add(fn, m, loc, rot)
 
+    def loft(self, sections, m, loc=(0, 0, 0)):
+        """Hull-like solid along +Y. sections: [(y, [(x, z), ...])] with each profile listed from the keel
+        centre up to the gunwale on the +X side (first x should be 0). The profile is mirrored to -X,
+        consecutive sections are bridged, both ends are capped."""
+        def ring(bm, y, prof):
+            right = [bm.verts.new((x, y, z)) for x, z in prof]
+            left = [bm.verts.new((-x, y, z)) for x, z in prof[1:]][::-1]
+            return left + right
+        def fn(bm):
+            rings = [ring(bm, y, p) for y, p in sections]
+            n = len(rings[0])
+            for a, c in zip(rings, rings[1:]):
+                for i in range(n - 1):
+                    bm.faces.new((a[i], a[i + 1], c[i + 1], c[i]))
+                bm.faces.new((a[n - 1], a[0], c[0], c[n - 1]))      # close across the deck opening
+            bm.faces.new(rings[0][::-1]); bm.faces.new(rings[-1])
+        self._add(fn, m, loc, (0, 0, 0))
+
     def finish(self, name):
         bm = self.bm
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)

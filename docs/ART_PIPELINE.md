@@ -52,7 +52,17 @@ Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre. Üçgen sayıları
 | `MarketStall` | 516 | 2,16 × 1,50 × 2,23 | Liman erzak tezgâhı |
 | `DockPlank` | 528 | 4,00 × 2,10 × 1,46 | İskele modülü |
 | `Lighthouse` | 860 | 4,60 × 4,60 × 9,15 | Liman fenerinin kule modeli |
-| `PirateShipSmall` | 524 | 2,10 × 6,58 × 4,70 | Korsan gemisi (`Ship_Pirate_01`) |
+| `PirateShipSmall` | 592 | 2,20 × 6,71 × 4,70 | Korsan gemisi (`Ship_Pirate_01`); kavisli (loft) gövde |
+| `Anchor` | 364 | 1,06 × 0,13 × 1,53 | Çapa (liman/gemi dekoru, demirleme) |
+| `RopeCoil` | 1232 | 0,53 × 0,53 × 0,45 | Halat yumağı (iskele dekoru) |
+| `Rowboat` | 190 | 3,03 × 2,50 × 0,97 | Filika (liman dekoru, kurtarma teması) |
+| `FlagPole` | 180 | 1,05 × 0,28 × 2,85 | Bayrak direği (kozmetik/liman) |
+| `Gangway` | 276 | 1,32 × 3,00 × 0,79 | İskele geçiş tahtası (`Gangway_Visuals`) |
+| `CrateStack` | 692 | 2,08 × 1,57 × 1,27 | Sandık + varil yığını (iskele/depo) |
+| `HarborCrane` | 232 | 1,40 × 4,45 × 4,61 | Liman vinci |
+| `HarborHut` | 268 | 3,60 × 2,70 × 3,35 | Liman terminal binası (`Port_*/Visuals`) |
+| `FishCrate` | 360 | 0,70 × 0,45 × 0,29 | Balık sandığı (liman tezgâhı dekoru) |
+| `Character_VIP` | 676 | 0,77 × 0,48 × 1,75 | VIP yolcu (silindir şapka, baston) |
 | `Character_Crew1..4` | ~524 | 0,75 × 0,35 × 1,49 | Mürettebat; gömlek renkleri `Crew_01..04` materyalleriyle aynı hizada |
 | `Character_Passenger1..3` | ~540 | 0,72 × 0,52 × 1,63 | Yolcu varyantları |
 | `Character_Pirate` | 576 | 0,88 × 0,37 × 1,64 | Korsan karakteri |
@@ -62,5 +72,5 @@ Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre. Üçgen sayıları
 - Varlıklar yalnızca projeye eklendi; `ShipPrototype` sahnesindeki primitive `Visuals` nesnelerine **bağlanmadı**. Değiştirirken [PROTOTYPE.md](PROTOTYPE.md) sözleşmesindeki kök, `InteractionAnchor` ve `CarrySocket` referanslarını koru.
 - Karakterlerde iskelet/animasyon yoktur (statik poz). Hareket için ayrı rig gerekir; mevcut `StylizedCharacterPack` animasyonları bu modellere uymaz.
 - FBX'ler Unity Editör'de açılıp görsel olarak doğrulanmadı; Blender'da üretim ve önizleme render'ı yapıldı. İlk açılışta ölçek, yön ve malzeme eşlemesi bir kez gözle kontrol edilmelidir.
-- `PirateShipSmall` gövdesi basit kutu birleşimidir; yakın kamera için iyileştirme gerekebilir. `CannonballPile` 3612 üçgenle diğerlerinden ağırdır (10 ayrı küre).
+- `CannonballPile` 3612 üçgenle diğerlerinden ağırdır (10 ayrı küre).
 - Üretim yöntemi: modeller bu depodaki Blender betikleriyle elle yazıldı. Yerel LLM (llama.cpp + Blender MCP) denemeleri tutarlı sonuç vermedi (sandık ve kupa testlerinde eksik/yığılmış parçalar); bu nedenle çıktılar LLM'den değil betiklerden gelir.
