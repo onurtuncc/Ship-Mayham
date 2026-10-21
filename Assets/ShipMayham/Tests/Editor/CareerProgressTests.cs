@@ -12,6 +12,7 @@ namespace ShipMayham.Tests
             {
                 Wallet = 245,
                 Reputation = 9,
+                Livery = ShipLivery.Sunset,
                 EngineLevel = 2,
                 CapacityLevel = 1,
                 ComfortLevel = 1,
@@ -28,6 +29,7 @@ namespace ShipMayham.Tests
 
             Assert.AreEqual(245, restored.Wallet);
             Assert.AreEqual(9, restored.Reputation);
+            Assert.AreEqual(ShipLivery.Sunset, restored.Livery);
             Assert.AreEqual(2, restored.EngineLevel);
             Assert.AreEqual(1, restored.CapacityLevel);
             Assert.AreEqual(1, restored.ComfortLevel);

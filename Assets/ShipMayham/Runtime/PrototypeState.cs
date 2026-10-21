@@ -13,6 +13,7 @@ namespace ShipMayham
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
     public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull }
     public enum RouteProfile : byte { CoastalFerry, MarketRun, StormPassage }
+    public enum ShipLivery : byte { Classic, Seafoam, Sunset }
 
     [Serializable]
     public struct VoyageState : INetworkSerializable, IEquatable<VoyageState>
@@ -22,6 +23,7 @@ namespace ShipMayham
         public float Heading, Speed, Health, Elapsed;
         public float HullShield;
         public RouteProfile Route;
+        public ShipLivery Livery;
         public bool DockJobActive;
         public int Wallet, Voyage, Boarded, Served, FoodStock, DrinkStock, Leak, RepairSteps;
         public int DockJobProgress, DockJobPortKey, DockJobsCompleted;
@@ -35,6 +37,7 @@ namespace ShipMayham
             s.SerializeValue(ref Heading); s.SerializeValue(ref Speed); s.SerializeValue(ref Health); s.SerializeValue(ref Elapsed);
             s.SerializeValue(ref HullShield);
             s.SerializeValue(ref Route);
+            s.SerializeValue(ref Livery);
             s.SerializeValue(ref DockJobActive);
             s.SerializeValue(ref Wallet); s.SerializeValue(ref Voyage); s.SerializeValue(ref Boarded); s.SerializeValue(ref Served);
             s.SerializeValue(ref DockJobProgress); s.SerializeValue(ref DockJobPortKey); s.SerializeValue(ref DockJobsCompleted);

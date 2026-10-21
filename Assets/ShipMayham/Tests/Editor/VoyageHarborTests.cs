@@ -274,6 +274,58 @@ namespace ShipMayham.Tests
             Assert.IsFalse(sim.State.DockJobActive);
             Assert.AreEqual(0, sim.State.DockJobProgress);
         }
+        [Test] public void PaintRequiresShoreAndReputationAndSurvivesNewVoyage()
+        {
+            sim.State.Reputation = 5;
+            sim.SelectLivery(Client, ShipLivery.Sunset);
+            Assert.AreEqual(ShipLivery.Classic, sim.State.Livery);
+            Harbor(HarborAction.GoAshore);
+            sim.State.Reputation = 1;
+            sim.SelectLivery(Client, ShipLivery.Seafoam);
+            Assert.AreEqual(ShipLivery.Classic, sim.State.Livery);
+            sim.State.Reputation = 5;
+            sim.SelectLivery(Client, (ShipLivery)255);
+            Assert.AreEqual(ShipLivery.Classic, sim.State.Livery);
+            sim.SelectLivery(Client, ShipLivery.Sunset);
+            Assert.AreEqual(ShipLivery.Sunset, sim.State.Livery);
+            Assert.AreEqual(0, sim.State.Wallet);
+            Harbor(HarborAction.BoardShip);
+            Depart(); Arrive(); Use(0);
+            Assert.AreEqual(ShipLivery.Sunset, sim.State.Livery);
+        }
+
+        [Test] public void CargoCannotBeDeliveredRemotelyOrRepeatedDuringCooldown()
+        {
+            Harbor(HarborAction.GoAshore);
+            sim.ToggleDockJob(Client);
+            Harbor(HarborAction.BuyFood);
+            Advance();
+            sim.HarborCommand(Client, HarborAction.MaintainHull);
+            Assert.AreEqual(0, sim.State.DockJobProgress);
+            Assert.AreEqual(ServiceItem.Cargo, sim.Crew[1].Carrying);
+            Harbor(HarborAction.MaintainHull);
+            Assert.AreEqual(1, sim.State.DockJobProgress);
+            sim.Crew[1].Position = VoyageSimulation.HarborPoint(HarborAction.BuyFood) + Vector2.right;
+            sim.HarborCommand(Client, HarborAction.BuyFood);
+            Assert.AreEqual(ServiceItem.None, sim.Crew[1].Carrying);
+        }
+
+        [Test] public void FourCrewCannotTakeMoreCratesThanTheJobNeeds()
+        {
+            sim.Join(12); sim.Join(13);
+            Harbor(HarborAction.GoAshore);
+            sim.ToggleDockJob(Client);
+            foreach (ulong id in new ulong[] { Host, 12, 13 }) Harbor(HarborAction.GoAshore, id);
+            foreach (ulong id in new ulong[] { Host, Client, 12, 13 }) Harbor(HarborAction.BuyFood, id);
+            Assert.AreEqual(ServiceItem.None, sim.Crew[3].Carrying);
+            foreach (ulong id in new ulong[] { Host, Client, 12 }) Harbor(HarborAction.MaintainHull, id);
+            Assert.IsFalse(sim.State.DockJobActive);
+            foreach (var member in sim.Crew) Assert.AreEqual(ServiceItem.None, member.Carrying);
+            foreach (ulong id in new ulong[] { Host, Client, 12, 13 }) Harbor(HarborAction.BoardShip, id);
+            Assert.AreEqual(0, sim.CrewAshore);
+            Assert.AreEqual(24, sim.State.Wallet);
+        }
+
         [Test] public void ActiveCargoRelayLocksManifestButNewPortOffersAnotherJob()
         {
             Harbor(HarborAction.GoAshore);

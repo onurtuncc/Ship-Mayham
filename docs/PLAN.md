@@ -24,6 +24,8 @@ Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her f
 
 Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gülle, rastgele olay destesi, gelişmiş arıza mini oyunları, kapsamlı kara görevleri, kayıt ve gelişmiş yolcu davranışları sonraki dilimlerde yapılacaktır. Doğrulama kapsamı ve mevcut sınırlamalar [PROTOTYPE.md](PROTOTYPE.md) içinde tutulur.
 
+**Dokuzuncu geliştirme dilimi:** Limanda itibarla açılan Classic, Seafoam (2 itibar) ve Sunset (5 itibar) gövde boyaları seçilebilir. Renk ağ durumuyla tüm oyunculara ulaşır, kariyer kaydı ve host migration ile korunur; mekanik güç veya ücret etkisi yoktur. Kargo teslimatlarında mesafe/cooldown doğrulaması ve dört kişilik ekipte fazla kasa alma engeli eklendi.
+
 ## Faz 0 — Proje ve test altyapısı
 
 **Amaç:** Mevcut Unity projesini gemi prototipine hazır hale getirmek.

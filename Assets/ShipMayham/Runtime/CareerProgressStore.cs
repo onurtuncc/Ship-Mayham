@@ -13,6 +13,7 @@ namespace ShipMayham
         public int CapacityLevel;
         public int ComfortLevel;
         public int DockJobsCompleted;
+        public ShipLivery Livery;
 
         public static CareerProgress Capture(VoyageState state) => new CareerProgress
         {
@@ -22,7 +23,8 @@ namespace ShipMayham
             EngineLevel = Mathf.Clamp(state.EngineLevel, 0, 2),
             CapacityLevel = Mathf.Clamp(state.CapacityLevel, 0, 2),
             ComfortLevel = Mathf.Clamp(state.ComfortLevel, 0, 1),
-            DockJobsCompleted = Mathf.Max(0, state.DockJobsCompleted)
+            DockJobsCompleted = Mathf.Max(0, state.DockJobsCompleted),
+            Livery = state.Livery <= ShipLivery.Sunset ? state.Livery : ShipLivery.Classic
         };
 
         public void Apply(ref VoyageState state)
@@ -34,6 +36,8 @@ namespace ShipMayham
             state.CapacityLevel = Mathf.Clamp(CapacityLevel, 0, 2);
             state.ComfortLevel = Mathf.Clamp(ComfortLevel, 0, 1);
             state.DockJobsCompleted = Mathf.Max(0, DockJobsCompleted);
+            state.Livery = Livery <= ShipLivery.Sunset && state.Reputation >= VoyageSimulation.LiveryReputation(Livery)
+                ? Livery : ShipLivery.Classic;
         }
     }
 

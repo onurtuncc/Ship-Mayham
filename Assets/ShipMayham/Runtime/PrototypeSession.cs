@@ -136,6 +136,16 @@ namespace ShipMayham
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void SelectLiveryRpc(ShipLivery livery, RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.SelectLivery(sender, livery);
+            NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void ToggleDockJobRpc(RpcParams rpc = default)
         {
             if (Simulation == null) return;

@@ -410,6 +410,21 @@ namespace ShipMayham
                 GUILayout.Label($"Unpaid: {s.LastUnpaid}\nMissing: {s.LastMissing}\nRescue costs: {s.LastRescueCosts}", body);
             else GUILayout.Label("All crew aboard, then Helm + Space / X to depart.", body);
             GUILayout.EndArea();
+            if (local >= 0 && Session.Crew[local].OnShore)
+            {
+                GUI.Box(new Rect(400, 188, 370, 92), GUIContent.none);
+                GUILayout.BeginArea(new Rect(412, 196, 346, 76));
+                GUILayout.Label($"SHIP PAINT: {s.Livery} | Reputation {s.Reputation}", body);
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Classic")) Session.SelectLiveryRpc(ShipLivery.Classic);
+                GUI.enabled = s.Reputation >= 2;
+                if (GUILayout.Button("Seafoam (2)")) Session.SelectLiveryRpc(ShipLivery.Seafoam);
+                GUI.enabled = s.Reputation >= 5;
+                if (GUILayout.Button("Sunset (5)")) Session.SelectLiveryRpc(ShipLivery.Sunset);
+                GUI.enabled = true;
+                GUILayout.EndHorizontal();
+                GUILayout.EndArea();
+            }
         }
 
         private void DrawEncounter()

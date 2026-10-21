@@ -386,7 +386,7 @@ namespace ShipMayham
             State = new VoyageState { Health = 100, Voyage = old.Voyage + 1, Wallet = old.Wallet,
                 EngineLevel = old.EngineLevel, CapacityLevel = old.CapacityLevel, ComfortLevel = old.ComfortLevel,
                 FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield,
-                Reputation = old.Reputation, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted };
+                Reputation = old.Reputation, Livery = old.Livery, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted };
             Array.Clear(Passengers, 0, Passengers.Length);
             nextLeak = 25;
             ResetEncounter();

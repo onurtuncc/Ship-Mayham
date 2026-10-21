@@ -25,6 +25,8 @@ namespace ShipMayham
         [Header("Service colors")]
         public Color FoodColor = new Color(1f, .48f, .12f);
         public Color DrinkColor = new Color(.15f, .6f, 1f);
+        [Tooltip("Optional hull meshes to recolor. Classic restores their authored property blocks.")]
+        public Renderer[] LiveryRenderers;
         public int FocusedTarget { get; private set; } = -1;
         public string FocusText { get; private set; } = "";
         public bool IsFirstPerson { get; private set; }
@@ -43,6 +45,8 @@ namespace ShipMayham
         private Quaternion[] passengerVisualRotations;
         private Transform[] passengerBuoys;
         private bool[] displayedShore;
+        private MaterialPropertyBlock[] originalLiveryBlocks;
+        private int displayedLivery = -1;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
@@ -55,6 +59,19 @@ namespace ShipMayham
             displayedItems = new ServiceItem[CrewRoots.Length];
             displayedShore = new bool[CrewRoots.Length];
             itemProperties = new MaterialPropertyBlock();
+            if (LiveryRenderers == null || LiveryRenderers.Length == 0)
+            {
+                var hulls = new System.Collections.Generic.List<Renderer>();
+                foreach (var renderer in Session.ShipRoot.GetComponentsInChildren<Renderer>(true))
+                    if (renderer.name == "Hull_Primitive") hulls.Add(renderer);
+                LiveryRenderers = hulls.ToArray();
+            }
+            originalLiveryBlocks = new MaterialPropertyBlock[LiveryRenderers.Length];
+            for (int i = 0; i < LiveryRenderers.Length; i++)
+            {
+                originalLiveryBlocks[i] = new MaterialPropertyBlock();
+                if (LiveryRenderers[i] != null) LiveryRenderers[i].GetPropertyBlock(originalLiveryBlocks[i]);
+            }
             for (int i = 0; i < CrewRoots.Length; i++)
             {
                 crewVisuals[i] = CrewRoots[i].Find("Visuals");
@@ -256,6 +273,13 @@ namespace ShipMayham
                 bestAngle = angle;
                 FocusedTarget = PrototypeHarbor.Target(action);
                 FocusText = PrototypeHarbor.Prompt(action);
+                if (Session.Voyage.Value.DockJobActive)
+                {
+                    if (action == HarborAction.BuyFood)
+                        FocusText = crew.Carrying == ServiceItem.Cargo ? "E / A: return cargo crate" : "E / A: pick up cargo crate — deliver at HULL";
+                    else if (action == HarborAction.MaintainHull && crew.Carrying == ServiceItem.Cargo)
+                        FocusText = "E / A: deliver cargo crate";
+                }
             }
         }
 
@@ -280,6 +304,7 @@ namespace ShipMayham
             }
             wasAtCannon = atCannon;
             var state = active ? Session.Voyage.Value : new VoyageState { Health = 100 };
+            ApplyLivery(state.Livery);
             Transform ship = Session.ShipRoot;
             float blend = wasSpawned ? 1 - Mathf.Exp(-18 * Time.deltaTime) : 1;
             ship.position = Vector3.Lerp(ship.position, new Vector3(state.Position.x, 0, state.Position.y), blend);
@@ -358,6 +383,24 @@ namespace ShipMayham
                 WorldLabelPresentation.UpdateLabel(station.Label, Camera);
                 station.Label.gameObject.SetActive((local < 0 || !Session.Crew[local].OnShore) && Vector3.Distance(station.Label.transform.position, Camera.transform.position) < 10);
                 station.Label.color = FocusedTarget >= 0 && FocusedTarget < Session.Stations.Length && Session.Stations[FocusedTarget] == station ? Color.yellow : Color.white;
+            }
+        }
+
+        private void ApplyLivery(ShipLivery livery)
+        {
+            if (displayedLivery == (int)livery) return;
+            displayedLivery = (int)livery;
+            Color color = livery == ShipLivery.Seafoam ? new Color(.15f, .72f, .55f) : new Color(1f, .36f, .14f);
+            for (int i = 0; i < LiveryRenderers.Length; i++)
+            {
+                var renderer = LiveryRenderers[i];
+                if (renderer == null) continue;
+                renderer.SetPropertyBlock(originalLiveryBlocks[i]);
+                if (livery == ShipLivery.Classic) continue;
+                renderer.GetPropertyBlock(itemProperties);
+                itemProperties.SetColor(BaseColorId, color);
+                itemProperties.SetColor(ColorId, color);
+                renderer.SetPropertyBlock(itemProperties);
             }
         }
 

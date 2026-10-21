@@ -35,6 +35,19 @@ namespace ShipMayham
 
         private int CurrentPortKey => State.Voyage * 2 + (State.Phase == VoyagePhase.Arrived ? 1 : 0);
 
+        public static int LiveryReputation(ShipLivery livery) => livery == ShipLivery.Seafoam ? 2 : livery == ShipLivery.Sunset ? 5 : 0;
+
+        public string SelectLivery(ulong clientId, ShipLivery livery)
+        {
+            int slot = FindCrew(clientId);
+            if (slot < 0 || !HarborOpen || !Crew[slot].OnShore) return "Go ashore to repaint the ship.";
+            if (livery > ShipLivery.Sunset) return "Unknown ship paint.";
+            int required = LiveryReputation(livery);
+            if (State.Reputation < required) return $"This paint unlocks at {required} reputation.";
+            State.Livery = livery;
+            return $"Ship paint changed to {livery}. Cosmetic only; no coins charged.";
+        }
+
         public string SelectRoute(ulong clientId, RouteProfile route)
         {
             int slot = FindCrew(clientId);
@@ -94,6 +107,10 @@ namespace ShipMayham
             ref var crew = ref Crew[slot];
             if (crew.AtHelm || crew.AtCannon) return "Release your station first.";
             if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) return "Land before interacting.";
+            if (crew.OnShore == (action == HarborAction.GoAshore)) return "Use the gangway to change areas first.";
+            if (Vector2.Distance(crew.Position, HarborPoint(action)) > InteractionRange) return "Move closer to the harbor station.";
+            if (clock < interactionReady[slot]) return string.Empty;
+            interactionReady[slot] = clock + .35f;
             if (crew.Carrying == ServiceItem.Cargo)
             {
                 if (action == HarborAction.BuyFood && State.DockJobActive)
@@ -116,10 +133,6 @@ namespace ShipMayham
                 return "Deliver cargo at HULL, or return it to the FOOD pickup.";
             }
             if (crew.Carrying != ServiceItem.None || CarriedPassenger(slot) >= 0) return "Return your item or put the passenger down first.";
-            if (crew.OnShore == (action == HarborAction.GoAshore)) return "Use the gangway to change areas first.";
-            if (Vector2.Distance(crew.Position, HarborPoint(action)) > InteractionRange) return "Move closer to the harbor station.";
-            if (clock < interactionReady[slot]) return string.Empty;
-            interactionReady[slot] = clock + .35f;
             if (action == HarborAction.GoAshore || action == HarborAction.BoardShip)
             {
                 crew.OnShore = action == HarborAction.GoAshore;
@@ -137,6 +150,10 @@ namespace ShipMayham
             }
             if (action == HarborAction.BuyFood && State.DockJobActive)
             {
+                int committed = State.DockJobProgress;
+                foreach (var member in Crew)
+                    if (member.Active && member.Carrying == ServiceItem.Cargo) committed++;
+                if (committed >= DockJobGoal) return "All remaining crates are already being carried. Help the crew deliver them.";
                 crew.Carrying = ServiceItem.Cargo;
                 return $"Cargo crate picked up. Deliver it to HULL ({State.DockJobProgress}/{DockJobGoal}).";
             }

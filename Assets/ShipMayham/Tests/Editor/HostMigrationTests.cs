@@ -21,6 +21,7 @@ namespace ShipMayham.Tests
             Assert.AreEqual(0, original.Join(10, "player-a"));
             Assert.AreEqual(1, original.Join(11, "player-b"));
             original.State.Wallet = 137;
+            original.State.Livery = ShipLivery.Seafoam;
             original.State.Position = new Vector2(14, 92);
             original.Crew[1].Position = new Vector2(1.25f, 3.5f);
 
@@ -28,6 +29,7 @@ namespace ShipMayham.Tests
             restored.ImportMigrationData(original.ExportMigrationData());
 
             Assert.AreEqual(137, restored.State.Wallet);
+            Assert.AreEqual(ShipLivery.Seafoam, restored.State.Livery);
             Assert.AreEqual(new Vector2(14, 92), restored.State.Position);
             Assert.AreEqual(1, restored.Join(77, "player-b"));
             Assert.AreEqual(77ul, restored.Crew[1].ClientId);
