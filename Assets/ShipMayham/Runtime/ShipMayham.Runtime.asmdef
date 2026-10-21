@@ -1,5 +1,12 @@
 {
   "name": "ShipMayham.Runtime",
   "rootNamespace": "ShipMayham",
-  "references": ["Unity.Netcode.Runtime", "Unity.InputSystem", "Unity.Collections"]
+  "references": [
+    "Unity.Netcode.Runtime",
+    "Unity.InputSystem",
+    "Unity.Collections",
+    "Unity.Services.Core",
+    "Unity.Services.Authentication",
+    "Unity.Services.Multiplayer"
+  ]
 }

@@ -40,9 +40,10 @@ namespace ShipMayham
                 seats[i] = new Vector2(p.x, p.z);
             }
             Simulation = new VoyageSimulation(stations, seats, Harbor != null);
+            VoyageMigrationDataHandler.RestorePending(Simulation);
             NetworkManager.OnClientConnectedCallback += Connected;
             NetworkManager.OnClientDisconnectCallback += Disconnected;
-            foreach (ulong id in NetworkManager.ConnectedClientsIds) Simulation.Join(id);
+            foreach (ulong id in NetworkManager.ConnectedClientsIds) Simulation.Join(id, PrototypeHud.PlayerIdentity(id));
             Publish();
         }
 
@@ -56,8 +57,19 @@ namespace ShipMayham
             Simulation = null;
         }
 
-        private void Connected(ulong id) { Simulation.Join(id); Publish(); }
-        private void Disconnected(ulong id) { Simulation.Leave(id); Publish(); }
+        private void Connected(ulong id) { Simulation.Join(id, PrototypeHud.PlayerIdentity(id)); Publish(); }
+        private void Disconnected(ulong id)
+        {
+            if (!PrototypeHud.OnlineTransportActive) Simulation.Leave(id);
+            Publish();
+        }
+
+        public void RemoveOnlinePlayer(string playerId)
+        {
+            if (!IsServer || Simulation == null) return;
+            Simulation.LeavePlayer(playerId);
+            Publish();
+        }
 
         private void FixedUpdate()
         {

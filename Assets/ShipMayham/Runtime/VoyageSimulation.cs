@@ -19,6 +19,7 @@ namespace ShipMayham
         private readonly float[] interactionReady = new float[MaxCrew];
         private readonly float[] inputExpires = new float[MaxCrew];
         private readonly Vector2[] inputs = new Vector2[MaxCrew];
+        private readonly string[] crewPlayerIds = new string[MaxCrew];
         private float clock;
         private float nextLeak = 25;
 
@@ -38,14 +39,27 @@ namespace ShipMayham
             return -1;
         }
 
-        public int Join(ulong clientId)
+        public int Join(ulong clientId, string playerId = null)
         {
+            if (!string.IsNullOrEmpty(playerId))
+            {
+                for (int i = 0; i < MaxCrew; i++)
+                {
+                    if (crewPlayerIds[i] != playerId) continue;
+                    Crew[i].Active = true;
+                    Crew[i].ClientId = clientId;
+                    inputs[i] = Vector2.zero;
+                    inputExpires[i] = 0;
+                    return i;
+                }
+            }
             int existing = FindCrew(clientId);
             if (existing >= 0) return existing;
             for (int i = 0; i < MaxCrew; i++)
             {
                 if (Crew[i].Active) continue;
                 Crew[i] = new CrewState { Active = true, ClientId = clientId, Position = new Vector2(-1.5f + i, -6) };
+                crewPlayerIds[i] = playerId;
                 inputs[i] = Vector2.zero;
                 interactionReady[i] = 0;
                 return i;
@@ -57,12 +71,29 @@ namespace ShipMayham
         {
             int i = FindCrew(clientId);
             if (i < 0) return;
+            LeaveSlot(i);
+        }
+
+        public void LeavePlayer(string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId)) return;
+            for (int i = 0; i < MaxCrew; i++)
+            {
+                if (crewPlayerIds[i] != playerId) continue;
+                LeaveSlot(i);
+                return;
+            }
+        }
+
+        private void LeaveSlot(int i)
+        {
             if (Crew[i].AtHelm) State.Speed = 0;
             if (Crew[i].AtCannon) ReleaseCannon(i);
             int carriedPassenger = CarriedPassenger(i);
             if (carriedPassenger >= 0) ReturnPassengerToSeat(carriedPassenger);
             ReturnItem(i);
             Crew[i] = default;
+            crewPlayerIds[i] = null;
             inputs[i] = Vector2.zero;
         }
 

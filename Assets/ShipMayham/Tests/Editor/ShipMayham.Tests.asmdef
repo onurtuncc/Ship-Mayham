@@ -1,6 +1,6 @@
 {
   "name": "ShipMayham.Tests",
-  "references": ["ShipMayham.Runtime", "Unity.Netcode.Runtime"],
+  "references": ["ShipMayham.Runtime", "Unity.Netcode.Runtime", "Unity.Services.Multiplayer"],
   "includePlatforms": ["Editor"],
   "optionalUnityReferences": ["TestAssemblies"]
 }
