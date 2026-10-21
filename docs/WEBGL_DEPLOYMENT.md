@@ -1,26 +1,41 @@
 # GitHub Pages üzerinde WebGL yayını
 
-Bu repo, `main` dalına gönderilen her değişiklikte `ShipPrototype` sahnesini WebGL için derleyip GitHub Pages'a yayınlar.
+Bu repo, Unity lisans bilgilerini GitHub'a göndermeden yerel bilgisayardan WebGL build alıp GitHub Pages'a yayınlanır.
 
 Beklenen adres:
 
 `https://onurtuncc.github.io/Ship-Mayham/`
 
-## Bir kerelik GitHub kurulumu
+## Tek komutla build ve yayın
 
-1. GitHub'da repo içinden **Settings → Secrets and variables → Actions** sayfasını aç.
-2. Unity lisans tipine göre repository secret'larını ekle:
-   - Unity Personal: `UNITY_LICENSE`, `UNITY_EMAIL`, `UNITY_PASSWORD`
-   - Unity Pro: `UNITY_SERIAL`, `UNITY_EMAIL`, `UNITY_PASSWORD`
-3. **Settings → Pages → Build and deployment → Source** alanını **GitHub Actions** yap.
-4. Bu değişiklikleri `main` dalına gönder. İstersen **Actions → Build and deploy WebGL → Run workflow** ile elle de başlatabilirsin.
-5. `build` ve `deploy` işleri yeşil olduğunda yukarıdaki adresi aç.
+Unity Hub'da **Installs → 6000.4.6f1 → Manage → Add modules → Web Build Support** modülünün kurulu ve Unity lisansının bu bilgisayarda etkin olduğundan emin ol. Ardından proje kökünde çalıştır:
 
-Unity Personal lisans dosyasını üretme adımları için GameCI'nin güncel aktivasyon belgesini kullan:
+```powershell
+.\Scripts\Publish-WebGL.ps1
+```
 
-https://game.ci/docs/github/activation
+Script şu işlemleri yapar:
 
-Secret değerlerini repoya veya workflow dosyasına yazma.
+1. Projenin kayıtlı Unity sürümünü bulur.
+2. `ShipPrototype` sahnesini `Builds/WebGL/` klasörüne derler.
+3. Çıktıyı geçici bir Git worktree ile `gh-pages` dalına gönderir.
+4. Geçici worktree'yi temizler.
+
+Ana proje Unity Editor'de açıksa script, proje kilidine çarpmamak için `Builds/ShipPrototypeValidation/` altındaki kalıcı ve cache'li build workspace'ini günceller. İlk senkronizasyon sonraki yayınlardan daha uzun sürebilir.
+
+Unity farklı bir konumdaysa yolu açıkça verebilirsin:
+
+```powershell
+.\Scripts\Publish-WebGL.ps1 -UnityPath "D:\Unity\Editor\Unity.exe"
+```
+
+Build zaten hazırsa yalnızca yayınlamak için:
+
+```powershell
+.\Scripts\Publish-WebGL.ps1 -SkipBuild
+```
+
+GitHub Actions içinde Unity build çalıştırılmadığı için `UNITY_LICENSE`, `UNITY_EMAIL` veya `UNITY_PASSWORD` secret'larına ihtiyaç yoktur. GitHub Pages kaynağı `gh-pages` dalının kök dizinidir.
 
 ## Yerel WebGL build
 
