@@ -1,0 +1,15 @@
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from assetlib import *
+reset()
+wood=mat("Wood",hexc("#9a6a3c")); woodD=mat("Wood_Dark",hexc("#5f3d22")); woodL=mat("Wood_Light",hexc("#c08a52")); metal=mat("Metal",hexc("#5d6772"),0.5,metal=0.6); metalD=mat("Metal_Dark",hexc("#2c3138"),0.6,metal=0.5); brass=mat("Brass",hexc("#d9a63a"),0.4,metal=0.7); cream=mat("Cream",hexc("#f0e8d4")); red=mat("Red",hexc("#cf3a2d")); navy=mat("Navy",hexc("#25435f")); rope=mat("Rope",hexc("#c9a35a"),0.9)
+b=Builder()
+glow=mat("Glass_Glow",hexc("#ffd36b"),0.2,emit=hexc("#ffb630"))
+b.cyl(0.11,0.04,(0,0,0.02),metalD,segs=8)
+b.cyl(0.095,0.2,(0,0,0.14),glow,segs=8,r2=0.085)
+for i in range(4):
+    a=math.radians(i*90+45)
+    b.box((0.02,0.02,0.22),(0.09*math.cos(a),0.09*math.sin(a),0.145),metalD)
+b.cyl(0.11,0.03,(0,0,0.26),metalD,segs=8)
+b.cyl(0.1,0.07,(0,0,0.3),metalD,segs=8,r2=0.04)
+b.torus(0.05,0.012,(0,0,0.38),metalD,major=14,minor=5,rot=(90,0,0))
+deliver(b,"Lantern")

@@ -1,0 +1,12 @@
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from assetlib import *
+reset()
+wood=mat("Wood",hexc("#9a6a3c")); woodD=mat("Wood_Dark",hexc("#5f3d22")); woodL=mat("Wood_Light",hexc("#c08a52")); metal=mat("Metal",hexc("#5d6772"),0.5,metal=0.6); metalD=mat("Metal_Dark",hexc("#2c3138"),0.6,metal=0.5); brass=mat("Brass",hexc("#d9a63a"),0.4,metal=0.7); cream=mat("Cream",hexc("#f0e8d4")); red=mat("Red",hexc("#cf3a2d")); navy=mat("Navy",hexc("#25435f")); rope=mat("Rope",hexc("#c9a35a"),0.9)
+b=Builder()
+b.cyl(0.18,0.16,(0,0,0.14),red,segs=12,r2=0.22)
+b.cyl(0.22,0.16,(0,0,0.3),cream,segs=12,r2=0.18)
+b.cyl(0.18,0.16,(0,0,0.46),red,segs=12,r2=0.1)
+b.cyl(0.015,0.4,(0,0,0.74),metalD,segs=6)
+b.sphere(0.06,(0,0,0.96),brass,segs=8,rings=5)
+b.torus(0.1,0.014,(0,0,0.05),metalD,major=14,minor=5)
+deliver(b,"Buoy")

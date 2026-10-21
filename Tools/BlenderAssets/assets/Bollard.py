@@ -1,0 +1,13 @@
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from assetlib import *
+reset()
+wood=mat("Wood",hexc("#9a6a3c")); woodD=mat("Wood_Dark",hexc("#5f3d22")); woodL=mat("Wood_Light",hexc("#c08a52")); metal=mat("Metal",hexc("#5d6772"),0.5,metal=0.6); metalD=mat("Metal_Dark",hexc("#2c3138"),0.6,metal=0.5); brass=mat("Brass",hexc("#d9a63a"),0.4,metal=0.7); cream=mat("Cream",hexc("#f0e8d4")); red=mat("Red",hexc("#cf3a2d")); navy=mat("Navy",hexc("#25435f")); rope=mat("Rope",hexc("#c9a35a"),0.9)
+b=Builder()
+stone=mat("Stone",hexc("#8b8d92"),0.95); stoneD=mat("Stone_Dark",hexc("#6a6c72"),0.95)
+b.box((0.6,0.6,0.12),(0,0,0.06),stone)
+b.box((0.5,0.5,0.06),(0,0,0.15),stoneD)
+b.cyl(0.14,0.42,(0,0,0.39),metalD,segs=10,r2=0.12)
+b.sphere(0.2,(0,0,0.6),metalD,segs=12,rings=6,scale=(1,1,0.6))
+b.cyl(0.13,0.05,(0,0,0.5),metal,segs=10)
+for i in range(3): b.torus(0.15,0.028,(0,0,0.3+i*0.07),rope,major=14,minor=5)
+deliver(b,"Bollard")

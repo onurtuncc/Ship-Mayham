@@ -1,0 +1,17 @@
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from assetlib import *
+reset(); globals().update(std()); b = Builder()
+b.box((1.6, 0.7, 1.0), (0, 0, 0.5), wood)
+b.box((1.7, 0.8, 0.06), (0, 0, 1.03), woodL)
+for i in range(6):
+    b.box((0.2, 0.03, 0.7), (-0.7 + i * 0.28, -0.36, 0.5), woodD)
+b.box((0.5, 0.4, 0.25), (-0.5, 0.05, 1.2), brass)
+b.box((0.45, 0.3, 0.1), (-0.5, 0.05, 1.36), brass, rot=(-20, 0, 0))
+b.box((0.2, 0.28, 0.01), (0.4, 0.0, 1.07), cream)
+b.box((0.2, 0.28, 0.01), (0.55, 0.05, 1.075), cream, rot=(0, 0, 12))
+b.box((0.04, 0.04, 0.5), (0.7, 0.25, 1.3), woodD)
+b.box((0.5, 0.04, 0.3), (0.7, 0.25, 1.55), cream)
+b.box((0.4, 0.03, 0.12), (0.7, 0.22, 1.55), red)
+b.cyl(0.06, 0.1, (0.15, -0.1, 1.13), metal, segs=8)
+b.sphere(0.04, (0.15, -0.1, 1.2), metal, segs=6, rings=4)
+deliver(b, "TicketCounter")
