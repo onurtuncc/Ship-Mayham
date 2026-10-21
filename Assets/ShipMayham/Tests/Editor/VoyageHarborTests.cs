@@ -199,5 +199,45 @@ namespace ShipMayham.Tests
             var voyage = sim.State; sim.State.HullShield = 20;
             Assert.IsFalse(voyage.Equals(sim.State));
         }
+        [Test] public void RouteContractRequiresShoreAndLocksWithPassengerManifest()
+        {
+            sim.SelectRoute(Client, RouteProfile.MarketRun);
+            Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
+            Harbor(HarborAction.GoAshore);
+            sim.SelectRoute(Client, (RouteProfile)255);
+            Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
+            sim.SelectRoute(Client, RouteProfile.MarketRun);
+            Assert.AreEqual(RouteProfile.MarketRun, sim.State.Route);
+            Harbor(HarborAction.BoardShip); Use(0); Harbor(HarborAction.GoAshore);
+            sim.SelectRoute(Client, RouteProfile.StormPassage);
+            Assert.AreEqual(RouteProfile.MarketRun, sim.State.Route);
+        }
+        [Test] public void MarketContractRewardsServiceAndPersistsReputation()
+        {
+            Harbor(HarborAction.GoAshore);
+            sim.SelectRoute(Client, RouteProfile.MarketRun);
+            Harbor(HarborAction.BoardShip);
+            Depart(); sim.State.Served = 3; Arrive();
+            Assert.AreEqual(35, sim.State.LastRouteBonus);
+            Assert.AreEqual(2, sim.State.LastReputation);
+            Assert.AreEqual(2, sim.State.Reputation);
+            Use(0);
+            Assert.AreEqual(2, sim.State.Reputation);
+            Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
+        }
+        [Test] public void StormContractAcceleratesHazardsAndRewardsSafeArrival()
+        {
+            Harbor(HarborAction.GoAshore);
+            sim.SelectRoute(Client, RouteProfile.StormPassage);
+            Harbor(HarborAction.BoardShip);
+            Depart(); Advance(12.1f);
+            Assert.AreEqual(VoyageEventPhase.Active, sim.Event.Phase);
+            Assert.That(sim.Event.Remaining, Is.LessThanOrEqualTo(24));
+            Advance(4.1f);
+            Assert.AreEqual(1, sim.State.Leak);
+            sim.State.Leak = 0; sim.State.Health = 75; Arrive();
+            Assert.AreEqual(50, sim.State.LastRouteBonus);
+            Assert.AreEqual(3, sim.State.LastReputation);
+        }
     }
 }

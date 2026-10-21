@@ -364,7 +364,10 @@ namespace ShipMayham
             State.LastCosts = State.Served * 2 + Mathf.CeilToInt((100 - State.Health) * .5f) + State.LastRescueCosts;
             State.LastBounty = success ? Encounter.Bounty : 0;
             State.LastEventBonus = success ? Event.Reward : 0;
-            State.LastNet = State.LastTickets + State.LastServices + State.LastTips + State.LastBounty + State.LastEventBonus - State.LastCosts;
+            State.LastRouteBonus = success ? RouteBonus() : 0;
+            State.LastReputation = success ? RouteReputation() : 0;
+            State.Reputation += State.LastReputation;
+            State.LastNet = State.LastTickets + State.LastServices + State.LastTips + State.LastBounty + State.LastEventBonus + State.LastRouteBonus - State.LastCosts;
             State.Wallet = Mathf.Max(0, State.Wallet + State.LastNet);
             Encounter.ReloadRemaining = 0;
             if (Encounter.Pirate == PiratePhase.Warning || Encounter.Pirate == PiratePhase.Attacking) Encounter.Pirate = PiratePhase.Escaped;
@@ -379,7 +382,8 @@ namespace ShipMayham
             var old = State;
             State = new VoyageState { Health = 100, Voyage = old.Voyage + 1, Wallet = old.Wallet,
                 EngineLevel = old.EngineLevel, CapacityLevel = old.CapacityLevel, ComfortLevel = old.ComfortLevel,
-                FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield };
+                FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield,
+                Reputation = old.Reputation };
             Array.Clear(Passengers, 0, Passengers.Length);
             nextLeak = 25;
             ResetEncounter();
@@ -395,6 +399,20 @@ namespace ShipMayham
                 Crew[i].VerticalSpeed = 0;
                 inputs[i] = Vector2.zero;
             }
+        }
+
+        private int RouteBonus()
+        {
+            if (State.Route == RouteProfile.MarketRun) return State.Served >= 3 ? 35 : 5;
+            if (State.Route == RouteProfile.StormPassage) return State.Health >= 70 ? 50 : 0;
+            return 0;
+        }
+
+        private int RouteReputation()
+        {
+            if (State.Route == RouteProfile.MarketRun && State.Served >= 3) return 2;
+            if (State.Route == RouteProfile.StormPassage && State.Health >= 70) return 3;
+            return 1;
         }
     }
 }

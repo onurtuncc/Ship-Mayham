@@ -16,6 +16,8 @@ Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her f
 
 **Beşinci geliştirme dilimi:** Host-otoriter, deterministik bir olay destesi eklendi. Kaçak kargo taşıyan şüpheli yolcuyu bilet kontrolüyle bulma, iki hızlı servis tamamlama ve tamir panelinden savrulan yükü sabitleme olayları sırayla fakat sefer numarasına göre dönen başlangıçla gelir. Başarı varışta olay bonusu, zaman aşımı ise arızaya uygun hasar/memnuniyet/elektrik sonucu üretir. Aktif olay ve deste konumu host migration anlık görüntüsüne dahildir.
 
+**Altıncı geliştirme dilimi:** Limandaki sözleşme panosu üzerinden üç rota profili seçilebilir. Coastal Ferry standart akıştır; Market Run üç servis karşılığında ek ödeme verir; Storm Passage krizleri ve ilk sızıntıyı erkene çeker fakat sağlam varışa yüksek bonus ve itibar kazandırır. Seçim host otoritesindedir, yalnız karadaki mürettebat tarafından yolcular alınmadan önce değiştirilebilir ve sefer sonucunda ortak ekonomi/itibara yansır.
+
 Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gülle, rastgele olay destesi, gelişmiş arıza mini oyunları, kapsamlı kara görevleri, kayıt ve gelişmiş yolcu davranışları sonraki dilimlerde yapılacaktır. Doğrulama kapsamı ve mevcut sınırlamalar [PROTOTYPE.md](PROTOTYPE.md) içinde tutulur.
 
 ## Faz 0 — Proje ve test altyapısı

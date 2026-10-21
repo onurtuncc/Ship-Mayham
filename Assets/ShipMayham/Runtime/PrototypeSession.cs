@@ -124,6 +124,16 @@ namespace ShipMayham
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void SelectRouteRpc(RouteProfile route, RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.SelectRoute(sender, route);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void AimPassengerRpc(float yaw, RpcParams rpc = default)
         {
             Simulation?.AimPassenger(rpc.Receive.SenderClientId, yaw);

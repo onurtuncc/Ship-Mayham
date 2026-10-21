@@ -29,6 +29,26 @@ namespace ShipMayham
             get { int count = 0; foreach (var crew in Crew) if (crew.Active && crew.OnShore) count++; return count; }
         }
 
+        public static string RouteName(RouteProfile route) => route == RouteProfile.MarketRun
+            ? "Market Run" : route == RouteProfile.StormPassage ? "Storm Passage" : "Coastal Ferry";
+
+        public string SelectRoute(ulong clientId, RouteProfile route)
+        {
+            int slot = FindCrew(clientId);
+            if (slot < 0 || !HarborOpen || State.Phase != VoyagePhase.Boarding) return "Route contracts are available before departure.";
+            if (!Crew[slot].OnShore) return "Go ashore to use the contract board.";
+            if ((int)route < 0 || route > RouteProfile.StormPassage) return "Unknown route contract.";
+            if (State.Boarded > 0) return "The passenger manifest is locked. Choose the route before boarding passengers.";
+            State.Route = route;
+            nextLeak = route == RouteProfile.StormPassage ? 16 : 25;
+            Event.NextIn = route == RouteProfile.StormPassage ? 12 : route == RouteProfile.MarketRun ? 16 : FirstEventDelay;
+            return route == RouteProfile.MarketRun
+                ? "Market Run selected: serve 3 orders for a 35-coin contract bonus."
+                : route == RouteProfile.StormPassage
+                    ? "Storm Passage selected: earlier crises and leaks; arrive above 70 hull for 50 coins."
+                    : "Coastal Ferry selected: standard risk with no contract condition.";
+        }
+
         private void MoveShoreCrew(int slot, Vector2 movement)
         {
             Vector2 p = Crew[slot].Position;

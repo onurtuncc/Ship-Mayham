@@ -1,6 +1,6 @@
 # İlk oynanabilir prototip
 
-Bu sürüm GDD'nin ilk dört geliştirme dilimidir: yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme al → karada erzak/bakım veya gemide yükseltme satın al → ekibi topla → tekrar sefere çık.
+Bu sürüm GDD'nin ilk altı geliştirme dilimidir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım veya gemide yükseltme satın al → ekibi topla → tekrar sefere çık.
 
 ## Çalıştırma
 
@@ -34,6 +34,7 @@ Netcode'un editörde sahne senkronizasyonu yapabilmesi için prototip sahnesi Bu
 - Sefer sonunda bilet, servis, bahşiş ve masraflar ayrı gösterilir. Para ortak kasaya bir kez eklenir.
 - Mor istasyonlarda motor, yolcu kapasitesi veya konfor yükseltmesi al. Manifest ile yeni sefere hazırlan; tekrar E ile yeni yolcuları al.
 - Limandayken geminin sol arka köşesindeki yeşil **ASHORE** işaretine yaklaş, ona bakıp **E / A** ile iskeleye geç. Dümeni/topu bırakmış, yerde ve elleri boş olmalısın. Karada WASD/analog ve zıplama çalışır; terminalin önündeki işaretli iskele şeridinde yürüyebilirsin.
+- Yolcuları Manifest'ten almadan önce karadayken sağdaki sözleşme panosundan **COAST / MARKET / STORM** seç. Market Run üç servis karşılığında 35 para; Storm Passage daha erken olay ve sızıntı karşılığında 70+ gövdeyle varışta 50 para verir. Başarılı sözleşmeler kalıcı ortak itibarı yükseltir.
 - İskelede turuncu **FOOD +8** ve mavi **DRINK +8** tezgâhları 12'şer para, yeşil **HULL SHIELD +20** tezgâhı 30 para ister. Yaklaş, bak ve E/A kullan. Satın alma ortak kasadan anında düşer. Erzak geminin stoğuna eklenir; elde taşınanlar dahil tür başına en fazla 32 ürün depolanır. Gövde koruması sızıntı ve korsanlardan gelecek toplam 20 hasarı emer; sıfırlanmadan tekrar satın alınamaz.
 - **BOARD SHIP** işaretinde E/A ile güverteye dön. Karada aktif oyuncu varken kaptan ayrılamaz, Manifest de yeni sefere geçiremez. Ayrılan oyuncu bağlantısını kapatırsa ekip onu beklemek zorunda kalmaz.
 
@@ -96,7 +97,7 @@ Liman hareketi ikinci bir yerel düzlemdir: `CrewState.OnShore` açıkken `Posit
 - `VoyagePassengers`: Host üzerinde bilet, tek taşıyıcı sahipliği, bırakma/fırlatma ve kurtarma kuralları.
 - `PassengerPresentation`: Bilet durumu ve bekleme/teşekkür/şikâyet/kurtarma etiketleri.
 - `PrototypePhaseThreeBuilder`: Mevcut yolcu görsellerine eklemeli/idempotent kurtarma görseli güncellemesi.
-- `VoyageHarbor`: Karada hareket, geçiş, kalkış engeli, erzak satın alma ve hasar emen bakım kuralları.
+- `VoyageHarbor`: Karada hareket, geçiş, rota sözleşmesi, kalkış engeli, erzak satın alma ve hasar emen bakım kuralları.
 - `PrototypeHarbor`: İki limanın sahne referansları, işaretler, bağlama göre görünen geçiş tahtaları ve etiketler.
 - `PrototypePhaseFourBuilder`: Eski sahne kimliklerini koruyarak liman hazırlık noktaları ekler.
 - `WorldLabelPresentation`: Birinci şahıs için dünya yazılarını mesafeye göre ölçekler; yakın etiketlerin ekranı kaplamasını önler.
@@ -119,6 +120,8 @@ Mevcut Blocks karakter prefabları üçüncü şahıs animasyon/kamera/olay bağ
 | Stok | İlk sefer 16+16; yeni seferde her tür en az 16'ya ücretsiz tamamlanır, fazlası korunur |
 | Liman erzağı | 12 para karşılığı +8, tür başına depoda+elde en fazla 32 |
 | Gövde koruması | 30 para karşılığı toplam 20 hasar emme; kullanılmayan miktar sonraki sefere kalır |
+| Market Run | En az 3 servisle başarılı varış: +35 para, +2 itibar; koşul kaçarsa +5 para, +1 itibar |
+| Storm Passage | İlk olay 12 sn, ilk sızıntı 16 sn; 70+ gövdeyle başarılı varış: +50 para, +3 itibar |
 | Motor | 4 m/s; yükseltme başına +1,5 m/s; 100, sonra 200 |
 | Kapasite | Yükseltme ücretleri 150, sonra 300; sonraki yolcu alımında uygulanır |
 | Konfor | 120; bekleyen siparişin memnuniyet kaybını azaltır |

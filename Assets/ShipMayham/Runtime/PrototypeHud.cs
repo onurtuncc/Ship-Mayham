@@ -300,6 +300,7 @@ namespace ShipMayham
                 if (onlineMode && !string.IsNullOrWhiteSpace(sessionCode))
                     GUILayout.Label($"Online code: {sessionCode}" + (onlineSession != null && onlineSession.IsHost ? " • HOST" : string.Empty), body);
                 GUILayout.Label($"Voyage {s.Voyage} / {s.Phase}    Coins: {s.Wallet}", body);
+                GUILayout.Label($"Route: {VoyageSimulation.RouteName(s.Route)} | Reputation: {s.Reputation}", body);
                 GUILayout.Label($"Hull {s.Health:0}% | Shield {s.HullShield:0} | {s.Speed:0.0} m/s", body);
                 GUILayout.Label($"Destination: {Vector2.Distance(s.Position, VoyageSimulation.Destination):0} m    Heading: {s.Heading:0}°", body);
                 GUILayout.Label($"Passengers: {s.Boarded}    Orders served: {s.Served}", body);
@@ -308,7 +309,7 @@ namespace ShipMayham
                 if (s.Leak != 0) GUILayout.Label($"LEAK! Repair station: {s.RepairSteps}/4 patches", body);
                 else GUILayout.Label("Hull watertight", body);
                 if (s.Phase == VoyagePhase.Arrived || s.Phase == VoyagePhase.Failed)
-                    GUILayout.Label($"Tickets {s.LastTickets} + service {s.LastServices} + tips {s.LastTips}\nBounty {s.LastBounty} + events {s.LastEventBonus} - costs {s.LastCosts} = net {s.LastNet}\nManifest: new voyage. Upgrades: spend coins.", body);
+                    GUILayout.Label($"Tickets {s.LastTickets} + service {s.LastServices} + tips {s.LastTips}\nBounty {s.LastBounty} + events {s.LastEventBonus} + route {s.LastRouteBonus} - costs {s.LastCosts} = net {s.LastNet}\nReputation +{s.LastReputation}. Manifest: new voyage.", body);
                 else GUILayout.Label(s.Phase == VoyagePhase.Boarding ? "1. Manifest: board\n2. Helm: E, then Space to depart" : "Serve matching orders. Brake (S) and dock (Space) within 12 m.", body);
                 if (GUILayout.Button("Leave session")) LeaveOrReload();
             }
@@ -386,10 +387,19 @@ namespace ShipMayham
             var s = Session.Voyage.Value;
             int ashore = 0;
             foreach (var crew in Session.Crew) if (crew.Active && crew.OnShore) ashore++;
-            GUI.Box(new Rect(1070, 355, 198, 288), GUIContent.none);
-            GUILayout.BeginArea(new Rect(1080, 365, 178, 268));
+            GUI.Box(new Rect(1070, 355, 198, 328), GUIContent.none);
+            GUILayout.BeginArea(new Rect(1080, 365, 178, 308));
             GUILayout.Label("HARBOR PREPARATION", body);
-            GUILayout.Label($"Crew ashore: {ashore}\nHull shield: {s.HullShield:0}/20", body);
+            GUILayout.Label($"Crew ashore: {ashore}\nHull shield: {s.HullShield:0}/20\nRoute: {VoyageSimulation.RouteName(s.Route)}", body);
+            int local = Session.LocalCrewIndex;
+            bool canChoose = s.Phase == VoyagePhase.Boarding && s.Boarded == 0 && local >= 0 && Session.Crew[local].OnShore;
+            GUI.enabled = canChoose;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("COAST")) Session.SelectRouteRpc(RouteProfile.CoastalFerry);
+            if (GUILayout.Button("MARKET")) Session.SelectRouteRpc(RouteProfile.MarketRun);
+            if (GUILayout.Button("STORM")) Session.SelectRouteRpc(RouteProfile.StormPassage);
+            GUILayout.EndHorizontal();
+            GUI.enabled = true;
             GUILayout.Label("Green gangway: E / A\nFood +8: 12 coins\nDrink +8: 12 coins\nHull shield: 30 coins", body);
             GUILayout.Label("Supplies carry over. Storage cap: 32 each. Shared wallet.", body);
             if (s.Phase == VoyagePhase.Arrived)

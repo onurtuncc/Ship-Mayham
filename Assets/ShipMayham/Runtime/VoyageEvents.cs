@@ -52,7 +52,7 @@ namespace ShipMayham
             Event.Serial++;
             Event.Progress = 0;
             Event.Goal = kind == VoyageEventKind.GalleyRush ? 2 : kind == VoyageEventKind.LooseCargo ? 3 : 1;
-            Event.Remaining = EventDuration;
+            Event.Remaining = State.Route == RouteProfile.StormPassage ? 24 : State.Route == RouteProfile.MarketRun ? 28 : EventDuration;
             Event.NextIn = 0;
             Event.TargetPassenger = kind == VoyageEventKind.ContrabandInspection && State.Boarded > 0
                 ? (State.Voyage + Event.Serial) % State.Boarded

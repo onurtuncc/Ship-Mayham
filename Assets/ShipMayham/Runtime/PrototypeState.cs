@@ -12,6 +12,7 @@ namespace ShipMayham
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
     public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull }
+    public enum RouteProfile : byte { CoastalFerry, MarketRun, StormPassage }
 
     [Serializable]
     public struct VoyageState : INetworkSerializable, IEquatable<VoyageState>
@@ -20,22 +21,27 @@ namespace ShipMayham
         public Vector2 Position;
         public float Heading, Speed, Health, Elapsed;
         public float HullShield;
+        public RouteProfile Route;
         public int Wallet, Voyage, Boarded, Served, FoodStock, DrinkStock, Leak, RepairSteps;
         public int EngineLevel, CapacityLevel, ComfortLevel;
-        public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty, LastEventBonus;
+        public int Reputation, LastReputation;
+        public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty, LastEventBonus, LastRouteBonus;
         public int CheckedTickets, CollectedFares, RescueCount, LastUnpaid, LastMissing, LastRescueCosts;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref Phase); s.SerializeValue(ref Position);
             s.SerializeValue(ref Heading); s.SerializeValue(ref Speed); s.SerializeValue(ref Health); s.SerializeValue(ref Elapsed);
             s.SerializeValue(ref HullShield);
+            s.SerializeValue(ref Route);
             s.SerializeValue(ref Wallet); s.SerializeValue(ref Voyage); s.SerializeValue(ref Boarded); s.SerializeValue(ref Served);
             s.SerializeValue(ref FoodStock); s.SerializeValue(ref DrinkStock); s.SerializeValue(ref Leak); s.SerializeValue(ref RepairSteps);
             s.SerializeValue(ref EngineLevel); s.SerializeValue(ref CapacityLevel); s.SerializeValue(ref ComfortLevel);
+            s.SerializeValue(ref Reputation); s.SerializeValue(ref LastReputation);
             s.SerializeValue(ref LastTickets); s.SerializeValue(ref LastServices); s.SerializeValue(ref LastTips);
             s.SerializeValue(ref LastCosts); s.SerializeValue(ref LastNet);
             s.SerializeValue(ref LastBounty);
             s.SerializeValue(ref LastEventBonus);
+            s.SerializeValue(ref LastRouteBonus);
             s.SerializeValue(ref CheckedTickets); s.SerializeValue(ref CollectedFares); s.SerializeValue(ref RescueCount);
             s.SerializeValue(ref LastUnpaid); s.SerializeValue(ref LastMissing); s.SerializeValue(ref LastRescueCosts);
         }
