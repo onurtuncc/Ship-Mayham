@@ -387,8 +387,8 @@ namespace ShipMayham
             var s = Session.Voyage.Value;
             int ashore = 0;
             foreach (var crew in Session.Crew) if (crew.Active && crew.OnShore) ashore++;
-            GUI.Box(new Rect(1070, 355, 198, 328), GUIContent.none);
-            GUILayout.BeginArea(new Rect(1080, 365, 178, 308));
+            GUI.Box(new Rect(1010, 355, 258, 328), GUIContent.none);
+            GUILayout.BeginArea(new Rect(1020, 365, 238, 308));
             GUILayout.Label("HARBOR PREPARATION", body);
             GUILayout.Label($"Crew ashore: {ashore}\nHull shield: {s.HullShield:0}/20\nRoute: {VoyageSimulation.RouteName(s.Route)}", body);
             int local = Session.LocalCrewIndex;
@@ -399,6 +399,10 @@ namespace ShipMayham
             if (GUILayout.Button("MARKET")) Session.SelectRouteRpc(RouteProfile.MarketRun);
             if (GUILayout.Button("STORM")) Session.SelectRouteRpc(RouteProfile.StormPassage);
             GUILayout.EndHorizontal();
+            GUI.enabled = true;
+            GUILayout.Label(s.DockJobActive ? $"CARGO RELAY {s.DockJobProgress}/{VoyageSimulation.DockJobGoal}" : $"Cargo relays completed: {s.DockJobsCompleted}", body);
+            GUI.enabled = local >= 0 && Session.Crew[local].OnShore;
+            if (GUILayout.Button(s.DockJobActive ? "CANCEL CARGO RELAY" : "START CARGO RELAY")) Session.ToggleDockJobRpc();
             GUI.enabled = true;
             GUILayout.Label("Green gangway: E / A\nFood +8: 12 coins\nDrink +8: 12 coins\nHull shield: 30 coins", body);
             GUILayout.Label("Supplies carry over. Storage cap: 32 each. Shared wallet.", body);

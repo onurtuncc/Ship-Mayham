@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ShipMayham
 {
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
-    public enum ServiceItem : byte { None, Food, Drink }
+    public enum ServiceItem : byte { None, Food, Drink, Cargo }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing }
@@ -22,7 +22,9 @@ namespace ShipMayham
         public float Heading, Speed, Health, Elapsed;
         public float HullShield;
         public RouteProfile Route;
+        public bool DockJobActive;
         public int Wallet, Voyage, Boarded, Served, FoodStock, DrinkStock, Leak, RepairSteps;
+        public int DockJobProgress, DockJobPortKey, DockJobsCompleted;
         public int EngineLevel, CapacityLevel, ComfortLevel;
         public int Reputation, LastReputation;
         public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty, LastEventBonus, LastRouteBonus;
@@ -33,7 +35,9 @@ namespace ShipMayham
             s.SerializeValue(ref Heading); s.SerializeValue(ref Speed); s.SerializeValue(ref Health); s.SerializeValue(ref Elapsed);
             s.SerializeValue(ref HullShield);
             s.SerializeValue(ref Route);
+            s.SerializeValue(ref DockJobActive);
             s.SerializeValue(ref Wallet); s.SerializeValue(ref Voyage); s.SerializeValue(ref Boarded); s.SerializeValue(ref Served);
+            s.SerializeValue(ref DockJobProgress); s.SerializeValue(ref DockJobPortKey); s.SerializeValue(ref DockJobsCompleted);
             s.SerializeValue(ref FoodStock); s.SerializeValue(ref DrinkStock); s.SerializeValue(ref Leak); s.SerializeValue(ref RepairSteps);
             s.SerializeValue(ref EngineLevel); s.SerializeValue(ref CapacityLevel); s.SerializeValue(ref ComfortLevel);
             s.SerializeValue(ref Reputation); s.SerializeValue(ref LastReputation);

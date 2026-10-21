@@ -35,6 +35,7 @@ Netcode'un editörde sahne senkronizasyonu yapabilmesi için prototip sahnesi Bu
 - Mor istasyonlarda motor, yolcu kapasitesi veya konfor yükseltmesi al. Manifest ile yeni sefere hazırlan; tekrar E ile yeni yolcuları al.
 - Limandayken geminin sol arka köşesindeki yeşil **ASHORE** işaretine yaklaş, ona bakıp **E / A** ile iskeleye geç. Dümeni/topu bırakmış, yerde ve elleri boş olmalısın. Karada WASD/analog ve zıplama çalışır; terminalin önündeki işaretli iskele şeridinde yürüyebilirsin.
 - Yolcuları Manifest'ten almadan önce karadayken sağdaki sözleşme panosundan **COAST / MARKET / STORM** seç. Market Run üç servis karşılığında 35 para; Storm Passage daha erken olay ve sızıntı karşılığında 70+ gövdeyle varışta 50 para verir. Başarılı sözleşmeler kalıcı ortak itibarı yükseltir.
+- Aynı panelden **START CARGO RELAY** seçildiğinde turuncu FOOD noktası kasa kaynağına, yeşil HULL noktası teslim alanına dönüşür. Üç kasa teslimatı 24 ortak para ve 1 itibar verir; oyuncular paralel taşıyabilir. Kasayı FOOD'a iade edebilir, elde kasa yokken işi iptal edebilirsin.
 - İskelede turuncu **FOOD +8** ve mavi **DRINK +8** tezgâhları 12'şer para, yeşil **HULL SHIELD +20** tezgâhı 30 para ister. Yaklaş, bak ve E/A kullan. Satın alma ortak kasadan anında düşer. Erzak geminin stoğuna eklenir; elde taşınanlar dahil tür başına en fazla 32 ürün depolanır. Gövde koruması sızıntı ve korsanlardan gelecek toplam 20 hasarı emer; sıfırlanmadan tekrar satın alınamaz.
 - **BOARD SHIP** işaretinde E/A ile güverteye dön. Karada aktif oyuncu varken kaptan ayrılamaz, Manifest de yeni sefere geçiremez. Ayrılan oyuncu bağlantısını kapatırsa ekip onu beklemek zorunda kalmaz.
 
@@ -122,6 +123,7 @@ Mevcut Blocks karakter prefabları üçüncü şahıs animasyon/kamera/olay bağ
 | Gövde koruması | 30 para karşılığı toplam 20 hasar emme; kullanılmayan miktar sonraki sefere kalır |
 | Market Run | En az 3 servisle başarılı varış: +35 para, +2 itibar; koşul kaçarsa +5 para, +1 itibar |
 | Storm Passage | İlk olay 12 sn, ilk sızıntı 16 sn; 70+ gövdeyle başarılı varış: +50 para, +3 itibar |
+| Liman kargo relay | Liman başına 3 teslimat; +24 ortak para ve +1 itibar |
 | Motor | 4 m/s; yükseltme başına +1,5 m/s; 100, sonra 200 |
 | Kapasite | Yükseltme ücretleri 150, sonra 300; sonraki yolcu alımında uygulanır |
 | Konfor | 120; bekleyen siparişin memnuniyet kaybını azaltır |

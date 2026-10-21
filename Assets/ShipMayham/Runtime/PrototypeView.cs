@@ -366,7 +366,7 @@ namespace ShipMayham
             if (displayedItems[slot] == item) return;
             displayedItems[slot] = item;
             if (item == ServiceItem.None) return;
-            Color color = item == ServiceItem.Drink ? DrinkColor : FoodColor;
+            Color color = item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
             foreach (var renderer in itemRenderers[slot])
             {
                 renderer.GetPropertyBlock(itemProperties);

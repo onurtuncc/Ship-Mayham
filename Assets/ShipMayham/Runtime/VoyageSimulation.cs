@@ -222,9 +222,11 @@ namespace ShipMayham
                     if (State.Phase == VoyagePhase.Arrived || State.Phase == VoyagePhase.Failed)
                     {
                         if (CrewAshore > 0) return "Wait for all crew to board before preparing a new voyage.";
+                        if (State.DockJobActive) return "Finish or cancel the cargo relay before preparing a new voyage.";
                         ResetVoyage(); return "Back at the departure port. Board new passengers.";
                     }
                     if (State.Phase != VoyagePhase.Boarding) return "Manifest is available at port.";
+                    if (State.DockJobActive) return "Finish or cancel the cargo relay before boarding passengers.";
                     if (State.Boarded > 0) return "Passengers already boarded. Take the helm and press Space.";
                     State.Boarded = 4 + State.CapacityLevel * 2;
                     for (int p = 0; p < State.Boarded; p++) Passengers[p] = new PassengerState
@@ -272,6 +274,7 @@ namespace ShipMayham
             {
                 if (State.Boarded == 0) return "Board passengers at the manifest first.";
                 if (CrewAshore > 0) return "Cannot depart: crew are still ashore. Ask them to board at the gangway.";
+                if (State.DockJobActive) return "Finish or cancel the cargo relay before departure.";
                 State.Phase = VoyagePhase.Sailing;
                 return "Under way! W accelerates. Serve passengers and watch the hull.";
             }
@@ -383,7 +386,7 @@ namespace ShipMayham
             State = new VoyageState { Health = 100, Voyage = old.Voyage + 1, Wallet = old.Wallet,
                 EngineLevel = old.EngineLevel, CapacityLevel = old.CapacityLevel, ComfortLevel = old.ComfortLevel,
                 FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield,
-                Reputation = old.Reputation };
+                Reputation = old.Reputation, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted };
             Array.Clear(Passengers, 0, Passengers.Length);
             nextLeak = 25;
             ResetEncounter();

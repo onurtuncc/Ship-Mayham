@@ -18,6 +18,8 @@ Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her f
 
 **Altıncı geliştirme dilimi:** Limandaki sözleşme panosu üzerinden üç rota profili seçilebilir. Coastal Ferry standart akıştır; Market Run üç servis karşılığında ek ödeme verir; Storm Passage krizleri ve ilk sızıntıyı erkene çeker fakat sağlam varışa yüksek bonus ve itibar kazandırır. Seçim host otoritesindedir, yalnız karadaki mürettebat tarafından yolcular alınmadan önce değiştirilebilir ve sefer sonucunda ortak ekonomi/itibara yansır.
 
+**Yedinci geliştirme dilimi:** Her limanda bir kez yapılabilen kısa kargo relay işi eklendi. Karadaki ekip turuncu tezgahtan aynı anda kasalar alıp yeşil bakım noktasına üç teslimat yapar; tamamlanınca ortak para ve itibar kazanılır. Elde kasa varken gemiye binilemez, yarım iş yolcu kabulünü/yeni seferi kilitler ve tüm kasalar kaynağa döndürüldüğünde iş güvenle iptal edilebilir.
+
 Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gülle, rastgele olay destesi, gelişmiş arıza mini oyunları, kapsamlı kara görevleri, kayıt ve gelişmiş yolcu davranışları sonraki dilimlerde yapılacaktır. Doğrulama kapsamı ve mevcut sınırlamalar [PROTOTYPE.md](PROTOTYPE.md) içinde tutulur.
 
 ## Faz 0 — Proje ve test altyapısı

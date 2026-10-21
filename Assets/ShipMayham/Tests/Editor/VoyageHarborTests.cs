@@ -239,5 +239,56 @@ namespace ShipMayham.Tests
             Assert.AreEqual(50, sim.State.LastRouteBonus);
             Assert.AreEqual(3, sim.State.LastReputation);
         }
+        [Test] public void CargoRelaySupportsParallelCrewAndRewardsSharedProgress()
+        {
+            Harbor(HarborAction.GoAshore);
+            Harbor(HarborAction.GoAshore, Host);
+            sim.ToggleDockJob(Client);
+            Harbor(HarborAction.BuyFood);
+            Harbor(HarborAction.BuyFood, Host);
+            Assert.AreEqual(ServiceItem.Cargo, sim.Crew[0].Carrying);
+            Assert.AreEqual(ServiceItem.Cargo, sim.Crew[1].Carrying);
+            Harbor(HarborAction.MaintainHull);
+            Harbor(HarborAction.MaintainHull, Host);
+            Harbor(HarborAction.BuyFood);
+            Harbor(HarborAction.MaintainHull);
+            Assert.IsFalse(sim.State.DockJobActive);
+            Assert.AreEqual(3, sim.State.DockJobProgress);
+            Assert.AreEqual(24, sim.State.Wallet);
+            Assert.AreEqual(1, sim.State.Reputation);
+            Assert.AreEqual(1, sim.State.DockJobsCompleted);
+            sim.ToggleDockJob(Client);
+            Assert.IsFalse(sim.State.DockJobActive);
+        }
+        [Test] public void CargoRelayCanBeCancelledOnlyAfterCarriedCratesReturn()
+        {
+            Harbor(HarborAction.GoAshore);
+            sim.ToggleDockJob(Client);
+            Harbor(HarborAction.BuyFood);
+            sim.ToggleDockJob(Client);
+            Assert.IsTrue(sim.State.DockJobActive);
+            Assert.AreEqual(ServiceItem.Cargo, sim.Crew[1].Carrying);
+            Harbor(HarborAction.BuyFood);
+            Assert.AreEqual(ServiceItem.None, sim.Crew[1].Carrying);
+            sim.ToggleDockJob(Client);
+            Assert.IsFalse(sim.State.DockJobActive);
+            Assert.AreEqual(0, sim.State.DockJobProgress);
+        }
+        [Test] public void ActiveCargoRelayLocksManifestButNewPortOffersAnotherJob()
+        {
+            Harbor(HarborAction.GoAshore);
+            sim.ToggleDockJob(Client);
+            Harbor(HarborAction.BoardShip);
+            Use(0);
+            Assert.AreEqual(0, sim.State.Boarded);
+            Harbor(HarborAction.GoAshore);
+            sim.ToggleDockJob(Client);
+            Harbor(HarborAction.BoardShip);
+            Depart(); Arrive();
+            Harbor(HarborAction.GoAshore);
+            sim.ToggleDockJob(Client);
+            Assert.IsTrue(sim.State.DockJobActive);
+            Assert.AreEqual(0, sim.State.DockJobProgress);
+        }
     }
 }
