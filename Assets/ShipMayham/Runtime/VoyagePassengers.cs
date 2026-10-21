@@ -70,13 +70,16 @@ namespace ShipMayham
             if (Vector2.Distance(Crew[slot].Position, new Vector2(target.Position.x, target.Position.z)) > InteractionRange) return "Move closer to the passenger.";
             if (action == PassengerAction.CheckTicket)
             {
+                string inspection = InspectPassengerForEvent(passenger);
                 if (!target.TicketChecked)
                 {
                     target.TicketChecked = true;
                     State.CheckedTickets++;
                     React(passenger, target.FarePaid ? PassengerReaction.Thanks : PassengerReaction.TicketDue);
-                    return target.FarePaid ? "Ticket valid. Destination: North Port." : "No payment! F / Y again to collect 40 coins (paid on arrival).";
+                    string ticket = target.FarePaid ? "Ticket valid. Destination: North Port." : "No payment! F / Y again to collect 40 coins (paid on arrival).";
+                    return ticket + inspection;
                 }
+                if (!string.IsNullOrEmpty(inspection)) return inspection.TrimStart();
                 if (target.FarePaid) return "Already paid. No duplicate charge.";
                 target.FarePaid = true;
                 State.CollectedFares++;

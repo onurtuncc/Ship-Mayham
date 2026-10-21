@@ -22,7 +22,7 @@ namespace ShipMayham
         public float HullShield;
         public int Wallet, Voyage, Boarded, Served, FoodStock, DrinkStock, Leak, RepairSteps;
         public int EngineLevel, CapacityLevel, ComfortLevel;
-        public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty;
+        public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty, LastEventBonus;
         public int CheckedTickets, CollectedFares, RescueCount, LastUnpaid, LastMissing, LastRescueCosts;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
@@ -35,6 +35,7 @@ namespace ShipMayham
             s.SerializeValue(ref LastTickets); s.SerializeValue(ref LastServices); s.SerializeValue(ref LastTips);
             s.SerializeValue(ref LastCosts); s.SerializeValue(ref LastNet);
             s.SerializeValue(ref LastBounty);
+            s.SerializeValue(ref LastEventBonus);
             s.SerializeValue(ref CheckedTickets); s.SerializeValue(ref CollectedFares); s.SerializeValue(ref RescueCount);
             s.SerializeValue(ref LastUnpaid); s.SerializeValue(ref LastMissing); s.SerializeValue(ref LastRescueCosts);
         }

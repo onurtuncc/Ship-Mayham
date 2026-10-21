@@ -8,15 +8,17 @@ namespace ShipMayham
     [Serializable]
     internal sealed class VoyageMigrationSnapshot
     {
-        public int Version = 1;
+        public int Version = 2;
         public VoyageState State;
         public EncounterState Encounter;
+        public VoyageEventState Event;
         public CrewState[] Crew;
         public PassengerState[] Passengers;
         public string[] CrewPlayerIds;
         public float Clock;
         public float NextLeak;
         public bool ScheduledPowerFault;
+        public int EventDeckCursor;
         public float[] PassengerCarryYaw;
     }
 
@@ -59,12 +61,14 @@ namespace ShipMayham
             {
                 State = State,
                 Encounter = Encounter,
+                Event = Event,
                 Crew = (CrewState[])Crew.Clone(),
                 Passengers = (PassengerState[])Passengers.Clone(),
                 CrewPlayerIds = (string[])crewPlayerIds.Clone(),
                 Clock = clock,
                 NextLeak = nextLeak,
                 ScheduledPowerFault = scheduledPowerFault,
+                EventDeckCursor = eventDeckCursor,
                 PassengerCarryYaw = (float[])passengerCarryYaw.Clone()
             };
             return Encoding.UTF8.GetBytes(JsonUtility.ToJson(snapshot));
@@ -74,18 +78,20 @@ namespace ShipMayham
         {
             if (data == null || data.Length == 0) throw new ArgumentException("Migration data is empty.", nameof(data));
             VoyageMigrationSnapshot snapshot = JsonUtility.FromJson<VoyageMigrationSnapshot>(Encoding.UTF8.GetString(data));
-            if (snapshot == null || snapshot.Version != 1 || snapshot.Crew?.Length != MaxCrew ||
+            if (snapshot == null || snapshot.Version != 2 || snapshot.Crew?.Length != MaxCrew ||
                 snapshot.Passengers?.Length != MaxPassengers || snapshot.CrewPlayerIds?.Length != MaxCrew)
                 throw new InvalidOperationException("Unsupported or incomplete voyage migration snapshot.");
 
             State = snapshot.State;
             Encounter = snapshot.Encounter;
+            Event = snapshot.Event;
             Array.Copy(snapshot.Crew, Crew, MaxCrew);
             Array.Copy(snapshot.Passengers, Passengers, MaxPassengers);
             Array.Copy(snapshot.CrewPlayerIds, crewPlayerIds, MaxCrew);
             clock = snapshot.Clock;
             nextLeak = snapshot.NextLeak;
             scheduledPowerFault = snapshot.ScheduledPowerFault;
+            eventDeckCursor = snapshot.EventDeckCursor;
             if (snapshot.PassengerCarryYaw?.Length == MaxCrew)
                 Array.Copy(snapshot.PassengerCarryYaw, passengerCarryYaw, MaxCrew);
 

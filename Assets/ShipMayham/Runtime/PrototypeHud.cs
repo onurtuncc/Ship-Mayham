@@ -308,7 +308,7 @@ namespace ShipMayham
                 if (s.Leak != 0) GUILayout.Label($"LEAK! Repair station: {s.RepairSteps}/4 patches", body);
                 else GUILayout.Label("Hull watertight", body);
                 if (s.Phase == VoyagePhase.Arrived || s.Phase == VoyagePhase.Failed)
-                    GUILayout.Label($"Tickets {s.LastTickets} + service {s.LastServices} + tips {s.LastTips}\nBounty {s.LastBounty} - costs {s.LastCosts} = net {s.LastNet}\nManifest: new voyage. Upgrades: spend coins.", body);
+                    GUILayout.Label($"Tickets {s.LastTickets} + service {s.LastServices} + tips {s.LastTips}\nBounty {s.LastBounty} + events {s.LastEventBonus} - costs {s.LastCosts} = net {s.LastNet}\nManifest: new voyage. Upgrades: spend coins.", body);
                 else GUILayout.Label(s.Phase == VoyagePhase.Boarding ? "1. Manifest: board\n2. Helm: E, then Space to depart" : "Serve matching orders. Brake (S) and dock (Space) within 12 m.", body);
                 if (GUILayout.Button("Leave session")) LeaveOrReload();
             }
@@ -401,8 +401,9 @@ namespace ShipMayham
         private void DrawEncounter()
         {
             var e = Session.Encounter.Value;
-            GUI.Box(new Rect(12, 360, 370, 192), GUIContent.none);
-            GUILayout.BeginArea(new Rect(26, 370, 342, 176));
+            var voyageEvent = Session.ActiveEvent.Value;
+            GUI.Box(new Rect(12, 360, 370, 260), GUIContent.none);
+            GUILayout.BeginArea(new Rect(26, 370, 342, 244));
             GUILayout.Label(e.PowerOut ? $"POWER OUT! Breakers: {e.PowerRepairSteps}/3" : "POWER ONLINE", body);
             if (e.PowerOut) GUILayout.Label("New food/drink blocked. Use POWER panel.", body);
             string threat = e.Pirate == PiratePhase.Warning ? $"PIRATES IN {e.WarningRemaining:0.0}s — find CANNON!" :
@@ -412,7 +413,22 @@ namespace ShipMayham
             GUILayout.Label(threat, body);
             GUILayout.Label($"Cannon ammo: {e.Ammo}/12 | " + (e.ReloadRemaining > 0 ? $"Reloading {e.ReloadRemaining:0.0}s" : e.CannonLoaded ? "LOADED" : "R / X: reload"), body);
             GUILayout.Label("At CANNON: mouse / right stick aims\nLMB / RT fires • R / X reloads • E / A releases", body);
+            GUILayout.Space(4);
+            GUILayout.Label(EventText(voyageEvent), body);
             GUILayout.EndArea();
+        }
+
+        private static string EventText(VoyageEventState e)
+        {
+            if (e.Phase == VoyageEventPhase.Waiting) return $"NEXT SHIP EVENT: ~{e.NextIn:0}s";
+            if (e.Phase == VoyageEventPhase.Resolved) return "EVENT SOLVED — +15 on arrival";
+            if (e.Phase == VoyageEventPhase.Failed) return "EVENT FAILED — consequences applied";
+            string timer = $"{e.Remaining:0}s";
+            return e.Kind == VoyageEventKind.ContrabandInspection
+                ? $"CONTRABAND INSPECTION — {timer}\nCheck passenger tickets with F / Y."
+                : e.Kind == VoyageEventKind.GalleyRush
+                    ? $"GALLEY RUSH — {e.Progress}/{e.Goal} orders — {timer}"
+                    : $"LOOSE CARGO — repair panel {e.Progress}/{e.Goal} — {timer}";
         }
     }
 }

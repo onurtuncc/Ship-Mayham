@@ -14,6 +14,8 @@ Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her f
 
 **Dördüncü geliştirme dilimi ve polish:** İki limanda sınırlı iskele yürüyüşü, E/A ile gemiden inme/binme, yiyecek/içecek satın alma ve gövde koruması eklendi. Satın alınan stok ve kullanılmayan koruma yeni sefere aktarılır. Karada mürettebat varken kalkış ve yeni sefere sıfırlama engellenir. HUD bağlama göre liman/yolcu bilgisi gösterir; ayrıntılı kontroller F1 ile açılır, bildirimler söner ve uzak yolcu etiketleri gizlenir. Bu, Faz 8'in küçük hazırlık hub'ı kesitidir; çoklu rota, kara görevleri veya açık dünya değildir.
 
+**Beşinci geliştirme dilimi:** Host-otoriter, deterministik bir olay destesi eklendi. Kaçak kargo taşıyan şüpheli yolcuyu bilet kontrolüyle bulma, iki hızlı servis tamamlama ve tamir panelinden savrulan yükü sabitleme olayları sırayla fakat sefer numarasına göre dönen başlangıçla gelir. Başarı varışta olay bonusu, zaman aşımı ise arızaya uygun hasar/memnuniyet/elektrik sonucu üretir. Aktif olay ve deste konumu host migration anlık görüntüsüne dahildir.
+
 Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gülle, rastgele olay destesi, gelişmiş arıza mini oyunları, kapsamlı kara görevleri, kayıt ve gelişmiş yolcu davranışları sonraki dilimlerde yapılacaktır. Doğrulama kapsamı ve mevcut sınırlamalar [PROTOTYPE.md](PROTOTYPE.md) içinde tutulur.
 
 ## Faz 0 — Proje ve test altyapısı

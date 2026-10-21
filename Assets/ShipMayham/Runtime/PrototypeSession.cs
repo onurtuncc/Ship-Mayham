@@ -14,6 +14,7 @@ namespace ShipMayham
         public PrototypeHarbor Harbor;
         public readonly NetworkVariable<VoyageState> Voyage = new NetworkVariable<VoyageState>();
         public readonly NetworkVariable<EncounterState> Encounter = new NetworkVariable<EncounterState>();
+        public readonly NetworkVariable<VoyageEventState> ActiveEvent = new NetworkVariable<VoyageEventState>();
         public NetworkList<CrewState> Crew;
         public NetworkList<PassengerState> Passengers;
         public VoyageSimulation Simulation { get; private set; }
@@ -83,6 +84,7 @@ namespace ShipMayham
         {
             Voyage.Value = Simulation.State;
             Encounter.Value = Simulation.Encounter;
+            ActiveEvent.Value = Simulation.Event;
             for (int i = 0; i < VoyageSimulation.MaxCrew; i++)
                 if (Crew.Count <= i) Crew.Add(Simulation.Crew[i]); else if (!Crew[i].Equals(Simulation.Crew[i])) Crew[i] = Simulation.Crew[i];
             for (int i = 0; i < VoyageSimulation.MaxPassengers; i++)

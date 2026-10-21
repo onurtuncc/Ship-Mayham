@@ -100,6 +100,7 @@ Liman hareketi ikinci bir yerel düzlemdir: `CrewState.OnShore` açıkken `Posit
 - `PrototypeHarbor`: İki limanın sahne referansları, işaretler, bağlama göre görünen geçiş tahtaları ve etiketler.
 - `PrototypePhaseFourBuilder`: Eski sahne kimliklerini koruyarak liman hazırlık noktaları ekler.
 - `WorldLabelPresentation`: Birinci şahıs için dünya yazılarını mesafeye göre ölçekler; yakın etiketlerin ekranı kaplamasını önler.
+- `VoyageEvents`: Şüpheli yolcu, servis yoğunluğu ve savrulan yük görevlerini zamanlayan deterministik olay destesi; sonuçlar host otoritesindedir ve host migration ile taşınır.
 
 Mevcut Blocks karakter prefabları üçüncü şahıs animasyon/kamera/olay bağlantıları taşıdığı için bu küçük bloklama sahnesinin hareketi ayrı tutuldu. Mevcut projeyle aynı Netcode ve Input System paketlerini kullanır. Bu kontrolcü nihai karakter veya fizik sistemi değildir.
 

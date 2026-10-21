@@ -31,6 +31,7 @@ namespace ShipMayham
             HarborEnabled = harborEnabled;
             State = new VoyageState { Health = 100, Voyage = 1, FoodStock = 16, DrinkStock = 16 };
             ResetEncounter();
+            ResetEvents();
         }
 
         public int FindCrew(ulong clientId)
@@ -154,6 +155,7 @@ namespace ShipMayham
             State.Position.x = Mathf.Clamp(State.Position.x, -90, 90);
             State.Position.y = Mathf.Clamp(State.Position.y, -20, 250);
             TickEncounter(dt);
+            TickEvents(dt);
             if (State.Elapsed >= nextLeak && State.Leak == 0)
             {
                 State.Leak = 1;
@@ -237,6 +239,11 @@ namespace ShipMayham
                 case StationKind.Food: return TakeItem(i, ServiceItem.Food);
                 case StationKind.Drink: return TakeItem(i, ServiceItem.Drink);
                 case StationKind.Repair:
+                    if (State.Leak == 0)
+                    {
+                        string cargoResult = ClearLooseCargo();
+                        if (!string.IsNullOrEmpty(cargoResult)) return cargoResult;
+                    }
                     if (State.Leak == 0) return "Hull is watertight.";
                     State.RepairSteps++;
                     if (State.RepairSteps < 4) return $"Patching leak: {State.RepairSteps}/4";
@@ -309,6 +316,7 @@ namespace ShipMayham
             p.Satisfaction = Mathf.Min(100, p.Satisfaction + 15);
             Crew[crew].Carrying = ServiceItem.None;
             State.Served++;
+            RecordServiceForEvent();
             React(passenger, PassengerReaction.Thanks);
             return "Order delivered! +8 service income, paid on arrival.";
         }
@@ -355,7 +363,8 @@ namespace ShipMayham
             State.LastRescueCosts = State.RescueCount * 15;
             State.LastCosts = State.Served * 2 + Mathf.CeilToInt((100 - State.Health) * .5f) + State.LastRescueCosts;
             State.LastBounty = success ? Encounter.Bounty : 0;
-            State.LastNet = State.LastTickets + State.LastServices + State.LastTips + State.LastBounty - State.LastCosts;
+            State.LastEventBonus = success ? Event.Reward : 0;
+            State.LastNet = State.LastTickets + State.LastServices + State.LastTips + State.LastBounty + State.LastEventBonus - State.LastCosts;
             State.Wallet = Mathf.Max(0, State.Wallet + State.LastNet);
             Encounter.ReloadRemaining = 0;
             if (Encounter.Pirate == PiratePhase.Warning || Encounter.Pirate == PiratePhase.Attacking) Encounter.Pirate = PiratePhase.Escaped;
@@ -374,6 +383,7 @@ namespace ShipMayham
             Array.Clear(Passengers, 0, Passengers.Length);
             nextLeak = 25;
             ResetEncounter();
+            ResetEvents();
             for (int i = 0; i < MaxCrew; i++)
             {
                 Crew[i].AtHelm = false;
