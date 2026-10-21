@@ -41,6 +41,7 @@ namespace ShipMayham
                 seats[i] = new Vector2(p.x, p.z);
             }
             Simulation = new VoyageSimulation(stations, seats, Harbor != null);
+            CareerProgressStore.Load(ref Simulation.State);
             VoyageMigrationDataHandler.RestorePending(Simulation);
             NetworkManager.OnClientConnectedCallback += Connected;
             NetworkManager.OnClientDisconnectCallback += Disconnected;
@@ -82,6 +83,7 @@ namespace ShipMayham
 
         private void Publish()
         {
+            CareerProgressStore.SaveIfChanged(Simulation.State);
             Voyage.Value = Simulation.State;
             Encounter.Value = Simulation.Encounter;
             ActiveEvent.Value = Simulation.Event;

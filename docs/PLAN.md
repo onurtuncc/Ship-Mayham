@@ -20,6 +20,8 @@ Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her f
 
 **Yedinci geliştirme dilimi:** Her limanda bir kez yapılabilen kısa kargo relay işi eklendi. Karadaki ekip turuncu tezgahtan aynı anda kasalar alıp yeşil bakım noktasına üç teslimat yapar; tamamlanınca ortak para ve itibar kazanılır. Elde kasa varken gemiye binilemez, yarım iş yolcu kabulünü/yeni seferi kilitler ve tüm kasalar kaynağa döndürüldüğünde iş güvenle iptal edilebilir.
 
+**Sekizinci geliştirme dilimi:** Ortak kariyer ilerlemesi host tarafında yerel ve sürümlemeli olarak kaydedilir. Para, itibar, üç mekanik yükseltme seviyesi ve tamamlanan liman işi sayısı WebGL'de tarayıcı depolamasından yeni oturuma taşınır. Anlık sefer/sağlık/yolcu durumu kayda girmez; host migration snapshot'ı yüklendikten sonra oturum durumu kariyer kaydının üzerine yazılır.
+
 Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gülle, rastgele olay destesi, gelişmiş arıza mini oyunları, kapsamlı kara görevleri, kayıt ve gelişmiş yolcu davranışları sonraki dilimlerde yapılacaktır. Doğrulama kapsamı ve mevcut sınırlamalar [PROTOTYPE.md](PROTOTYPE.md) içinde tutulur.
 
 ## Faz 0 — Proje ve test altyapısı

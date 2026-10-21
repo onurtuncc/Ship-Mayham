@@ -41,6 +41,8 @@ Netcode'un editörde sahne senkronizasyonu yapabilmesi için prototip sahnesi Bu
 
 Bu ilk döngüde yeni sefer başlangıç limanına geri yerleştirir. Yolcular binme/yürüme animasyonu olmadan koltuklarda belirir. İki limanda da dar bir yürünebilir iskele/hazırlık alanı vardır; terminal binalarının içi, açık kara dünyası ve görevler yoktur. Başarılı yanaşmada gemi sabit rıhtım konumuna/yönüne hizalanır. Geçişler E/A ile anlıktır; yürüyerek kesintisiz plank geçişi değildir. Başarısız seferde limana geçiş kapalıdır; önce Manifest ile ücretsiz yeni sefere hazırlan.
 
+Ortak para, itibar, motor/kapasite/konfor seviyeleri ve tamamlanan kargo işi sayısı host cihazında sürümlemeli yerel kariyer kaydı olarak tutulur. WebGL'de bu kayıt tarayıcının kalıcı depolamasını kullanır. Sağlık, aktif rota, yolcular ve devam eden olaylar kariyer kaydına girmez; çevrimiçi host migration bunları ayrı snapshot ile taşır.
+
 ## Sahne ve model değiştirme sözleşmesi
 
 | Kök / alt nesne | Sorumluluk |
@@ -103,6 +105,7 @@ Liman hareketi ikinci bir yerel düzlemdir: `CrewState.OnShore` açıkken `Posit
 - `PrototypePhaseFourBuilder`: Eski sahne kimliklerini koruyarak liman hazırlık noktaları ekler.
 - `WorldLabelPresentation`: Birinci şahıs için dünya yazılarını mesafeye göre ölçekler; yakın etiketlerin ekranı kaplamasını önler.
 - `VoyageEvents`: Şüpheli yolcu, servis yoğunluğu ve savrulan yük görevlerini zamanlayan deterministik olay destesi; sonuçlar host otoritesindedir ve host migration ile taşınır.
+- `CareerProgressStore`: Host cihazında yalnız uzun vadeli ortak ilerlemeyi sürümlemeli ve bozuk veri toleranslı olarak saklar.
 
 Mevcut Blocks karakter prefabları üçüncü şahıs animasyon/kamera/olay bağlantıları taşıdığı için bu küçük bloklama sahnesinin hareketi ayrı tutuldu. Mevcut projeyle aynı Netcode ve Input System paketlerini kullanır. Bu kontrolcü nihai karakter veya fizik sistemi değildir.
 
