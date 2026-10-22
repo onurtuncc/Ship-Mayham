@@ -4,6 +4,8 @@
 
 Bu sürüm GDD'nin ilk on iki geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık. İlk prop modeli grubu bağlanmıştır; kalan görseller hâlâ blok prototiptir.
 
+Güncel web paketi `f53bc8d`, Pages deployment `39706737575` başarılıdır: ilk prop modelleri ve Relay host başlangıcı canlı sayfada doğrulandı (`Logs/WebGL-GeneratedProps-Relay.png`). Site: [Ship Mayham](https://onurtuncc.github.io/Ship-Mayham/). Model kapsamı ve sınırlamalar [ART_PIPELINE.md](ART_PIPELINE.md) içindedir.
+
 ## Çalıştırma
 
 1. Unity **6000.4.6f1** ile projeyi aç ve derlemenin bitmesini bekle.
