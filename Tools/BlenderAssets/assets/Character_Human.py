@@ -10,9 +10,9 @@ looks = {
     "2": dict(shirt="#2b4f8f", shirt2="#f4efe2", pants="#2a2d3a", skin="#d99a6c", hair="#1c1a1f", style="short"),
     "3": dict(shirt="#e8527a", shirt2="#f4efe2", pants="#3b5d8c", skin="#8e5a3c", hair="#2a1a14", style="bun"),
 }[V]
-shirt = mat("Shirt", hexc(looks["shirt"]), 0.55); shirt2 = mat("Shirt_Accent", hexc(looks["shirt2"]), 0.55)
-pants = mat("Pants", hexc(looks["pants"]), 0.6); shoe = mat("Shoes", hexc("#3a2a20"), 0.45)
-skin = mat("Skin", hexc(looks["skin"]), 0.55); hair = mat("Hair", hexc(looks["hair"]), 0.6)
+shirt = mat("Shirt_V" + V, hexc(looks["shirt"]), 0.55); shirt2 = mat("Shirt_Accent_V" + V, hexc(looks["shirt2"]), 0.55)
+pants = mat("Pants_V" + V, hexc(looks["pants"]), 0.6); shoe = mat("Shoes", hexc("#3a2a20"), 0.45)
+skin = mat("Skin_V" + V, hexc(looks["skin"]), 0.55); hair = mat("Hair_V" + V, hexc(looks["hair"]), 0.6)
 eyeW = mat("Eye_White", hexc("#ffffff"), 0.25); eyeB = mat("Eye_Black", hexc("#15171c"), 0.2)
 blush = mat("Skin_Blush", hexc("#ee8f7a"), 0.6)
 

@@ -89,7 +89,7 @@ namespace ShipMayham.Editor
                 // Long boardwalk and east-west promenades leave wide, direct travel lanes.
                 Box("MainPromenade", town, new Vector3(-3, .345f, 0), new Vector3(4, .03f, 44), wood);
                 for (int lane = -1; lane <= 1; lane++)
-                    Box("Crosswalk_" + lane, town, new Vector3(-15, .345f, lane * 9), new Vector3(35, .03f, 2.5f), wood);
+                    Box("Crosswalk_" + lane, town, new Vector3(-15, .361f, lane * 9), new Vector3(35, .03f, 2.5f), wood);   // 16 mm above the promenade: no shared top face
                 for (int edge = 0; edge < 2; edge++)
                     Box("SeaWall_" + edge, town, new Vector3(-14, .55f, edge == 0 ? -24 : 24), new Vector3(40, .5f, .45f), stone);
                 Box("WestSeaWall", town, new Vector3(-34.5f, .55f, 0), new Vector3(.45f, .5f, 48), stone);
@@ -133,7 +133,7 @@ namespace ShipMayham.Editor
                         marker.GetComponentInChildren<TextMesh>(true).text = titles[a];
                     }
                     else labels.Add(Label("HarborLabel", marker, Vector3.up * 2.8f, titles[a], .07f));
-                    if (a > 1) Box("ShopWelcomeMat", marker, new Vector3(0, .035f, 0), new Vector3(1.7f, .04f, 1.3f), colors[a - 1]);
+                    if (a > 1) Box("ShopWelcomeMat", marker, new Vector3(0, .072f, 0), new Vector3(1.7f, .04f, 1.3f), colors[a - 1]);   // clear of the crosswalk top
                 }
                 for (int i = 0; i < HarborTownLayout.SalvageCount; i++)
                 {

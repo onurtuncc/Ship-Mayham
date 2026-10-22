@@ -53,7 +53,8 @@ namespace ShipMayham.Editor
         }
 
         private static AnimatorController EnsurePassengerController() => EnsureAnimatorController(PassengerControllerPath,
-            ("Seated", "SittingIdle"), ("Pleading", "Waving"), ("Fidgeting", "Talking"), ("Panicked", "Terrified"));
+            ("Seated", "SittingIdle"), ("Pleading", "Waving"), ("Fidgeting", "Talking"), ("Panicked", "Terrified"),
+            ("Delighted", "CheeringWhileSitting"));
 
         // State names double as the strings the runtime animators cross-fade to; the first state is the default.
         private static AnimatorController EnsureAnimatorController(string controllerPath, params (string state, string clip)[] map)
@@ -80,6 +81,9 @@ namespace ShipMayham.Editor
             string modelPath = GeneratedModels + model + ".fbx";
             if (AssetDatabase.LoadAssetAtPath<GameObject>(modelPath) == null)
                 throw new FileNotFoundException("Rigged human model is missing.", modelPath);
+            // Re-created on every run so a re-exported model (new materials, new rig) always replaces the scene instance.
+            var stale = parent.Find("Model_" + model);
+            if (stale != null) Object.DestroyImmediate(stale.gameObject);
             container = AddProp(parent, model, Vector3.zero, scale);
             var instance = container.GetChild(0);
             var humanAnimator = instance.GetComponent<Animator>();

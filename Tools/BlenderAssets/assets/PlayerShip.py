@@ -15,6 +15,13 @@ def section(y, f, lift):
     return (y, [(x * f, z + lift * (z / DECK) ** 2) for x, z in base])
 sections = [section(-10.2, 0.93, 0), section(-9.6, 1.0, 0), section(HALF_LEN, 1.0, 0), section(11.2, 0.78, 0.15),
             section(12.6, 0.46, 0.45), section(13.8, 0.14, 0.9)]
+def hull_x(z):
+    """Half-width of the hull side at height z (matches the loft profile above the turn of the bilge)."""
+    pts = [(0.5, 4.4), (1.05, 5.6), (DECK, BEAM)]
+    if z <= pts[0][0]: return pts[0][1]
+    for (z0, x0), (z1, x1) in zip(pts, pts[1:]):
+        if z <= z1: return x0 + (x1 - x0) * (z - z0) / (z1 - z0)
+    return pts[-1][1]
 PART = os.environ.get("PART", "all")                       # "hull" = paintable livery mesh, "rest" = everything else
 HULL_ONLY, NO_HULL = PART == "hull", PART == "rest"
 if not NO_HULL: b.loft(sections, hull)
@@ -27,10 +34,10 @@ if not HULL_ONLY:
     for sx in (-1, 1):
         b.box((0.26, 20.4, BULWARK), (sx * (BEAM - 0.13), 0, DECK + BULWARK / 2), rail, r=0.04)   # bulwark
         b.box((0.4, 20.5, 0.14), (sx * (BEAM - 0.13), 0, DECK + BULWARK + 0.04), wale, r=0.05)      # cap rail
-        b.box((0.08, 20.0, 0.18), (sx * (BEAM + 0.02), 0, 1.25), wale, r=0.03)                    # wale stripe
-        b.box((0.08, 20.0, 0.14), (sx * (BEAM - 0.4), 0, 0.5), red, r=0.03)                        # waterline band
+        b.box((0.08, 20.0, 0.18), (sx * (hull_x(1.25) + 0.03), 0, 1.25), wale, r=0.03)                    # wale stripe
+        b.box((0.08, 20.0, 0.14), (sx * (hull_x(0.5) + 0.02), 0, 0.5), red, r=0.03)                        # waterline band
         for i in range(5):                                                                        # cannon ports
-            b.box((0.1, 0.9, 0.62), (sx * (BEAM + 0.02), -7.2 + i * 3.6, 0.85), port, r=0.04)
+            b.box((0.14, 0.9, 0.62), (sx * (hull_x(0.85) + 0.02), -7.2 + i * 3.6, 0.85), port, r=0.04)
         for i in range(6):                                                                        # bulwark posts
             b.box((0.3, 0.3, BULWARK + 0.35), (sx * (BEAM - 0.13), -8.6 + i * 3.4, DECK + (BULWARK + 0.35) / 2), wale, r=0.05)
     b.box((12.4, 0.26, BULWARK), (0, -HALF_LEN + 0.1, DECK + BULWARK / 2), rail, r=0.04)          # stern rail
