@@ -1,5 +1,7 @@
 # Ship Mayham — Game Design Document
 
+Dilim 18: Kara alanı küçük iskeleden gezilebilir liman kasabasına genişletildi; fiziksel dükkânlar, sabit NPC'ler, kara haritası ve Town Salvage işi eklendi. [HARBOR_TOWN.md](HARBOR_TOWN.md).
+
 22 Ekim uygulama eki: on altıncı dilimde liman bagaj ayırma, on yedinci dilimde fiziksel hızlı yama kiti akışı geliştirilmiştir; bu, aşağıdaki tam vizyonun tamamlandığı anlamına gelmez. Kurallar ve doğrulama: [DOCK_SORTING.md](DOCK_SORTING.md), [REPAIR_SUPPLIES.md](REPAIR_SUPPLIES.md).
 
 **Doküman durumu:** v0.1 — İlk konsept ve MVP kapsamı  

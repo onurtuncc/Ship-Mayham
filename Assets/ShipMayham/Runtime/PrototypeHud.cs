@@ -17,7 +17,7 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
-        public const ushort NetworkProtocolVersion = 7;
+        public const ushort NetworkProtocolVersion = 8;
         public NetworkManager Manager;
         public PrototypeSession Session;
         public PrototypeView View;
@@ -419,6 +419,22 @@ namespace ShipMayham
         private void DrawMap()
         {
             Rect map = new Rect(1070, 70, 190, 270);
+            int local = Session.LocalCrewIndex;
+            if (local >= 0 && Session.Crew[local].OnShore)
+            {
+                GUI.Box(map, Session.Harbor.PortIndex == 0 ? "BRASS QUAY" : "NORTH HAVEN");
+                TownMapPoint(map, VoyageSimulation.HarborPoint(HarborAction.BoardShip), "SHIP", Color.white);
+                TownMapPoint(map, VoyageSimulation.HarborPoint(HarborAction.BuyFood), "FOOD", new Color(1, .55f, .2f));
+                TownMapPoint(map, VoyageSimulation.HarborPoint(HarborAction.BuyDrink), "DRINK", Color.cyan);
+                TownMapPoint(map, VoyageSimulation.HarborPoint(HarborAction.MaintainHull), "HULL", Color.green);
+                TownMapPoint(map, VoyageSimulation.HarborPoint(HarborAction.HarborMaster), "OFFICE", Color.yellow);
+                TownMapPoint(map, VoyageSimulation.HarborPoint(HarborAction.PaintShop), "PAINT", Color.magenta);
+                if (Session.Voyage.Value.DockJobActive && Session.Voyage.Value.DockJobType == DockJobKind.SalvageRun)
+                    for (int i = 0; i < HarborTownLayout.SalvageCount; i++)
+                        if ((Session.Voyage.Value.DockJobDeliveredMask & (1 << i)) == 0) TownMapPoint(map, HarborTownLayout.SalvagePoint(i), "S" + (i + 1), Color.yellow);
+                TownMapPoint(map, Session.Crew[local].Position, "@", Color.white);
+                return;
+            }
             GUI.Box(map, "ROUTE / north up");
             var p = Session.Voyage.Value.Position;
             GUI.Label(new Rect(map.x + 70, map.y + 28, 110, 24), "DESTINATION");
@@ -433,6 +449,14 @@ namespace ShipMayham
                 GUI.Label(new Rect(Mathf.Clamp(map.x + 90 + pirate.x * .75f, map.x + 5, map.xMax - 25),
                     Mathf.Clamp(map.y + 235 - pirate.y * .9f, map.y + 25, map.yMax - 25), 25, 25), "P");
             }
+        }
+
+        private static void TownMapPoint(Rect map, Vector2 point, string text, Color color)
+        {
+            Color old = GUI.color; GUI.color = color;
+            float x = map.x + 8 + (point.x - HarborTownLayout.Bounds.xMin) / HarborTownLayout.Bounds.width * 133;
+            float y = map.y + 30 + (HarborTownLayout.Bounds.yMax - point.y) / HarborTownLayout.Bounds.height * 215;
+            GUI.Label(new Rect(x, y, 55, 20), text); GUI.color = old;
         }
 
         private void DrawPassengers()
@@ -459,7 +483,8 @@ namespace ShipMayham
             GUILayout.Label("HARBOR PREPARATION", body);
             GUILayout.Label($"Crew ashore: {ashore}\nHull shield: {s.HullShield:0}/20\nRoute: {VoyageSimulation.RouteName(s.Route)}", body);
             int local = Session.LocalCrewIndex;
-            bool canChoose = s.Phase == VoyagePhase.Boarding && s.Boarded == 0 && local >= 0 && Session.Crew[local].OnShore;
+            bool atOffice = local >= 0 && Session.Crew[local].OnShore && Vector2.Distance(Session.Crew[local].Position, VoyageSimulation.HarborPoint(HarborAction.HarborMaster)) < 4;
+            bool canChoose = s.Phase == VoyagePhase.Boarding && s.Boarded == 0 && atOffice;
             GUI.enabled = canChoose;
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("COAST")) Session.SelectRouteRpc(RouteProfile.CoastalFerry);
@@ -470,7 +495,7 @@ namespace ShipMayham
             GUILayout.EndHorizontal();
             GUI.enabled = true;
             GUILayout.Label(s.DockJobActive ? $"{VoyageSimulation.DockJobName(s.DockJobType)} {s.DockJobProgress}/{VoyageSimulation.DockJobGoal}" : $"Port jobs completed: {s.DockJobsCompleted}", body);
-            GUI.enabled = local >= 0 && Session.Crew[local].OnShore;
+            GUI.enabled = s.DockJobActive ? local >= 0 && Session.Crew[local].OnShore : atOffice;
             if (s.DockJobActive)
             {
                 if (GUILayout.Button("CANCEL JOB")) Session.SelectDockJobRpc(s.DockJobType);
@@ -480,18 +505,21 @@ namespace ShipMayham
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("CARGO")) Session.SelectDockJobRpc(DockJobKind.CargoRelay);
                 if (GUILayout.Button("BAG SORT")) Session.SelectDockJobRpc(DockJobKind.LuggageSort);
+                if (GUILayout.Button("SALVAGE")) Session.SelectDockJobRpc(DockJobKind.SalvageRun);
                 GUILayout.EndHorizontal();
             }
             GUI.enabled = true;
             if (s.DockJobActive && s.DockJobType == DockJobKind.LuggageSort)
                 GUILayout.Label($"ORANGE: pickup / return\nA: {VoyageSimulation.LuggageDesk(s, ServiceItem.LuggageA)}\nB: {VoyageSimulation.LuggageDesk(s, ServiceItem.LuggageB)}\nC: {VoyageSimulation.LuggageDesk(s, ServiceItem.LuggageC)}", body);
-            else GUILayout.Label("Green gangway: E / A\nFood +8: 12 coins\nDrink +8: 12 coins\nHull shield: 30 coins", body);
+            else if (s.DockJobActive && s.DockJobType == DockJobKind.SalvageRun)
+                GUILayout.Label("Find S1 / S2 / S3 on town map.\nCarry salvage to PORT OFFICE.\n3 delivered: +36 coins / +1 rep.\nFOOD accepts returns.", body);
+            else GUILayout.Label("Visit PORT OFFICE for routes/jobs.\nFood +8: 12 coins\nDrink +8: 12 coins\nHull shield: 30 coins", body);
             GUILayout.Label("Supplies carry over. Storage cap: 32 each. Shared wallet.", body);
             if (s.Phase == VoyagePhase.Arrived)
                 GUILayout.Label($"Unpaid: {s.LastUnpaid}\nMissing: {s.LastMissing}\nRescue costs: {s.LastRescueCosts}", body);
             else GUILayout.Label("All crew aboard, then Helm + Space / X to depart.", body);
             GUILayout.EndArea();
-            if (local >= 0 && Session.Crew[local].OnShore)
+            if (local >= 0 && Session.Crew[local].OnShore && Vector2.Distance(Session.Crew[local].Position, VoyageSimulation.HarborPoint(HarborAction.PaintShop)) < 4)
             {
                 GUI.Box(new Rect(400, 188, 370, 92), GUIContent.none);
                 GUILayout.BeginArea(new Rect(412, 196, 346, 76));

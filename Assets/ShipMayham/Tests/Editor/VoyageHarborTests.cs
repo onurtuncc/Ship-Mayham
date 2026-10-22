@@ -108,10 +108,10 @@ namespace ShipMayham.Tests
             Harbor(HarborAction.GoAshore); sim.Jump(Client);
             sim.SetInput(Client, Vector2.right); sim.Tick(.1f);
             Assert.Greater(sim.Crew[1].JumpHeight, 0);
-            Assert.LessOrEqual(sim.Crew[1].Position.x, 5.2f);
-            sim.Crew[1].Position = new Vector2(2, 9.99f);
+            Assert.LessOrEqual(sim.Crew[1].Position.x, HarborTownLayout.Bounds.xMax);
+            sim.Crew[1].Position = new Vector2(2, HarborTownLayout.Bounds.yMax - .01f);
             sim.SetInput(Client, Vector2.up); sim.Tick(.1f);
-            Assert.LessOrEqual(sim.Crew[1].Position.y, 10);
+            Assert.LessOrEqual(sim.Crew[1].Position.y, HarborTownLayout.Bounds.yMax);
         }
         [Test] public void ShorePlayerCannotUseShipOrPassengerCommandsAtMatchingCoordinates()
         {

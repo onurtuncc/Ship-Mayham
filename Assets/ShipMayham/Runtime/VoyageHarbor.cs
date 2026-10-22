@@ -16,9 +16,11 @@ namespace ShipMayham
             {
                 case HarborAction.GoAshore: return ShipGangway;
                 case HarborAction.BoardShip: return new Vector2(5, -6);
-                case HarborAction.BuyFood: return new Vector2(0, -7);
-                case HarborAction.BuyDrink: return Vector2.zero;
-                case HarborAction.MaintainHull: return new Vector2(0, 7);
+                case HarborAction.BuyFood: return new Vector2(-10, -10);
+                case HarborAction.BuyDrink: return new Vector2(-25, -7);
+                case HarborAction.MaintainHull: return new Vector2(-12, 11);
+                case HarborAction.HarborMaster: return new Vector2(-7, 1);
+                case HarborAction.PaintShop: return new Vector2(-26, -12);
                 default: return Vector2.zero;
             }
         }
@@ -74,7 +76,7 @@ namespace ShipMayham
         {
             int slot = FindCrew(clientId);
             if (slot < 0 || !HarborOpen || !Crew[slot].OnShore) return "Go ashore to use the job board.";
-            if (kind > DockJobKind.LuggageSort) return "Unknown dock job.";
+            if (kind > DockJobKind.SalvageRun) return "Unknown dock job.";
             if (State.DockJobActive)
             {
                 if (State.DockJobType != kind) return "Finish or cancel the current job before changing contracts.";
@@ -90,6 +92,7 @@ namespace ShipMayham
             State.DockJobProgress = 0;
             State.DockJobType = kind;
             State.DockJobDeliveredMask = 0;
+            if (kind == DockJobKind.SalvageRun) return "Salvage run: find 3 marked bundles around town. Carry them to the PORT OFFICE. Food counter accepts returns.";
             if (kind == DockJobKind.LuggageSort) return "Bag sort: ORANGE pickup/return. Read A/B/C desks on the board. Deliver to BLUE or GREEN; wrong desks keep the bag.";
             return "Cargo relay started: carry 3 crates from FOOD pickup to HULL delivery. Multiple crew can relay together.";
         }
@@ -97,15 +100,16 @@ namespace ShipMayham
         private void MoveShoreCrew(int slot, Vector2 movement)
         {
             Vector2 p = Crew[slot].Position;
-            Vector2 candidate = new Vector2(Mathf.Clamp(p.x + movement.x, .2f, 5.2f), p.y);
+            Vector2 candidate = new Vector2(Mathf.Clamp(p.x + movement.x, HarborTownLayout.Bounds.xMin, HarborTownLayout.Bounds.xMax), p.y);
             if (ShoreWalkable(candidate)) p = candidate;
-            candidate = new Vector2(p.x, Mathf.Clamp(p.y + movement.y, -10, 10));
+            candidate = new Vector2(p.x, Mathf.Clamp(p.y + movement.y, HarborTownLayout.Bounds.yMin, HarborTownLayout.Bounds.yMax));
             if (ShoreWalkable(candidate)) p = candidate;
             Crew[slot].Position = p;
         }
 
         private static bool ShoreWalkable(Vector2 p)
         {
+            if (!HarborTownLayout.Walkable(p)) return false;
             for (int a = (int)HarborAction.BuyFood; a <= (int)HarborAction.MaintainHull; a++)
                 if (Vector2.Distance(p, HarborPoint((HarborAction)a)) < .9f) return false;
             return true;
@@ -114,7 +118,7 @@ namespace ShipMayham
         public string HarborCommand(ulong clientId, HarborAction action)
         {
             int slot = FindCrew(clientId);
-            if (slot < 0 || !HarborOpen || (int)action > (int)HarborAction.MaintainHull) return "Harbor is closed.";
+            if (slot < 0 || !HarborOpen || (int)action > (int)HarborAction.PaintShop) return "Harbor is closed.";
             ref var crew = ref Crew[slot];
             if (crew.AtHelm || crew.AtCannon) return "Release your station first.";
             if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) return "Land before interacting.";
@@ -131,6 +135,8 @@ namespace ShipMayham
                 inputs[slot] = Vector2.zero;
                 return crew.OnShore ? "Welcome ashore! Supplies and hull protection use the shared wallet." : "Back aboard. All crew must board before departure.";
             }
+            if (action == HarborAction.HarborMaster) return "Port office: choose a route or a paid town job on the harbor board. Salvage pays 36 coins +1 reputation.";
+            if (action == HarborAction.PaintShop) return "Paint dock: Classic is free. Seafoam needs 2 reputation; Sunset needs 5. Choose your paint on the board.";
             if (action == HarborAction.MaintainHull)
             {
                 if (State.HullShield > 0) return "Hull protection is already fitted. Use the remaining shield first.";

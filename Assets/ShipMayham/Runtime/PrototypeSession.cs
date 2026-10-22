@@ -115,6 +115,16 @@ namespace ShipMayham
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void PickUpSalvageRpc(int index, RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.PickUpSalvage(sender, index);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void DockItemCommandRpc(HarborAction action, DockJobKind expectedKind, RpcParams rpc = default)
         {
             if (Simulation == null) return;

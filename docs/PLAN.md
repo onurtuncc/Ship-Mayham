@@ -1,5 +1,7 @@
 # Ship Mayham — Uygulama Planı
 
+**On sekizinci geliştirme dilimi:** İki limanda geniş gezilebilir kasaba, gerçek model dükkânlar ve NPC'ler, yeni kara haritası ve üç noktadan paralel hurda toplama/teslim işi eklendi. Yalnız yeni kara alanı/iş için 7 odaklı kontrol ve build çalıştırıldı; eski uzun sefer/Relay akışları bu dilimde tekrarlanmadı. [HARBOR_TOWN.md](HARBOR_TOWN.md).
+
 **On yedinci geliştirme dilimi:** Fiziksel hızlı yama kiti deposu/taşıma/tezgâha teslim/uygulama akışı, sınırlı stok ve elle tamir alternatifi eklendi. Son sahneyle 202/202 test, Windows build ve dört süreçli tam sefer geçti; v7 Relay host kaybı da doğrulandı. Kaynak protokolü v7; canlı Pages yayını bu dilim ayrıca yayımlanana kadar v6'dır. [REPAIR_SUPPLIES.md](REPAIR_SUPPLIES.md).
 
 **On altıncı geliştirme dilimi — 22 Ekim:** Limanda A/B/C valizlerini değişen mavi/yeşil hedeflere ayırma, ortak 30 para/1 itibar ödülü, iade/iptal ve snapshot/protokol v6 eklendi. 182 EditMode testi, dört süreçli tam sefer/bagaj teslimatı ve v6 Relay host kaybı geçti. Kapsam ve kanıt: [DOCK_SORTING.md](DOCK_SORTING.md). GDD'nin tüm fazları tamamlanmış değildir.

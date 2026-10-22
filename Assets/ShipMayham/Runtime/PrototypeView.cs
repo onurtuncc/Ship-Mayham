@@ -40,6 +40,7 @@ namespace ShipMayham
         private Transform[] ammoItemVisuals, serviceItemVisuals;
         private Transform[] luggageItemVisuals;
         private Transform[] repairKitVisuals;
+        private Transform[] salvageVisuals;
         private Renderer[] luggageTagRenderers;
         private Transform ammoPile;
         private TextMesh ammoLabel;
@@ -73,6 +74,7 @@ namespace ShipMayham
             serviceItemVisuals = new Transform[CrewRoots.Length];
             luggageItemVisuals = new Transform[CrewRoots.Length];
             repairKitVisuals = new Transform[CrewRoots.Length];
+            salvageVisuals = new Transform[CrewRoots.Length];
             luggageTagRenderers = new Renderer[CrewRoots.Length];
             carryPositions = new Vector3[CrewRoots.Length];
             carryRotations = new Quaternion[CrewRoots.Length];
@@ -100,6 +102,7 @@ namespace ShipMayham
                 serviceItemVisuals[i] = CarriedItems[i].Find("Visuals");
                 luggageItemVisuals[i] = CarriedItems[i].Find("Model_Suitcase");
                 repairKitVisuals[i] = CarriedItems[i].Find("Model_Toolbox");
+                salvageVisuals[i] = CarriedItems[i].Find("Model_RopeCoil");
                 if (luggageItemVisuals[i] != null)
                 {
                     var tag = luggageItemVisuals[i].Find("Tag_Visual");
@@ -233,7 +236,9 @@ namespace ShipMayham
                 }
                 if (keyboard?.eKey.wasPressedThisFrame == true || pad?.buttonSouth.wasPressedThisFrame == true)
                 {
-                    if (FocusedTarget <= -100)
+                    if (FocusedTarget <= -200 && FocusedTarget > -200 - HarborTownLayout.SalvageCount)
+                        Session.PickUpSalvageRpc(-200 - FocusedTarget);
+                    else if (FocusedTarget <= -100)
                     {
                         var action = (HarborAction)(-100 - FocusedTarget);
                         if (Session.Voyage.Value.DockJobActive && (action == HarborAction.BuyFood || VoyageSimulation.IsPortCargo(Session.Crew[local].Carrying)))
@@ -327,7 +332,7 @@ namespace ShipMayham
         {
             var harbor = Session.Harbor;
             if (harbor == null || !harbor.IsOpen) return;
-            int first = crew.OnShore ? 1 : 0, last = crew.OnShore ? 4 : 0;
+            int first = crew.OnShore ? 1 : 0, last = crew.OnShore ? HarborTownLayout.StationsPerPort : 0;
             for (int i = first; i <= last; i++)
             {
                 var action = (HarborAction)i;
@@ -340,6 +345,11 @@ namespace ShipMayham
                 FocusText = PrototypeHarbor.Prompt(action);
                 if (Session.Voyage.Value.DockJobActive)
                 {
+                    if (Session.Voyage.Value.DockJobType == DockJobKind.SalvageRun)
+                    {
+                        if (VoyageSimulation.IsSalvage(crew.Carrying)) FocusText = "E / A: deliver salvage at PORT OFFICE | FOOD accepts returns";
+                        continue;
+                    }
                     if (Session.Voyage.Value.DockJobType == DockJobKind.LuggageSort)
                     {
                         FocusText = action == HarborAction.BuyFood
@@ -354,6 +364,20 @@ namespace ShipMayham
                     else if (action == HarborAction.MaintainHull && crew.Carrying == ServiceItem.Cargo)
                         FocusText = "E / A: deliver cargo crate";
                 }
+            }
+            if (!crew.OnShore || !Session.Voyage.Value.DockJobActive || Session.Voyage.Value.DockJobType != DockJobKind.SalvageRun) return;
+            for (int index = 0; index < HarborTownLayout.SalvageCount; index++)
+            {
+                if ((Session.Voyage.Value.DockJobDeliveredMask & (1 << index)) != 0) continue;
+                ServiceItem item = (ServiceItem)((int)ServiceItem.SalvageA + index);
+                bool held = false;
+                foreach (var member in Session.Crew) if (member.Active && member.Carrying == item) held = true;
+                if (held || Vector2.Distance(crew.Position, HarborTownLayout.SalvagePoint(index)) > VoyageSimulation.InteractionRange) continue;
+                Vector3 point = VoyageSimulation.HarborOrigin(Session.Voyage.Value) + new Vector3(HarborTownLayout.SalvagePoint(index).x, 1, HarborTownLayout.SalvagePoint(index).y);
+                float angle = Vector3.Angle(Camera.transform.forward, point - Camera.transform.position);
+                if (angle >= bestAngle) continue;
+                bestAngle = angle; FocusedTarget = -200 - index;
+                FocusText = $"E / A: take salvage bundle {index + 1}/3 -> PORT OFFICE";
             }
         }
 
@@ -500,9 +524,11 @@ namespace ShipMayham
             if (ammoItemVisuals[slot] != null) ammoItemVisuals[slot].gameObject.SetActive(item == ServiceItem.Ammo);
             bool luggage = VoyageSimulation.IsLuggage(item);
             bool repairKit = item == ServiceItem.RepairKit;
+            bool salvage = VoyageSimulation.IsSalvage(item);
+            if (salvageVisuals[slot] != null) salvageVisuals[slot].gameObject.SetActive(salvage);
             if (repairKitVisuals[slot] != null) repairKitVisuals[slot].gameObject.SetActive(repairKit);
             if (luggageItemVisuals[slot] != null) luggageItemVisuals[slot].gameObject.SetActive(luggage);
-            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && !luggage && !repairKit);
+            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && !luggage && !repairKit && !salvage);
             if (item == ServiceItem.None) return;
             Color color = item == ServiceItem.Ammo ? new Color(.12f, .14f, .18f) : item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
             if (luggage) color = VoyageSimulation.LuggageColor(item);
@@ -511,6 +537,7 @@ namespace ShipMayham
                 // Keep the imported leather palette; only the tag identifies a baggage item.
                 if (luggageItemVisuals[slot] != null && renderer.transform.IsChildOf(luggageItemVisuals[slot]) && renderer != luggageTagRenderers[slot]) continue;
                 if (repairKitVisuals[slot] != null && renderer.transform.IsChildOf(repairKitVisuals[slot])) continue;
+                if (salvageVisuals[slot] != null && renderer.transform.IsChildOf(salvageVisuals[slot])) continue;
                 renderer.GetPropertyBlock(itemProperties);
                 itemProperties.SetColor(BaseColorId, color);
                 itemProperties.SetColor(ColorId, color);

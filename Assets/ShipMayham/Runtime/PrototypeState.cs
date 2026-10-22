@@ -5,16 +5,16 @@ using UnityEngine;
 namespace ShipMayham
 {
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
-    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit }
+    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing }
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
-    public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull }
+    public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull, HarborMaster, PaintShop }
     public enum RouteProfile : byte { CoastalFerry, MarketRun, StormPassage }
     public enum ShipLivery : byte { Classic, Seafoam, Sunset }
-    public enum DockJobKind : byte { CargoRelay, LuggageSort }
+    public enum DockJobKind : byte { CargoRelay, LuggageSort, SalvageRun }
 
     [Serializable]
     public struct VoyageState : INetworkSerializable, IEquatable<VoyageState>

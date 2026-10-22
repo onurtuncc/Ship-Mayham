@@ -13,10 +13,11 @@ namespace ShipMayham
         public Transform[] ShoreMarkers;
         public TextMesh[] Labels;
         public Transform[] Walkways;
+        public Transform[] SalvageMarkers;
         public bool IsOpen => Session.IsSpawned && (Session.Voyage.Value.Phase == VoyagePhase.Boarding || Session.Voyage.Value.Phase == VoyagePhase.Arrived);
         public int PortIndex => Session.Voyage.Value.Phase == VoyagePhase.Arrived ? 1 : 0;
         public Vector3 Point(HarborAction action) => action == HarborAction.GoAshore ? ShipGate.position :
-            ShoreMarkers[PortIndex * 4 + (int)action - 1].position;
+            ShoreMarkers[PortIndex * HarborTownLayout.StationsPerPort + (int)action - 1].position;
         public static int Target(HarborAction action) => -100 - (int)action;
         public static string Prompt(HarborAction action)
         {
@@ -26,6 +27,8 @@ namespace ShipMayham
                 case HarborAction.BoardShip: return "E / A: board ship";
                 case HarborAction.BuyFood: return "E / A: buy 8 food for 12 coins | storage cap 32";
                 case HarborAction.BuyDrink: return "E / A: buy 8 drinks for 12 coins | storage cap 32";
+                case HarborAction.HarborMaster: return "E / A: speak to harbor master | routes / town jobs";
+                case HarborAction.PaintShop: return "E / A: visit paint dock | choose your ship colors";
                 default: return "E / A: hull protection — 30 coins, absorbs 20 damage";
             }
         }

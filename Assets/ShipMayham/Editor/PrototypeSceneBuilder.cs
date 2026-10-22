@@ -172,6 +172,7 @@ namespace ShipMayham.Editor
             EnsurePassengerCues(view);
             EnsureDockSorting(view);
             EnsureRepairSupplies(session, view);
+            EnsureHarborTown(session, view);
             EditorSceneManager.SaveScene(scene, ScenePath);
             RegisterScene();
             AssetDatabase.SaveAssets();
@@ -345,6 +346,18 @@ namespace ShipMayham.Editor
             }
             bool dockPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-dock-sort-preview") >= 0;
             bool repairPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-repair-preview") >= 0;
+            bool townPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-town-preview") >= 0;
+            bool streetPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-town-street-preview") >= 0;
+            if (townPreview || streetPreview)
+            {
+                Vector3 origin = VoyageSimulation.HarborOrigin(new VoyageState());
+                foreach (var crew in view.CrewRoots) crew.gameObject.SetActive(false);
+                foreach (var visual in view.PassengerVisuals) visual.gameObject.SetActive(false);
+                foreach (var label in view.PassengerLabels) label.gameObject.SetActive(false);
+                view.Camera.fieldOfView = townPreview ? 62 : view.FirstPersonFieldOfView;
+                view.Camera.transform.position = origin + (townPreview ? new Vector3(-14, 32, -32) : new Vector3(-3, 1.95f, -6));
+                view.Camera.transform.LookAt(origin + (townPreview ? new Vector3(-14, 0, 0) : new Vector3(-16, 1.3f, -2)));
+            }
             if (dockPreview)
             {
                 Vector3 origin = VoyageSimulation.HarborOrigin(new VoyageState { Phase = VoyagePhase.Boarding });
@@ -388,6 +401,7 @@ namespace ShipMayham.Editor
                     AssignFont(label);
                     WorldLabelPresentation.UpdateLabel(label, view.Camera);
                     if ((dockPreview || repairPreview) && Vector3.Distance(label.transform.position, view.Camera.transform.position) > 10) label.gameObject.SetActive(false);
+                    if ((townPreview || streetPreview) && (label.name == "PortLabel" || Vector3.Distance(label.transform.position, view.Camera.transform.position) > (townPreview ? 30 : 18))) label.gameObject.SetActive(false);
                 }
             var target = new RenderTexture(1280, 800, 24);
             var texture = new Texture2D(1280, 800, TextureFormat.RGB24, false);

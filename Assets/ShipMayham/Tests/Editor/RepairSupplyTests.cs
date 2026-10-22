@@ -126,11 +126,11 @@ namespace ShipMayham.Tests
             Assert.AreEqual(1, restored.State.ReadyRepairKits); Assert.AreEqual(1, restored.State.RepairKitsUsed); Conserved(restored);
             restored.LeavePlayer("repair-12"); Assert.AreEqual(1, restored.State.RepairKitStock); Conserved(restored);
         }
-        [Test] public void PreviousV6SnapshotIsRejected()
+        [Test] public void PreviousV7SnapshotIsRejected()
         {
-            byte[] old = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":7", "\"Version\":6"));
+            byte[] old = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":8", "\"Version\":7"));
             Assert.Throws<InvalidOperationException>(() => sim.ImportMigrationData(old));
-            Assert.AreEqual(7, PrototypeHud.NetworkProtocolVersion);
+            Assert.AreEqual(8, PrototypeHud.NetworkProtocolVersion);
         }
         [TestCase(VoyagePhase.Arrived)] [TestCase(VoyagePhase.Failed)]
         public void ClosedVoyageDoesNotMoveOrConsumeSupplies(VoyagePhase phase)

@@ -31,7 +31,7 @@ namespace ShipMayham.Tests
             var view = hud.View;
             var harbor = session.Harbor;
             Assert.IsNotNull(harbor);
-            Assert.AreEqual(8, harbor.ShoreMarkers.Length);
+            Assert.AreEqual(12, harbor.ShoreMarkers.Length);
             Assert.AreEqual(12, session.Stations.Length, "Ammo and repair supply append stations; existing IDs stay stable.");
             sim.Crew[0].Position = VoyageSimulation.ShipGangway;
             session.HarborCommandRpc(HarborAction.GoAshore);

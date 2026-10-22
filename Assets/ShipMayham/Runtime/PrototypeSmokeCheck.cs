@@ -182,13 +182,13 @@ namespace ShipMayham
                     yield return new WaitForSeconds(.5f);
                     for (int bag = 0; bag < VoyageSimulation.DockJobGoal; bag++)
                     {
-                        yield return WalkTo(new Vector2(1.2f, -7));
+                        yield return WalkToHarbor(HarborAction.BuyFood);
                         session.DockItemCommandRpc(HarborAction.BuyFood, DockJobKind.LuggageSort);
                         yield return new WaitForSeconds(.5f);
                         ServiceItem item = session.Crew[slot].Carrying;
                         if (!VoyageSimulation.IsLuggage(item)) { Fail("Remote tagged bag pickup failed"); yield break; }
                         HarborAction desk = VoyageSimulation.LuggageDestination(session.Voyage.Value, item);
-                        yield return WalkTo(new Vector2(1.2f, VoyageSimulation.HarborPoint(desk).y));
+                        yield return WalkToHarbor(desk);
                         session.DockItemCommandRpc(desk, DockJobKind.LuggageSort);
                         yield return new WaitForSeconds(.5f);
                         if (session.Crew[slot].Carrying != ServiceItem.None || session.Voyage.Value.DockJobProgress != bag + 1)
@@ -196,18 +196,16 @@ namespace ShipMayham
                     }
                     if (session.Voyage.Value.Wallet != settledWallet + VoyageSimulation.LuggageJobReward)
                     { Fail("Baggage contract reward mismatch"); yield break; }
-                    yield return WalkTo(new Vector2(2, -6));
-                    yield return WalkTo(new Vector2(2, -7));
+                    yield return WalkToHarbor(HarborAction.BuyFood);
                     session.HarborCommandRpc(HarborAction.BuyFood);
                     yield return new WaitForSeconds(.5f);
-                    yield return WalkTo(new Vector2(2, 0));
+                    yield return WalkToHarbor(HarborAction.BuyDrink);
                     session.HarborCommandRpc(HarborAction.BuyDrink);
                     yield return new WaitForSeconds(.5f);
-                    yield return WalkTo(new Vector2(2, 7));
+                    yield return WalkToHarbor(HarborAction.MaintainHull);
                     session.HarborCommandRpc(HarborAction.MaintainHull);
                     yield return new WaitForSeconds(.5f);
-                    yield return WalkTo(new Vector2(2, -6));
-                    yield return WalkTo(VoyageSimulation.HarborPoint(HarborAction.BoardShip));
+                    yield return WalkToHarbor(HarborAction.BoardShip);
                     session.HarborCommandRpc(HarborAction.BoardShip);
                     yield return new WaitForSeconds(.5f);
                     Debug.Log("SHIP_SMOKE_HARBOR CLIENT " + slot);
@@ -266,6 +264,14 @@ namespace ShipMayham
             Debug.Log("SHIP_SMOKE_PASS HOST wallet=" + session.Voyage.Value.Wallet + " food=" + session.Voyage.Value.FoodStock + " drink=" + session.Voyage.Value.DrinkStock + " shield=" + session.Voyage.Value.HullShield);
             yield return new WaitForSeconds(6);
             Application.Quit(0);
+        }
+
+        private IEnumerator WalkToHarbor(HarborAction action)
+        {
+            Vector2 p = VoyageSimulation.HarborPoint(action) + (action == HarborAction.BoardShip ? Vector2.zero : Vector2.right * 1.2f);
+            yield return WalkTo(new Vector2(-3, session.Crew[session.LocalCrewIndex].Position.y));
+            yield return WalkTo(new Vector2(-3, p.y));
+            yield return WalkTo(p);
         }
 
         private IEnumerator WalkTo(Vector2 point)

@@ -4,11 +4,12 @@ namespace ShipMayham
 {
     public sealed partial class VoyageSimulation
     {
-        public const int LuggageJobReward = 30;
+        public const int LuggageJobReward = 30, SalvageJobReward = 36;
+        public static bool IsSalvage(ServiceItem item) => item >= ServiceItem.SalvageA && item <= ServiceItem.SalvageC;
         public static bool IsLuggage(ServiceItem item) => item >= ServiceItem.LuggageA && item <= ServiceItem.LuggageC;
-        public static bool IsPortCargo(ServiceItem item) => item == ServiceItem.Cargo || IsLuggage(item);
+        public static bool IsPortCargo(ServiceItem item) => item == ServiceItem.Cargo || IsLuggage(item) || IsSalvage(item);
         public static string LuggageTag(ServiceItem item) => item == ServiceItem.LuggageA ? "A" : item == ServiceItem.LuggageB ? "B" : item == ServiceItem.LuggageC ? "C" : "?";
-        public static string DockJobName(DockJobKind kind) => kind == DockJobKind.LuggageSort ? "BAGGAGE SORT" : "CARGO RELAY";
+        public static string DockJobName(DockJobKind kind) => kind == DockJobKind.SalvageRun ? "TOWN SALVAGE" : kind == DockJobKind.LuggageSort ? "BAGGAGE SORT" : "CARGO RELAY";
         public string DockItemCommand(ulong clientId, HarborAction action, DockJobKind expectedKind)
         {
             // A delayed job interaction must not turn into a shared-wallet purchase.
@@ -30,6 +31,7 @@ namespace ShipMayham
 
         private string PickUpDockItem(int slot)
         {
+            if (State.DockJobType == DockJobKind.SalvageRun) return "Find the 3 marked salvage bundles around town. This counter only accepts returns for that job.";
             if (State.DockJobType == DockJobKind.CargoRelay)
             {
                 int committed = State.DockJobProgress;
@@ -60,7 +62,15 @@ namespace ShipMayham
                 return "Item returned to the orange pickup.";
             }
             if (!State.DockJobActive) return "No dock job is active. Return the item at the pickup before starting another job.";
-            if (IsLuggage(item))
+            if (IsSalvage(item))
+            {
+                if (State.DockJobType != DockJobKind.SalvageRun || action != HarborAction.HarborMaster)
+                    return "Bring salvage to the PORT OFFICE, or return it at the FOOD market.";
+                int bit = 1 << ((int)item - (int)ServiceItem.SalvageA);
+                if ((State.DockJobDeliveredMask & bit) != 0) return "That salvage bundle is already delivered.";
+                State.DockJobDeliveredMask |= bit;
+            }
+            else if (IsLuggage(item))
             {
                 if (State.DockJobType != DockJobKind.LuggageSort || action != LuggageDestination(State, item))
                     return $"Bag {LuggageTag(item)} belongs at {LuggageDesk(State, item)}. Keep it, or return to orange.";
@@ -76,10 +86,29 @@ namespace ShipMayham
             State.DockJobActive = false;
             State.DockJobPortKey = CurrentPortKey;
             State.DockJobsCompleted++;
-            int reward = State.DockJobType == DockJobKind.LuggageSort ? LuggageJobReward : DockJobReward;
+            int reward = State.DockJobType == DockJobKind.SalvageRun ? SalvageJobReward : State.DockJobType == DockJobKind.LuggageSort ? LuggageJobReward : DockJobReward;
             State.Wallet += reward;
             State.Reputation++;
             return $"{DockJobName(State.DockJobType)} complete! +{reward} shared coins and +1 reputation.";
+        }
+
+        public string PickUpSalvage(ulong clientId, int index)
+        {
+            int slot = FindCrew(clientId);
+            if (slot < 0 || !HarborOpen || !Crew[slot].OnShore || !State.DockJobActive || State.DockJobType != DockJobKind.SalvageRun)
+                return "Start TOWN SALVAGE at the port office while ashore.";
+            if (index < 0 || index >= HarborTownLayout.SalvageCount) return "Unknown salvage bundle.";
+            if (Crew[slot].AtHelm || Crew[slot].AtCannon || Crew[slot].JumpHeight > 0 || Crew[slot].VerticalSpeed > 0)
+                return "Land and release your station first.";
+            if (Vector2.Distance(Crew[slot].Position, HarborTownLayout.SalvagePoint(index)) > InteractionRange) return "Move closer to the salvage bundle.";
+            if (Crew[slot].Carrying != ServiceItem.None || CarriedPassenger(slot) >= 0) return "Free your hands first.";
+            if (clock < interactionReady[slot]) return string.Empty;
+            ServiceItem item = (ServiceItem)((int)ServiceItem.SalvageA + index);
+            if ((State.DockJobDeliveredMask & (1 << index)) != 0) return "Already delivered.";
+            foreach (var member in Crew) if (member.Active && member.Carrying == item) return "A crewmate is already carrying that bundle.";
+            interactionReady[slot] = clock + .35f;
+            Crew[slot].Carrying = item;
+            return "Salvage picked up. Carry it to the PORT OFFICE; FOOD accepts returns.";
         }
     }
 }
