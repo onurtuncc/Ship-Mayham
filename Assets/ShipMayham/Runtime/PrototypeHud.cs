@@ -35,6 +35,9 @@ namespace ShipMayham
         private static PrototypeHud instance;
         private GUIStyle title, body, crosshair;
         private bool showHelp;
+        public string OnlineCode => onlineSession?.Code;
+        public bool IsOnlineHost => onlineSession != null && onlineSession.IsHost;
+        public int CompletedMigrations { get; private set; }
 
         public static bool OnlineTransportActive => instance != null && instance.onlineMode;
         public static string PlayerIdentity(ulong clientId) =>
@@ -128,13 +131,14 @@ namespace ShipMayham
             status = started ? "Connecting..." : "Connection could not start. Reload and retry.";
         }
 
-        public void ConnectOnline(bool host)
+        public void ConnectOnline(bool host, string joinCode = null, string authenticationProfile = null)
         {
             if (Manager.IsListening || attempted) return;
-            _ = ConnectOnlineAsync(host);
+            if (joinCode != null) sessionCode = joinCode;
+            _ = ConnectOnlineAsync(host, authenticationProfile);
         }
 
-        private async Task ConnectOnlineAsync(bool host)
+        private async Task ConnectOnlineAsync(bool host, string authenticationProfile)
         {
             attempted = true;
             onlineMode = true;
@@ -143,10 +147,13 @@ namespace ShipMayham
             admittedPlayers.Clear();
             pendingDepartures.Clear();
             playerIdentities.Clear();
+            CompletedMigrations = 0;
 
             try
             {
                 await UnityServices.InitializeAsync();
+                if (!string.IsNullOrEmpty(authenticationProfile))
+                    AuthenticationService.Instance.SwitchProfile(authenticationProfile);
                 if (!AuthenticationService.Instance.IsSignedIn)
                     await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
@@ -221,6 +228,7 @@ namespace ShipMayham
 
         private void OnlineSessionMigrated()
         {
+            CompletedMigrations++;
             if (onlineSession != null && onlineSession.IsHost && Session != null)
             {
                 foreach (string playerId in pendingDepartures) Session.RemoveOnlinePlayer(playerId);

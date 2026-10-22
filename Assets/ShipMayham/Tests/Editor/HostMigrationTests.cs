@@ -40,6 +40,26 @@ namespace ShipMayham.Tests
         }
 
         [Test]
+        public void ReassignedConnectionIdsCannotControlAnUnboundRestoredPlayer()
+        {
+            var original = NewSimulation();
+            original.Join(0, "old-host");
+            original.Join(1, "guest-a");
+            original.Join(2, "guest-b");
+            original.Join(3, "guest-c");
+            var restored = NewSimulation();
+            restored.ImportMigrationData(original.ExportMigrationData());
+
+            Assert.AreEqual(-1, restored.FindCrew(0));
+            Assert.AreEqual(2, restored.Join(0, "guest-b"));
+            Assert.AreEqual(2, restored.FindCrew(0), "New host ID 0 must not select the departed host's slot.");
+            Assert.AreEqual(3, restored.Join(1, "guest-c"));
+            Assert.AreEqual(3, restored.FindCrew(1), "New connection ID 1 must not select unbound guest-a.");
+            Assert.AreEqual(1, restored.Join(2, "guest-a"));
+            Assert.AreEqual(1, restored.FindCrew(2));
+        }
+
+        [Test]
         public void MigrationHandlerAppliesOnePendingSnapshotToNewHost()
         {
             VoyageSimulation original = NewSimulation();

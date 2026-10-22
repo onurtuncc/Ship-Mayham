@@ -1,6 +1,6 @@
 # İlk oynanabilir prototip
 
-**22 Ekim 2026 doğrulaması:** Gövde boyaları/kargo korumaları sonrasında 105/105, soketsiz solo başlangıcı eklendikten sonra 106/106 Unity testi geçti (`Logs/Livery.xml`, `Logs/WebSolo.xml`). GitHub Pages'ta gerçek tarayıcı testi önce UDP solo başlangıcını ve URP shader hatasını ortaya çıkardı. `SoloTransport`, Forward/klasik-probe WebGL profili ve içerik hash'li dosya URL'leriyle son yayında solo oturum ve görünür gemi/iskele geometrisi doğrulandı; son yüklemede konsol hatası görülmedi. Kanıt ekranı `Logs/WebGL-Solo-Verified.png`. Relay üzerinden oturum oluşturma da tarayıcıda doğrulandı; çok istemcili internet/migration ve insanlarla oyun dengesi kabul testi henüz tamamlanmadı.
+**22 Ekim 2026 doğrulaması:** Güncel EditMode paketi **115/115 geçti** (`Logs/MigrationIds-After.xml`). Dört ayrı Windows development süreciyle gerçek internet Relay/WSS testi de geçti: ilk host zorla kapatıldı, kalan üç oyuncu kendi slotlarıyla ve korunmuş kasa/olay ilerlemesiyle yeni host üzerinden oynamaya devam etti. Bu testin SDK uyarıları, kanıtları ve kapsam sınırları [RELAY_MIGRATION_TEST.md](RELAY_MIGRATION_TEST.md) içindedir. WebGL'de solo, görünür geometri ve Relay host oluşturma ayrıca doğrulandı; tarayıcı konsolunda daha önce görülen genel Chromium hatası ve dört insanla oyun dengesi kabulü hâlâ açık işlerdir.
 
 Bu sürüm GDD'nin ilk on geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık.
 
@@ -8,8 +8,8 @@ Bu sürüm GDD'nin ilk on geliştirme dilimini içerir: karada rota sözleşmesi
 
 1. Unity **6000.4.6f1** ile projeyi aç ve derlemenin bitmesini bekle.
 2. `Assets/ShipMayham/Scenes/ShipPrototype.unity` sahnesini aç. Alternatif: **Ship Mayham → Open Prototype** menüsü. Sahne henüz yoksa menü ilk kopyayı üretir; mevcut sahneyi yeniden üretmez.
-3. Play'e bas, **HOST / SOLO** seç. Tek oyuncu için de host başlatılır.
-4. Başka oyuncular aynı build/sahne ile **JOIN** seçer. Aynı bilgisayarda `127.0.0.1`, yerel ağda host bilgisayarının IPv4 adresi kullanılır. UDP portu `7777`; en fazla dört oyuncu. İnternet lobisi/Relay bu sürümde yoktur.
+3. Play'e bas; tek oyuncu için **PLAY SOLO (OFFLINE)**, internet üzerinden arkadaşlarla oynamak için **CREATE ONLINE VOYAGE** seç. Solo, WebGL'de de çalışan soketsiz yerel host kullanır.
+4. Arkadaşların aynı güncel build'de paylaşılan oturum kodunu girip **JOIN ONLINE VOYAGE** seçer. İnternet bağlantısı Unity Relay üzerinden WSS kullanır; port yönlendirme gerekmez ve en fazla dört oyuncu bağlanabilir. Geliştirme/test amaçlı doğrudan `Connect` API'si Windows/Editor'de UDP `7777` kullanır; WebGL doğrudan UDP istemcisi değildir.
 5. Ayrı Windows build için **Ship Mayham → Build Prototype (Windows)**. Sadece prototip sahnesini `Builds/ShipPrototype/ShipPrototype.exe` içine derler; mevcut Build Settings listesini değiştirmez.
 
 Netcode'un editörde sahne senkronizasyonu yapabilmesi için prototip sahnesi Build Settings'e eklenmiştir. Önceden var olan sahne girişleri korunur. Genel Build düğmesi yerine yukarıdaki prototip build menüsünü kullan; mevcut listede eski template sahneleri de bulunuyor.

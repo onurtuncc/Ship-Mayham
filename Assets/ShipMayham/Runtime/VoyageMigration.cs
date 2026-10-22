@@ -89,6 +89,9 @@ namespace ShipMayham
             Array.Copy(snapshot.Crew, Crew, MaxCrew);
             Array.Copy(snapshot.Passengers, Passengers, MaxPassengers);
             Array.Copy(snapshot.CrewPlayerIds, crewPlayerIds, MaxCrew);
+            // NGO assigns new connection IDs after migration. Only the stable player IDs
+            // may identify the restored slots until each participant reconnects.
+            for (int i = 0; i < MaxCrew; i++) if (Crew[i].Active) Crew[i].ClientId = ulong.MaxValue;
             clock = snapshot.Clock;
             nextLeak = snapshot.NextLeak;
             scheduledPowerFault = snapshot.ScheduledPowerFault;

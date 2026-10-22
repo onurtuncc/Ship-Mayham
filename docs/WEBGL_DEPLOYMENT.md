@@ -69,10 +69,10 @@ Olay snapshot v3 kullanan sürümde NGO bağlantı protokolü de 3'tür. Eski bu
 
 Unity projesi Cloud Project ID'ye bağlıdır. Unity Dashboard'da bu proje için **Authentication**, **Lobby** ve **Relay** hizmetlerinin etkin olduğundan emin ol. Oyuncular şimdilik anonim kimlikle giriş yapar; ayrıca hesap ekranı gerekmez. Ağ trafiği Relay üzerinden geçtiği için modem portu açmaya veya oyuncuların IP adresini paylaşmaya gerek yoktur.
 
-**LOCAL SOLO (OFFLINE TEST)** yalnızca aynı makinede hızlı geliştirme testi içindir; Pages oyuncularının birbirine bağlanması için online düğmeler kullanılmalıdır.
+**PLAY SOLO (OFFLINE)** tek oyunculudur; Pages oyuncularının birbirine bağlanması için online düğmeler kullanılmalıdır.
 
 ## Host ayrılırsa
 
 Oturum, Unity'nin yerleşik host migration akışını kullanır. Mevcut host her 2 saniyede bir sefer durumunu Lobby migration verisine yükler. Host tarayıcıyı kapatır veya bağlantısı düşerse Lobby kalan oyunculardan yeni host'u seçer; Relay bağlantısı yeniden kurulur ve yeni host son görüntüyü uygular. Anonim Unity oyuncu kimliği mürettebat slotuyla birlikte saklandığı için yeniden bağlanan oyuncular eski slotlarını devralır.
 
-Bu, dedicated server değildir: geçiş birkaç saniye sürebilir ve son görüntüden sonraki en fazla yaklaşık 2 saniyelik hareket/girdi kaybolabilir. Tüm oyuncular ayrılırsa oturum doğal olarak sona erer. Daha sonra kesintisiz 7/24 sunucu istenirse Unity Multiplay/Dedicated Server ayrı bir mimari adımıdır.
+Bu, dedicated server değildir. Mevcut Lobby ayarında ani host kaybının ardından seçim yaklaşık iki dakika sürebilir; iki saniyelik snapshot aralığı seçim süresi değildir. Son başarılı snapshot'tan sonraki ilerleme kaybolabilir; normal yükleme aralığı 2 saniyedir ancak ağ veya servis hatalarında daha uzun olabilir. Tüm oyuncular ayrılırsa oturum sona erer. Daha kısa seçim süresi için Dashboard'daki disconnect/removal ayarı, kesintisiz 7/24 oyun içinse ayrı bir dedicated server mimarisi gerekir. Tekrarlanabilir dört süreçli internet testi ve sınırları için [RELAY_MIGRATION_TEST.md](RELAY_MIGRATION_TEST.md).
