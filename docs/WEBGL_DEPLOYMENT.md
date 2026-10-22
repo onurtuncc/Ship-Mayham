@@ -29,6 +29,8 @@ Unity farklı bir konumdaysa yolu açıkça verebilirsin:
 .\Scripts\Publish-WebGL.ps1 -UnityPath "D:\Unity\Editor\Unity.exe"
 ```
 
+Açık Editor'ün lisans istemcisiyle IPC bağlantısı gereken geliştirme makinelerinde, bilinen pipe adı isteğe bağlı olarak verilebilir: `-LicensingIpc 'LicenseClient-ONUR-6000.4.6'`. Bu bir lisans anahtarı değildir; lisans aktivasyonunu atlamaz ve GitHub secret'ı gerektirmez. Normal makine kurulumlarında bu argümanı boş bırak.
+
 Build zaten hazırsa yalnızca yayınlamak için:
 
 ```powershell

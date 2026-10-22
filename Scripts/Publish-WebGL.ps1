@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$UnityPath,
+    [string]$LicensingIpc,
     [string]$Remote = "origin",
     [string]$PagesBranch = "gh-pages",
     [switch]$SkipBuild
@@ -61,6 +62,9 @@ if (-not $SkipBuild) {
         "-executeMethod", "ShipMayham.Editor.WebGLBuild.Build",
         "-logFile", "`"$logPath`""
     )
+    if (-not [string]::IsNullOrWhiteSpace($LicensingIpc)) {
+        $unityArguments += @("-licensingIpc", $LicensingIpc)
+    }
     $unityProcess = Start-Process `
         -FilePath $UnityPath `
         -ArgumentList $unityArguments `
