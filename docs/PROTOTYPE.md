@@ -67,6 +67,8 @@ Sekiz kartlı deste Unity 6000.4.6f1 ile ayrı doğrulama projesinde `-runTests 
 
 Ağ protokolü 3'e sabitlendikten sonra tam paket yine **113/113** geçti (`Logs/EventDeckEight-Protocol.xml`). Aktif olay mesajlarının ücret tahsilatını engellememesi düzeltmesinden sonra olay test sınıfı `-testFilter ShipMayham.Tests.VoyageEventTests` ile tekrar koşuldu: **12/12 geçti**, exit 0 (`Logs/EventFareRegression.xml`). Bu son koşu, denetim bitmeden kontrol edilmiş bir yolcudan ücret alınabildiğini de kapsar.
 
+Son WebGL yayını `93ea92f` için Pages deployment başarılı oldu. Canlı tarayıcıda görünür geometriyle Relay host oturumu oluşturuldu; imleç Esc ile açıldıktan sonra Leave session menüye döndü. Kanıt ekranı `Logs/WebGL-EightEvents-Verified.png`. Bu kontrolde oturum açıldıktan sonra Chromium'un genel `UnknownError: If you see this error we have a bug. Please report this bug to chromium.` bildirimi de görüldü (22 Ekim 2026, 00:31:49 UTC). Kayıt C# stack trace içermiyor; neden henüz belirlenmedi. Bu nedenle temiz tarayıcıda yeniden üretim ve çok istemcili internet/migration kontrolü hâlâ açık doğrulama işleridir; hatasız tarayıcı oturumu veya tam internet kabul testi tamamlandı diye raporlanmaz.
+
 ## Sahne ve model değiştirme sözleşmesi
 
 | Kök / alt nesne | Sorumluluk |
