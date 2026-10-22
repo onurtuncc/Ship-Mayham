@@ -418,8 +418,10 @@ namespace ShipMayham
             GUI.enabled = canChoose;
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("COAST")) Session.SelectRouteRpc(RouteProfile.CoastalFerry);
-            if (GUILayout.Button("MARKET")) Session.SelectRouteRpc(RouteProfile.MarketRun);
-            if (GUILayout.Button("STORM")) Session.SelectRouteRpc(RouteProfile.StormPassage);
+            GUI.enabled = canChoose && s.Reputation >= VoyageSimulation.RouteReputation(RouteProfile.MarketRun);
+            if (GUILayout.Button("MARKET (2)")) Session.SelectRouteRpc(RouteProfile.MarketRun);
+            GUI.enabled = canChoose && s.Reputation >= VoyageSimulation.RouteReputation(RouteProfile.StormPassage);
+            if (GUILayout.Button("STORM (5)")) Session.SelectRouteRpc(RouteProfile.StormPassage);
             GUILayout.EndHorizontal();
             GUI.enabled = true;
             GUILayout.Label(s.DockJobActive ? $"CARGO RELAY {s.DockJobProgress}/{VoyageSimulation.DockJobGoal}" : $"Cargo relays completed: {s.DockJobsCompleted}", body);

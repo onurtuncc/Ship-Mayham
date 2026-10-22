@@ -33,6 +33,9 @@ namespace ShipMayham
         public static string RouteName(RouteProfile route) => route == RouteProfile.MarketRun
             ? "Market Run" : route == RouteProfile.StormPassage ? "Storm Passage" : "Coastal Ferry";
 
+        public static int RouteReputation(RouteProfile route) => route == RouteProfile.MarketRun
+            ? 2 : route == RouteProfile.StormPassage ? 5 : 0;
+
         private int CurrentPortKey => State.Voyage * 2 + (State.Phase == VoyagePhase.Arrived ? 1 : 0);
 
         public static int LiveryReputation(ShipLivery livery) => livery == ShipLivery.Seafoam ? 2 : livery == ShipLivery.Sunset ? 5 : 0;
@@ -55,6 +58,8 @@ namespace ShipMayham
             if (!Crew[slot].OnShore) return "Go ashore to use the contract board.";
             if ((int)route < 0 || route > RouteProfile.StormPassage) return "Unknown route contract.";
             if (State.Boarded > 0) return "The passenger manifest is locked. Choose the route before boarding passengers.";
+            int required = RouteReputation(route);
+            if (State.Reputation < required) return $"{RouteName(route)} unlocks at {required} reputation. Complete ferry voyages or harbor cargo relays.";
             State.Route = route;
             nextLeak = route == RouteProfile.StormPassage ? 16 : 25;
             Event.NextIn = route == RouteProfile.StormPassage ? 12 : route == RouteProfile.MarketRun ? 16 : FirstEventDelay;

@@ -29,6 +29,7 @@ namespace ShipMayham.Tests
 
             Assert.AreEqual(245, restored.Wallet);
             Assert.AreEqual(9, restored.Reputation);
+            Assert.GreaterOrEqual(restored.Reputation, VoyageSimulation.RouteReputation(RouteProfile.StormPassage));
             Assert.AreEqual(ShipLivery.Sunset, restored.Livery);
             Assert.AreEqual(2, restored.EngineLevel);
             Assert.AreEqual(1, restored.CapacityLevel);

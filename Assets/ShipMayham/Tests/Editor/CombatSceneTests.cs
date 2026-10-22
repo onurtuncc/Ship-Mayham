@@ -12,8 +12,10 @@ namespace ShipMayham.Tests
     {
         private static IEnumerable Wait(float seconds)
         {
-            float deadline = Time.realtimeSinceStartup + seconds;
-            while (Time.realtimeSinceStartup < deadline) yield return null;
+            float deadline = Time.time + seconds;
+            float timeout = Time.realtimeSinceStartup + seconds + 5;
+            while (Time.time < deadline && Time.realtimeSinceStartup < timeout) yield return null;
+            Assert.GreaterOrEqual(Time.time, deadline, "The simulation clock stopped during the scene test.");
         }
 
         [UnityTest]
@@ -43,6 +45,7 @@ namespace ShipMayham.Tests
             session.InteractRpc(1, false);
             session.InteractRpc(-1, true);
             foreach (var frame in Wait(.4f)) yield return frame;
+            Assert.AreEqual(VoyagePhase.Sailing, session.Voyage.Value.Phase, "Cannon shots require an active voyage.");
             session.InteractRpc(-1, false); // release helm
             foreach (var frame in Wait(.4f)) yield return frame;
             sim.Crew[0].Position = new Vector2(3.1f, 4.7f);

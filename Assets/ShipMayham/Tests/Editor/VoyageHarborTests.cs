@@ -201,6 +201,7 @@ namespace ShipMayham.Tests
         }
         [Test] public void RouteContractRequiresShoreAndLocksWithPassengerManifest()
         {
+            sim.State.Reputation = 5;
             sim.SelectRoute(Client, RouteProfile.MarketRun);
             Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
             Harbor(HarborAction.GoAshore);
@@ -214,19 +215,21 @@ namespace ShipMayham.Tests
         }
         [Test] public void MarketContractRewardsServiceAndPersistsReputation()
         {
+            sim.State.Reputation = 2;
             Harbor(HarborAction.GoAshore);
             sim.SelectRoute(Client, RouteProfile.MarketRun);
             Harbor(HarborAction.BoardShip);
             Depart(); sim.State.Served = 3; Arrive();
             Assert.AreEqual(35, sim.State.LastRouteBonus);
             Assert.AreEqual(2, sim.State.LastReputation);
-            Assert.AreEqual(2, sim.State.Reputation);
+            Assert.AreEqual(4, sim.State.Reputation);
             Use(0);
-            Assert.AreEqual(2, sim.State.Reputation);
+            Assert.AreEqual(4, sim.State.Reputation);
             Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
         }
         [Test] public void StormContractAcceleratesHazardsAndRewardsSafeArrival()
         {
+            sim.State.Reputation = 5;
             Harbor(HarborAction.GoAshore);
             sim.SelectRoute(Client, RouteProfile.StormPassage);
             Harbor(HarborAction.BoardShip);
@@ -239,6 +242,44 @@ namespace ShipMayham.Tests
             Assert.AreEqual(50, sim.State.LastRouteBonus);
             Assert.AreEqual(3, sim.State.LastReputation);
         }
+        [TestCase(RouteProfile.MarketRun, 2)]
+        [TestCase(RouteProfile.StormPassage, 5)]
+        public void RouteUnlockIsAuthoritativeAndDoesNotSpendReputation(RouteProfile route, int required)
+        {
+            Harbor(HarborAction.GoAshore);
+            sim.State.Reputation = required - 1;
+            sim.State.Wallet = 100;
+            var before = sim.Event;
+            StringAssert.Contains($"{required} reputation", sim.SelectRoute(Client, route));
+            Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
+            Assert.AreEqual(before.NextIn, sim.Event.NextIn);
+
+            sim.State.Reputation = required;
+            sim.SelectRoute(Client, route);
+            Assert.AreEqual(route, sim.State.Route);
+            Assert.AreEqual(required, sim.State.Reputation);
+            Assert.AreEqual(100, sim.State.Wallet);
+            sim.SelectRoute(Client, RouteProfile.CoastalFerry);
+            Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
+        }
+
+        [Test] public void FirstCargoRelayCanFinishTheMarketUnlockWithoutStartingARoute()
+        {
+            sim.State.Reputation = 1;
+            Harbor(HarborAction.GoAshore);
+            sim.SelectRoute(Client, RouteProfile.MarketRun);
+            Assert.AreEqual(RouteProfile.CoastalFerry, sim.State.Route);
+            sim.ToggleDockJob(Client);
+            for (int crate = 0; crate < VoyageSimulation.DockJobGoal; crate++)
+            {
+                Harbor(HarborAction.BuyFood);
+                Harbor(HarborAction.MaintainHull);
+            }
+            Assert.AreEqual(2, sim.State.Reputation);
+            sim.SelectRoute(Client, RouteProfile.MarketRun);
+            Assert.AreEqual(RouteProfile.MarketRun, sim.State.Route);
+        }
+
         [Test] public void CargoRelaySupportsParallelCrewAndRewardsSharedProgress()
         {
             Harbor(HarborAction.GoAshore);

@@ -46,6 +46,12 @@ Bu ilk döngüde yeni sefer başlangıç limanına geri yerleştirir. Yolcular b
 
 Ortak para, itibar, motor/kapasite/konfor seviyeleri ve tamamlanan kargo işi sayısı host cihazında sürümlemeli yerel kariyer kaydı olarak tutulur. WebGL'de bu kayıt tarayıcının kalıcı depolamasını kullanır. Sağlık, aktif rota, yolcular ve devam eden olaylar kariyer kaydına girmez; çevrimiçi host migration bunları ayrı snapshot ile taşır.
 
+Rota panosunda **Coastal Ferry** başlangıçta açıktır; **Market Run 2**, **Storm Passage 5** ortak itibar gerektirir. İtibar seçimde harcanmaz. Kilitli rota istemci düğmesi dışında host kurallarında da reddedilir. Başarılı standart sefer ve liman kargo işi birer itibar verir; böylece ilk zor sözleşmeye kısa bir sefer ve isteğe bağlı liman işiyle ulaşılabilir. Market'te üç servisle 2, Storm'da en az 70 gövdeyle 3 itibar kazanılır. Kayıt ve migration zaten itibarı taşıdığından ayrı bir açılım kaydı veya ücret yoktur.
+
+Bu dilimle **118/118 EditMode testi geçti**, Unity exit 0 (`Logs/RouteUnlocks-Final.xml`, `Logs/RouteUnlocks-Final.log`). Kurallar düşük/eşik itibarı, seçimde kaynak harcanmamasını ve kargo işiyle açılmayı; sahne testi gerçek `SelectRouteRpc` üzerinden kilitli/açık seçim ve ağ durumunu doğrular. İlk koşuda eski top sahne testi 118'de bir kez başarısızdı (`Logs/RouteUnlocks.xml`); bekleme yardımcısı duvar saati yerine oyun saatine bağlandı, beş saniyelik ek üst sınır ve kalkış assertion'ı eklendi. Son koşu tüm pakettir; başarısız ilk kanıt silinmedi.
+
+Host migration düzeltmesini içeren WebGL `188ffa1` yayınının Pages işi `39703647843` başarılıdır. Canlı tarayıcıda geometri ve Relay host oluşturma tekrar doğrulandı; bu kontrolde konsol hata listesi boştu (`Logs/WebGL-Migration-Fix-Verified.png`). Bu kısa kontrol önceki Chromium `UnknownError` kaydının kök nedeninin çözüldüğünü veya dört tarayıcılı migration kabulünün tamamlandığını kanıtlamaz. Rota açılımı bu eski WebGL paketinde henüz yoktur; sonraki yayına dahil edilmelidir.
+
 ## Olay destesi
 
 Host her oturumda bir seed üretir. Deste mevcut istasyon ve stoklara göre uygun kartlardan rota ağırlıklarıyla seçim yapar; aynı kart, o turdaki uygun kartlar bitmeden tekrar gelmez. Market Run servis/VIP kartlarına, Storm Passage teknik kartlara daha fazla ağırlık verir. Yeni tur sınırında da mümkünse art arda aynı kart gelmez. Deste, hedef yolcu, denetlenen yolcu maskesi ve hararetin soğuma süresi host migration snapshot v3 ile devam eder; tüm oyuncular aynı sürümü kullanmalıdır.

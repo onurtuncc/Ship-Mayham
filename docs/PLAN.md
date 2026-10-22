@@ -28,6 +28,8 @@ Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gü
 
 **Dokuzuncu geliştirme dilimi:** Limanda itibarla açılan Classic, Seafoam (2 itibar) ve Sunset (5 itibar) gövde boyaları seçilebilir. Renk ağ durumuyla tüm oyunculara ulaşır, kariyer kaydı ve host migration ile korunur; mekanik güç veya ücret etkisi yoktur. Kargo teslimatlarında mesafe/cooldown doğrulaması ve dört kişilik ekipte fazla kasa alma engeli eklendi.
 
+**On birinci geliştirme dilimi:** Sözleşmeler itibarla açılır: Coastal Ferry 0, Market Run 2, Storm Passage 5. Sunucu kuralı ve liman HUD'ı aynı eşikleri kullanır; seçim para/itibar tüketmez. Kariyer kaydı ve host migration ortak itibarı koruyarak açılımı da taşır. Bu, Faz 8'in temel rota açılımını tamamlar; farklı fiziksel liman/rota geometrisi değildir.
+
 ## Faz 0 — Proje ve test altyapısı
 
 **Amaç:** Mevcut Unity projesini gemi prototipine hazır hale getirmek.
@@ -186,4 +188,4 @@ Her prototip build’inde aşağıdaki ölçümler toplanmalıdır:
 
 ## Sonraki karar noktası
 
-Onuncu dilimden sonra başlıca uygulama boşlukları korsan karşılaşmasında fiziksel mühimmat/mermi akışı, sızmacının davranış ipuçları, daha çeşitli kara mini oyunları ve itibarla rota açılımıdır. Üretilmiş Blender modellerinin oynanış anchor'larını koruyarak sahneye entegrasyonu da görsel kalite için gereklidir. Sekiz kartlı deste ve üç rota profili artık uygulanmıştır; aynı fiziksel iki limanı kullanırlar. Dört insanla testte görev paylaşımı, olay yığılmaları, liman geçişleri, HUD okunurluğu ve tekrar oynama isteği değerlendirilmelidir. Bu insan testi otomatik testlerin yerini tutmayan ayrı bir kabul kapısıdır.
+On birinci dilimden sonra başlıca uygulama boşlukları korsan karşılaşmasında fiziksel mühimmat/mermi akışı, sızmacının davranış ipuçları ve daha çeşitli kara mini oyunlarıdır. Üretilmiş Blender modellerinin oynanış anchor'larını koruyarak sahneye entegrasyonu da görsel kalite için gereklidir. Sekiz kartlı deste, üç rota profili ve itibarla açılım uygulanmıştır; aynı fiziksel iki limanı kullanırlar. Dört insanla testte görev paylaşımı, olay yığılmaları, liman geçişleri, HUD okunurluğu ve tekrar oynama isteği değerlendirilmelidir. Bu insan testi otomatik testlerin yerini tutmayan ayrı bir kabul kapısıdır.
