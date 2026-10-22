@@ -57,6 +57,8 @@ WebGL buildi `WebBuildSettings` altında ayrı bir Forward render profili üreti
 
 **PLAY SOLO (OFFLINE)** soketsiz `SoloTransport` ile çalışır; Relay veya internet oturumu oluşturmaz. Doğrudan UDP host başlatmak WebGL'de desteklenmez. Windows LAN smoke testleri mevcut `Connect` akışını, çevrimiçi oyun ise WSS/Relay akışını kullanır.
 
+WebGL'de oturum açılınca bakış için oyun alanının ortasına tıkla. Esc/Start kilidi açar; yeniden yakalama tarayıcının istediği taze canvas tıklamasıyla yapılır. `WebCursor.jslib` yalnız bu canvas'ın pointer-lock isteğinin Promise reddini/senkron hatasını kontrollü uyarı olarak işler; genel JavaScript hataları gizlenmez. Node regresyon testi: `node Scripts/Test-WebCursor.cjs`. Chromium'un görülen hata mesajı [pointer-lock hata koduyla](https://chromium.googlesource.com/chromium/src/+/0a8c7ee1034e43691c810ab4dcc9b72eef8dc951%5E!/) eşleşir; tarayıcının kilit reddi sefer durumunu sonlandırmamalıdır.
+
 Build sonrasında loader, data, framework ve wasm URL'lerine dosyanın SHA-256 özetinden bir sürüm parametresi eklenir. Böylece aynı dosya adlarıyla yapılan yeni yayınlarda tarayıcı önceki shader/veri paketini kullanmaz. Yayını doğrularken yalnız HTTP 200'e bakma: GitHub Pages deploy işinin ilgili commit için tamamlandığını, oyunun açıldığını ve gemi geometrisinin göründüğünü de kontrol et.
 
 ## Online multiplayer kurulumu

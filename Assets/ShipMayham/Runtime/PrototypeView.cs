@@ -50,8 +50,16 @@ namespace ShipMayham
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        private static extern void ShipCursor_Install();
+#endif
+
         private void Awake()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            ShipCursor_Install();
+#endif
             crewVisuals = new Transform[CrewRoots.Length];
             itemRenderers = new Renderer[CrewRoots.Length][];
             carryPositions = new Vector3[CrewRoots.Length];
@@ -144,10 +152,17 @@ namespace ShipMayham
             bool capturedThisFrame = false;
             if (Application.isFocused && (keyboard?.escapeKey.wasPressedThisFrame == true || pad?.startButton.wasPressedThisFrame == true))
             {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                // Browsers reserve Escape for releasing pointer lock. Recapture
+                // requires a fresh canvas click, not an asynchronous/toggled request.
+                capturedThisFrame = true;
+                CaptureCursor(false);
+#else
                 // The Editor can unlock on Escape before Update; track our own intent so
                 // that the same Escape press does not immediately relock the cursor.
                 capturedThisFrame = !captureRequested;
                 CaptureCursor(capturedThisFrame);
+#endif
             }
             // Click only the unobstructed center of the game view to resume; HUD clicks stay UI clicks.
             if (Application.isFocused && Cursor.lockState != CursorLockMode.Locked && Mouse.current?.leftButton.wasPressedThisFrame == true)
@@ -294,7 +309,13 @@ namespace ShipMayham
                 IsFirstPerson = firstPerson;
                 lookYaw = 0;
                 lookPitch = 12;
+#if UNITY_WEBGL && !UNITY_EDITOR
+                // Relay completion is asynchronous, not a browser user gesture.
+                // Let the player explicitly click the center to request pointer lock.
+                CaptureCursor(false);
+#else
                 CaptureCursor(firstPerson && Application.isFocused && !Application.isBatchMode);
+#endif
             }
             bool atCannon = firstPerson && Session.Crew[local].AtCannon;
             if (atCannon && !wasAtCannon)

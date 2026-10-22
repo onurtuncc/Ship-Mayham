@@ -333,9 +333,9 @@ namespace ShipMayham
                 if (s.Phase == VoyagePhase.Arrived || s.Phase == VoyagePhase.Failed)
                     GUILayout.Label($"Tickets {s.LastTickets} + service {s.LastServices} + tips {s.LastTips}\nBounty {s.LastBounty} + events {s.LastEventBonus} + route {s.LastRouteBonus} - costs {s.LastCosts} = net {s.LastNet}\nReputation +{s.LastReputation}. Manifest: new voyage.", body);
                 else GUILayout.Label(s.Phase == VoyagePhase.Boarding ? "1. Manifest: board\n2. Helm: E, then Space to depart" : "Serve matching orders. Brake (S) and dock (Space) within 12 m.", body);
-                if (GUILayout.Button("Leave session")) LeaveOrReload();
             }
             GUILayout.EndArea();
+            if (Session.IsSpawned && GUI.Button(new Rect(1115, 12, 153, 32), "Leave session")) LeaveOrReload();
             if (Session.IsSpawned)
             {
                 DrawEncounter();
@@ -364,7 +364,8 @@ namespace ShipMayham
                     int local = Session.LocalCrewIndex;
                     if (local >= 0) GUI.Label(new Rect(900, 656, 340, 25), "Carrying: " + (Session.LocalCarriedPassengerIndex >= 0 ? "Passenger " + (Session.LocalCarriedPassengerIndex + 1) : Session.Crew[local].Carrying.ToString()), body);
                     if (Cursor.lockState != CursorLockMode.Locked)
-                        GUI.Label(new Rect(410, 610, 460, 28), "Esc / Start or click center to resume looking", body);
+                        GUI.Label(new Rect(410, 610, 460, 28), Application.platform == RuntimePlatform.WebGLPlayer
+                            ? "Click the game center to resume looking" : "Esc / Start or click center to resume looking", body);
                 }
                 DrawMap();
             }
