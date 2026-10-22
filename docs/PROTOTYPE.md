@@ -1,6 +1,6 @@
 # İlk oynanabilir prototip
 
-**Yeni kaynak — dilim 18:** Liman kasabası ve Town Salvage işi, protokol/snapshot **8**. Yeni kara alanı için 7/7 odaklı kontrol ve Windows build; önceki 202 test/v7 Relay kanıtları önceki kaynak içindir, bu dilimde tekrar çalıştırılmadı. [HARBOR_TOWN.md](HARBOR_TOWN.md). Canlı Pages bilgisi aşağıdaki son doğrulanmış yayından ayrı tutulur.
+**Güncel yayın — dilim 18:** Kaynak `1afa86d`, WebGL `fa132b5`, Pages işi `39729740601` başarılı. Liman kasabası ve Town Salvage işi, protokol/snapshot **8**. Yeni kara alanı için 7/7 odaklı kontrol, Windows/WebGL build ve canlı açılış geçti. Önceki 202 test/v7 Relay kanıtları önceki kaynak içindir; uzun akışlar bu dilimde tekrar çalıştırılmadı. [HARBOR_TOWN.md](HARBOR_TOWN.md). Aşağıdaki eski kaynak/yayın kayıtları tarihseldir.
 
 **Yeni kaynak — dilim 17:** Fiziksel hızlı yama kitleri eklendi; son sahneyle **202/202 test**, Windows build ve dört süreçli tam sefer geçti. v7 gerçek Relay host kaybı geçti. Kaynak ağ/snapshot protokolü **7**. Canlı Pages paketi aşağıdaki v6 yayınıdır; yeni kaynak için ayrı WebGL build/yayın yapılmadan v7 Windows ile aynı oturuma bağlanamaz. Kurallar ve doğrulama: [REPAIR_SUPPLIES.md](REPAIR_SUPPLIES.md).
 
