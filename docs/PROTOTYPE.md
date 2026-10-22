@@ -1,6 +1,8 @@
 # İlk oynanabilir prototip
 
-Bu sürüm GDD'nin ilk altı geliştirme dilimidir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım veya gemide yükseltme satın al → ekibi topla → tekrar sefere çık.
+**22 Ekim 2026 doğrulaması:** Gövde boyaları/kargo korumaları sonrasında 105/105, soketsiz solo başlangıcı eklendikten sonra 106/106 Unity testi geçti (`Logs/Livery.xml`, `Logs/WebSolo.xml`). GitHub Pages'ta gerçek tarayıcı testi önce UDP solo başlangıcını ve URP shader hatasını ortaya çıkardı. `SoloTransport`, Forward/klasik-probe WebGL profili ve içerik hash'li dosya URL'leriyle son yayında solo oturum ve görünür gemi/iskele geometrisi doğrulandı; son yüklemede konsol hatası görülmedi. Kanıt ekranı `Logs/WebGL-Solo-Verified.png`. Relay üzerinden oturum oluşturma da tarayıcıda doğrulandı; çok istemcili internet/migration ve insanlarla oyun dengesi kabul testi henüz tamamlanmadı.
+
+Bu sürüm GDD'nin ilk dokuz geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık.
 
 ## Çalıştırma
 
@@ -107,6 +109,7 @@ Liman hareketi ikinci bir yerel düzlemdir: `CrewState.OnShore` açıkken `Posit
 - `WorldLabelPresentation`: Birinci şahıs için dünya yazılarını mesafeye göre ölçekler; yakın etiketlerin ekranı kaplamasını önler.
 - `VoyageEvents`: Şüpheli yolcu, servis yoğunluğu ve savrulan yük görevlerini zamanlayan deterministik olay destesi; sonuçlar host otoritesindedir ve host migration ile taşınır.
 - `CareerProgressStore`: Host cihazında yalnız uzun vadeli ortak ilerlemeyi sürümlemeli ve bozuk veri toleranslı olarak saklar.
+- `SoloTransport`: NGO'nun yerel host RPC akışını soket açmadan çalıştırır; tarayıcıda gerçek çevrimdışı solo oyun sağlar.
 
 Mevcut Blocks karakter prefabları üçüncü şahıs animasyon/kamera/olay bağlantıları taşıdığı için bu küçük bloklama sahnesinin hareketi ayrı tutuldu. Mevcut projeyle aynı Netcode ve Input System paketlerini kullanır. Bu kontrolcü nihai karakter veya fizik sistemi değildir.
 

@@ -14,9 +14,12 @@ namespace ShipMayham.Tests
         public IEnumerator SerializedSceneCanStartHostWithoutPlayerPrefab() => StartHost(false);
 
         [UnityTest]
+        public IEnumerator SoloUsesNoSocketsAndCanBoardPassengersThroughRpc() => StartHost(false, true);
+
+        [UnityTest]
         public IEnumerator DestroyedPlayerReferenceCannotBreakHostStartup() => StartHost(true);
 
-        private static IEnumerator StartHost(bool destroyedReference)
+        private static IEnumerator StartHost(bool destroyedReference, bool solo = false)
         {
             // The bug is Editor-specific: a standalone player does not reproduce Unity fake-null.
             yield return new EnterPlayMode();
@@ -34,13 +37,23 @@ namespace ShipMayham.Tests
                 Assert.IsFalse(ReferenceEquals(manager.NetworkConfig.PlayerPrefab, null));
             }
 
-            hud.Connect(true);
+            if (solo) hud.ConnectSolo(); else hud.Connect(true);
             float deadline = Time.realtimeSinceStartup + 5;
             while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.IsTrue(manager.IsHost, "Host must start through the same Connect path as the HUD button.");
             Assert.IsTrue(hud.Session.IsSpawned);
             Assert.AreEqual(0, hud.Session.LocalCrewIndex);
             Assert.IsNull(manager.LocalClient.PlayerObject, "Crew slots are scene objects, not spawned player prefabs.");
+            if (solo)
+            {
+                Assert.IsInstanceOf<SoloTransport>(manager.NetworkConfig.NetworkTransport);
+                var sim = hud.Session.Simulation;
+                sim.Crew[0].Position = sim.Stations[0].Position + Vector2.right;
+                hud.Session.InteractRpc(0, false);
+                yield return null;
+                Assert.AreEqual(4, sim.State.Boarded);
+                Assert.AreEqual(4, hud.Session.Voyage.Value.Boarded);
+            }
             LogAssert.NoUnexpectedReceived();
             manager.Shutdown();
             deadline = Time.realtimeSinceStartup + 5;

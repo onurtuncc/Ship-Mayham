@@ -103,6 +103,17 @@ namespace ShipMayham
             Manager.NetworkConfig.AutoSpawnPlayerPrefabClientSide = false;
         }
 
+        public void ConnectSolo()
+        {
+            if (Manager.IsListening || attempted) return;
+            attempted = true;
+            onlineMode = false;
+            PrepareNetworkConfig();
+            Manager.NetworkConfig.NetworkTransport = Manager.gameObject.AddComponent<SoloTransport>();
+            bool started = Manager.StartHost();
+            status = started ? "Solo voyage ready." : "Solo voyage could not start. Reload and retry.";
+        }
+
         public void Connect(bool host, string hostAddress = null)
         {
             if (Manager.IsListening || attempted) return;
@@ -138,6 +149,7 @@ namespace ShipMayham
                     await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
                 PrepareNetworkConfig();
+                Manager.GetComponent<UnityTransport>().UseWebSockets = true;
                 string playerId = AuthenticationService.Instance.PlayerId;
                 Manager.NetworkConfig.ConnectionData = Encoding.UTF8.GetBytes(playerId);
 
@@ -289,7 +301,7 @@ namespace ShipMayham
                 GUI.enabled = !attempted;
                 if (GUILayout.Button("CREATE ONLINE VOYAGE", GUILayout.Height(36))) ConnectOnline(true);
                 if (GUILayout.Button("JOIN ONLINE VOYAGE", GUILayout.Height(36))) ConnectOnline(false);
-                if (GUILayout.Button("LOCAL SOLO (OFFLINE TEST)", GUILayout.Height(28))) Connect(true);
+                if (GUILayout.Button("PLAY SOLO (OFFLINE)", GUILayout.Height(28))) ConnectSolo();
                 GUI.enabled = true;
                 GUILayout.Label(status, body);
                 if (attempted && (!onlineMode || onlineSession != null) && GUILayout.Button("Cancel / leave")) LeaveOrReload();

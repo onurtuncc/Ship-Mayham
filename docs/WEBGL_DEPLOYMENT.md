@@ -51,6 +51,12 @@ python -m http.server 8000 --directory Builds/WebGL
 
 Sonra `http://localhost:8000` adresine git.
 
+WebGL buildi `WebBuildSettings` altında ayrı bir Forward render profili üretir. Storage-buffer shader varyantları tarayıcıda derlenemediği için bu profil klasik light probe kullanır; APV, HDR, native render pass ve FSR kullanmaz. Build sırasında tüm quality seviyeleri bu profile bağlanır; işlem sonunda editörün özgün pipeline atamaları geri yüklenir. Unity'nin [resmî sürüm notları](https://release-notes.ds.unity3d.com/search?from_release=6000.1.17f1&to_release=6000.3.2f1) APV'nin WebGL'de desteklenmediğini belirtir.
+
+**PLAY SOLO (OFFLINE)** soketsiz `SoloTransport` ile çalışır; Relay veya internet oturumu oluşturmaz. Doğrudan UDP host başlatmak WebGL'de desteklenmez. Windows LAN smoke testleri mevcut `Connect` akışını, çevrimiçi oyun ise WSS/Relay akışını kullanır.
+
+Build sonrasında loader, data, framework ve wasm URL'lerine dosyanın SHA-256 özetinden bir sürüm parametresi eklenir. Böylece aynı dosya adlarıyla yapılan yeni yayınlarda tarayıcı önceki shader/veri paketini kullanmaz. Yayını doğrularken yalnız HTTP 200'e bakma: GitHub Pages deploy işinin ilgili commit için tamamlandığını, oyunun açıldığını ve gemi geometrisinin göründüğünü de kontrol et.
+
 ## Online multiplayer kurulumu
 
 Prototip artık Unity Multiplayer Services oturumlarını, Relay'i ve güvenli WebSocket (`WSS`) aktarımını kullanır. Bu nedenle hem GitHub Pages'taki WebGL sürümü hem de Windows sürümü internet üzerinden aynı oturuma bağlanabilir:
