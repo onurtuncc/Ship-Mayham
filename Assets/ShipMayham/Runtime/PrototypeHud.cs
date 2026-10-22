@@ -254,7 +254,6 @@ namespace ShipMayham
 
         private void OnlinePlayerLeft(string playerId)
         {
-            admittedPlayers.Remove(playerId);
             pendingDepartures.Add(playerId);
             FlushPendingDepartures();
         }
@@ -263,7 +262,28 @@ namespace ShipMayham
         {
             if (pendingDepartures.Count == 0 || !onlineMode || onlineSession == null || !onlineSession.IsHost ||
                 Session == null || !Session.IsSpawned || !Session.IsServer || Session.Simulation == null) return;
-            foreach (string playerId in pendingDepartures) Session.RemoveOnlinePlayer(playerId);
+            var currentPlayers = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var player in onlineSession.Players) currentPlayers.Add(player.Id);
+            ReconcileOnlineDepartures(currentPlayers);
+        }
+
+        private void ReconcileOnlineDepartures(ISet<string> currentPlayers)
+        {
+            // Lobby deltas can arrive after a newer roster was applied. The SDK's
+            // indexed PlayerHasLeft callback is not sufficient authority to delete
+            // a stable crew identity that is still in the current session roster.
+            foreach (string playerId in pendingDepartures)
+            {
+                if (currentPlayers.Contains(playerId))
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    if (onlineMode) Debug.Log("SHIP_CREW_DEPART_IGNORED current session member");
+#endif
+                    continue;
+                }
+                admittedPlayers.Remove(playerId);
+                Session.RemoveOnlinePlayer(playerId);
+            }
             pendingDepartures.Clear();
         }
 

@@ -81,6 +81,7 @@ try {
             throw "Migration assertion failed for $($result.Participant)."
         }
     }
+    Set-Content -LiteralPath (Join-Path $output "all-clients-passed.txt") -Value "validated" -NoNewline
     foreach ($instance in $clients) {
         if (-not $instance.WaitForExit(15000) -or $instance.ExitCode -ne 0) { throw "A surviving client did not exit cleanly." }
     }

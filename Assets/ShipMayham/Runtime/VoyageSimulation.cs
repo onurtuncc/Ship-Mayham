@@ -42,6 +42,13 @@ namespace ShipMayham
             return -1;
         }
 
+        public int FindPlayer(string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId)) return -1;
+            for (int i = 0; i < MaxCrew; i++) if (crewPlayerIds[i] == playerId) return i;
+            return -1;
+        }
+
         public int Join(ulong clientId, string playerId = null)
         {
             if (clientId == ulong.MaxValue) return -1;

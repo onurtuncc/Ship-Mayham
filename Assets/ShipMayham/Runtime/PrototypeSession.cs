@@ -42,10 +42,13 @@ namespace ShipMayham
             }
             Simulation = new VoyageSimulation(stations, seats, Harbor != null, (uint)UnityEngine.Random.Range(1, int.MaxValue));
             CareerProgressStore.Load(ref Simulation.State);
-            VoyageMigrationDataHandler.RestorePending(Simulation);
+            bool restored = VoyageMigrationDataHandler.RestorePending(Simulation);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (PrototypeHud.OnlineTransportActive) Debug.Log($"SHIP_CREW_RESTORE restored={restored}");
+#endif
             NetworkManager.OnClientConnectedCallback += Connected;
             NetworkManager.OnClientDisconnectCallback += Disconnected;
-            foreach (ulong id in NetworkManager.ConnectedClientsIds) Simulation.Join(id, PrototypeHud.PlayerIdentity(id));
+            foreach (ulong id in NetworkManager.ConnectedClientsIds) BindConnection(id);
             Publish();
         }
 
@@ -59,7 +62,20 @@ namespace ShipMayham
             Simulation = null;
         }
 
-        private void Connected(ulong id) { Simulation.Join(id, PrototypeHud.PlayerIdentity(id)); Publish(); }
+        private void BindConnection(ulong id)
+        {
+            string identity = PrototypeHud.PlayerIdentity(id);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            int previousSlot = Simulation.FindPlayer(identity);
+#endif
+            int slot = Simulation.Join(id, identity);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (PrototypeHud.OnlineTransportActive)
+                Debug.Log($"SHIP_CREW_BIND connection={id} identity={!string.IsNullOrEmpty(identity)} previousSlot={previousSlot} slot={slot}");
+#endif
+        }
+
+        private void Connected(ulong id) { BindConnection(id); Publish(); }
         private void Disconnected(ulong id)
         {
             if (!IsSpawned || !IsServer || Simulation == null || NetworkManager.ShutdownInProgress) return;
@@ -71,6 +87,9 @@ namespace ShipMayham
         public void RemoveOnlinePlayer(string playerId)
         {
             if (!IsServer || Simulation == null) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (PrototypeHud.OnlineTransportActive) Debug.Log($"SHIP_CREW_DEPART slot={Simulation.FindPlayer(playerId)}");
+#endif
             Simulation.LeavePlayer(playerId);
             Publish();
         }

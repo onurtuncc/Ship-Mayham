@@ -155,7 +155,15 @@ namespace ShipMayham
             WriteSignal(participant + ".json", JsonUtility.ToJson(result, true));
             Debug.Log($"SHIP_ONLINE_SMOKE_PASS {participant} host={result.NewHost} slot={restoredSlot}");
             finished = true;
-            yield return new WaitForSeconds(10);
+            // A restored host must remain alive until every peer has validated its
+            // rebind and command. A fixed delay can terminate a healthy authority
+            // while a slower Relay peer is still reconnecting.
+            while (!File.Exists(Path.Combine(output, "all-clients-passed.txt")))
+            {
+                if (Time.realtimeSinceStartup > deadline) { finished = false; Fail("Timed out waiting for the supervisor completion barrier."); yield break; }
+                yield return null;
+            }
+            yield return new WaitForSeconds(1);
             Application.Quit(0);
         }
 
