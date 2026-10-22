@@ -43,9 +43,9 @@ Tools/BlenderAssets/build_asset.sh Character_Crew3 ./out/Crew3   # Character_Cre
 
 `StylizedOcean` shader'ı (URP, unlit, WebGL uyumlu, derinlik dokusu istemez) üç çapraz dalga, kademeli (cartoon) gölgeleme, iki katmanlı hücresel köpük çizgileri, dalga tepesi köpüğü, güneş parıltısı ve mesafeyle derinleşen mavi içerir. `OceanSurface` ızgara mesh'ini çalışma anında üretir ve verilen `Follow` hedefini (gemi) ızgara adımına yuvarlayarak izler; dalga yüksekliği yalnızca görseldir, oynanış okumaz.
 
-Sahneye uygulamak için (Editor'de, Play dışında): **Ship Mayham → Upgrade Prototype (Stylized Ocean)**. Eski `Ocean_Visual` kutusu silinmez, yalnızca çizimi kapanır; işlem tekrar çalıştırılabilir. Yedek `Logs/ShipPrototype-PreStylizedOcean.unity`. Renkler ve dalga parametreleri `Ocean_Stylized.mat` üzerindedir.
+Deniz `ShipPrototype` sahnesine uygulandı (`Ocean_Stylized`, `Follow` = gemi); eski `Ocean_Visual` yalnızca çizimi kapalı olarak duruyor. Başka bir kopyada uygulamak için (Editor'de, Play dışında): **Ship Mayham → Upgrade Prototype (Stylized Ocean)**. Eski `Ocean_Visual` kutusu silinmez, yalnızca çizimi kapanır; işlem tekrar çalıştırılabilir. Yedek `Logs/ShipPrototype-PreStylizedOcean.unity`. Renkler ve dalga parametreleri `Ocean_Stylized.mat` üzerindedir.
 
-Doğrulama: `OceanSurfaceTests` (15 test) ve boş sahnede render alan `OceanPreviewCapture.Capture` (`-executeMethod ShipMayham.Editor.OceanPreviewCapture.Capture --ocean-preview-out <png>`; shader'ların eşzamanlı derlenmesi için gerekli). Önizleme: `docs/art/ocean_preview.png`.
+Doğrulama: `OceanSurfaceTests` (15 test) ve boş sahnede render alan `OceanPreviewCapture.Capture` (`-executeMethod ShipMayham.Editor.OceanPreviewCapture.Capture --ocean-preview-out <png>`; shader'ların eşzamanlı derlenmesi için gerekli). Önizleme: `docs/art/ocean_preview.png` (boş sahne), `docs/art/ocean_in_prototype_scene.png` (gerçek sahne, `OceanPreviewCapture.CaptureScene`). Tüm EditMode paketi (ShipMayham.Tests) temiz bir kopyada 225/225 geçti.
 
 ## Varlık listesi
 
@@ -92,7 +92,7 @@ Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre.
 
 ## Durum ve sınırlar
 
-- Varlıklar `PrototypeGeneratedPropsBuilder` ile kısmen sahneye bağlıdır; listedeki diğerleri yalnızca projeye eklidir. Deniz yukarıdaki menü komutuyla uygulanır, bu oturumda gerçek sahneye uygulanmadı (Editör açıktı).
+- Varlıklar `PrototypeGeneratedPropsBuilder` ile kısmen sahneye bağlıdır; listedeki diğerleri yalnızca projeye eklidir. Deniz sahneye uygulandı ve gerçek sahne render'ıyla doğrulandı.
 - Karakterlerde iskelet ve animasyon yoktur (statik poz). Hareket için ayrı rig gerekir; mevcut `StylizedCharacterPack` animasyonları bu modellere uymaz.
-- FBX'ler ayrı bir minimal URP 17.4 Unity projesinde (Unity 6000.4.6f1) içe aktarılıp render alınarak doğrulandı; ana prototip sahnesinde görsel doğrulama yapılmadı.
+- FBX'ler ayrı bir minimal URP 17.4 Unity projesinde (Unity 6000.4.6f1) içe aktarılıp render alınarak doğrulandı; deniz ayrıca gerçek prototip sahnesinde render alınarak doğrulandı; model yerleşimlerinin görsel doğrulaması yapılmadı.
 - Üretim yöntemi: modeller bu depodaki Blender betikleriyle elle yazıldı. Yerel LLM (llama.cpp + Blender MCP) denemeleri tutarlı sonuç vermedi; çıktılar LLM'den değil betiklerden gelir.

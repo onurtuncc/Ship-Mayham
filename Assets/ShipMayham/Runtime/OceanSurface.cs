@@ -51,7 +51,7 @@ namespace ShipMayham
     /// Stylized sea surface. Generates its grid mesh at runtime (nothing to author), follows a target on XZ,
     /// and leaves wave motion to the StylizedOcean shader. Visual only: gameplay never reads this height.
     /// </summary>
-    [DisallowMultipleComponent, RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+    [ExecuteAlways, DisallowMultipleComponent, RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class OceanSurface : MonoBehaviour
     {
         [SerializeField, Tooltip("Optional: the sea re-centres under this transform (ship). Leave empty for a fixed sea.")] private Transform follow;
@@ -65,12 +65,20 @@ namespace ShipMayham
         public Transform Follow { get => follow; set => follow = value; }
         public Mesh Mesh => mesh;
 
-        private void Awake() => Rebuild();
+        // The generated mesh is never serialized (HideFlags.DontSave), so rebuild whenever the component (re)enables:
+        // scene load, domain reload and entering Play Mode all pass through here.
+        private void OnEnable() => EnsureMesh();
 
         private void OnValidate()
         {
             cells = Mathf.Clamp(cells, OceanGridMesh.MinCells, OceanGridMesh.MaxCells);
             if (extent < 10f) extent = 10f;
+        }
+
+        private void EnsureMesh()
+        {
+            if (meshFilter == null) meshFilter = GetComponent<MeshFilter>();
+            if (mesh == null || meshFilter.sharedMesh != mesh) Rebuild();
         }
 
         [ContextMenu("Rebuild Ocean Mesh")]
@@ -85,7 +93,7 @@ namespace ShipMayham
 
         private void LateUpdate()
         {
-            if (follow == null) return;
+            if (!Application.isPlaying || follow == null) return;   // never move the sea while editing: no scene dirtying
             float step = extent / cells * 4f;
             Vector3 p = transform.position;
             p.x = OceanGridMesh.Snap(follow.position.x, step);

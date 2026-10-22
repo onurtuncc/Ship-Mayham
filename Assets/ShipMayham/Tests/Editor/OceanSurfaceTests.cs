@@ -44,6 +44,23 @@ namespace ShipMayham.Tests
         }
 
         [Test]
+        public void ComponentBuildsItsMeshWhenEnabledAndReleasesItOnDestroy()
+        {
+            var go = new GameObject("OceanTest", typeof(MeshFilter), typeof(MeshRenderer));
+            try
+            {
+                var surface = go.AddComponent<OceanSurface>();   // ExecuteAlways: OnEnable runs in Edit Mode
+                Assert.IsNotNull(surface.Mesh);
+                Assert.AreSame(surface.Mesh, go.GetComponent<MeshFilter>().sharedMesh);
+                Assert.AreEqual(161 * 161, surface.Mesh.vertexCount);
+                var first = surface.Mesh;
+                surface.Rebuild();
+                Assert.IsTrue(first == null, "Rebuild must free the previous mesh instead of leaking it.");
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
         public void LargeGridsSwitchToThirtyTwoBitIndices()
         {
             var mesh = OceanGridMesh.Build(OceanGridMesh.MaxCells, 640f, 1f);

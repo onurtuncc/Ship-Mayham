@@ -62,6 +62,48 @@ namespace ShipMayham.Editor
             ShaderUtil.allowAsyncCompilation = asyncCompilation;
         }
 
+        /// <summary>
+        /// Renders the real prototype scene from outside the ship. The scene is opened read-only (never saved)
+        /// so this is safe to run after <see cref="PrototypeSceneBuilder.UpgradeStylizedOcean"/> for review.
+        /// </summary>
+        public static void CaptureScene()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string output = ArgValue(args, "--ocean-preview-out") ?? "Logs/OceanScenePreview.png";
+            int width = int.TryParse(ArgValue(args, "--ocean-preview-width"), out int w) ? w : 1280, height = width * 9 / 16;
+            bool asyncCompilation = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            RenderTexture rt = null; Texture2D tex = null;
+            try
+            {
+                EditorSceneManager.OpenScene(PrototypeSceneBuilder.ScenePath);
+                var session = Object.FindAnyObjectByType<PrototypeSession>();
+                if (session == null || session.ShipRoot == null) throw new InvalidOperationException("Prototype session/ship not found in the scene.");
+                var cam = new GameObject("OceanPreviewCamera").AddComponent<Camera>();
+                Transform ship = session.ShipRoot;
+                cam.transform.position = ship.TransformPoint(new Vector3(7.5f, 4.2f, -11f));
+                cam.transform.LookAt(ship.TransformPoint(new Vector3(0f, 1.2f, 4f)));
+                cam.fieldOfView = 55; cam.farClipPlane = 800;
+                rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+                cam.targetTexture = rt;
+                cam.Render(); cam.Render();
+                RenderTexture.active = rt;
+                tex = new Texture2D(width, height, TextureFormat.RGB24, false, false);
+                tex.ReadPixels(new Rect(0, 0, width, height), 0, 0); tex.Apply();
+                RenderTexture.active = null;
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)));
+                File.WriteAllBytes(output, tex.EncodeToPNG());
+                Debug.Log("SHIP_OCEAN_SCENE_PREVIEW_WRITTEN " + Path.GetFullPath(output));
+            }
+            finally
+            {
+                ShaderUtil.allowAsyncCompilation = asyncCompilation;
+                RenderTexture.active = null;
+                if (tex != null) Object.DestroyImmediate(tex);
+                if (rt != null) Object.DestroyImmediate(rt);
+            }
+        }
+
         private static void Place(string model, Vector3 position, float yaw, float scale)
         {
             var asset = AssetDatabase.LoadAssetAtPath<GameObject>(Models + model + ".fbx");
