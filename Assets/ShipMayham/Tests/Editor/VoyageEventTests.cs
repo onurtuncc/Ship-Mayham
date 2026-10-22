@@ -196,6 +196,18 @@ namespace ShipMayham.Tests
             Assert.AreEqual(VoyageEventPhase.Resolved, sim.Event.Phase);
         }
 
+        [Test] public void AuditDoesNotBlockCollectingAnUnpaidFare()
+        {
+            StartSpecificEvent(VoyageEventKind.TicketAudit);
+            Assert.IsFalse(sim.Passengers[0].FarePaid);
+            CheckPassenger(0);
+            CheckPassenger(0);
+            Assert.IsTrue(sim.Passengers[0].FarePaid);
+            Assert.AreEqual(1, sim.State.CollectedFares);
+            Assert.AreEqual(1, sim.Event.Progress);
+            Assert.AreEqual(VoyageEventPhase.Active, sim.Event.Phase);
+        }
+
         [Test] public void VipRequiresTheNamedPassengersOrder()
         {
             StartSpecificEvent(VoyageEventKind.VipService);

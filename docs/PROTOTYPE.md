@@ -65,6 +65,8 @@ Her başarı başarılı varışta ödenen 15 para olay bonusu kazandırır. Fı
 
 Sekiz kartlı deste Unity 6000.4.6f1 ile ayrı doğrulama projesinde `-runTests -testPlatform EditMode -assemblyNames ShipMayham.Tests` kullanılarak test edildi: **113/113 geçti, process exit 0**. Rapor `Logs/EventDeckEight-Final.xml`, günlük `Logs/EventDeckEight-Final.log`. Kapsam sekiz kartı gerçek etkileşimlerle çözme, denetim/VIP hedefleri, hararetin iki çözümü ve hız kesintisi, yetersiz istasyonların filtrelenmesi, karışık sınırlı erzak, 256 seed üzerinde rota ağırlıkları ve migration sonrasında sekiz gelecek çekimin eşitliğidir.
 
+Ağ protokolü 3'e sabitlendikten sonra tam paket yine **113/113** geçti (`Logs/EventDeckEight-Protocol.xml`). Aktif olay mesajlarının ücret tahsilatını engellememesi düzeltmesinden sonra olay test sınıfı `-testFilter ShipMayham.Tests.VoyageEventTests` ile tekrar koşuldu: **12/12 geçti**, exit 0 (`Logs/EventFareRegression.xml`). Bu son koşu, denetim bitmeden kontrol edilmiş bir yolcudan ücret alınabildiğini de kapsar.
+
 ## Sahne ve model değiştirme sözleşmesi
 
 | Kök / alt nesne | Sorumluluk |

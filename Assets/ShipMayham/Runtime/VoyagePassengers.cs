@@ -80,12 +80,11 @@ namespace ShipMayham
                     string ticket = target.FarePaid ? "Ticket valid. Destination: North Port." : "No payment! F / Y again to collect 40 coins (paid on arrival).";
                     return ticket + inspection;
                 }
-                if (!string.IsNullOrEmpty(inspection)) return inspection.TrimStart();
-                if (target.FarePaid) return "Already paid. No duplicate charge.";
+                if (target.FarePaid) return "Already paid. No duplicate charge." + inspection;
                 target.FarePaid = true;
                 State.CollectedFares++;
                 React(passenger, PassengerReaction.FareCollected);
-                return "Fare collected: +40 ticket income on successful arrival.";
+                return "Fare collected: +40 ticket income on successful arrival." + inspection;
             }
             if (Crew[slot].Carrying != ServiceItem.None) return "Serve or return your item before lifting a passenger.";
             target.Motion = PassengerMotion.Carried;
