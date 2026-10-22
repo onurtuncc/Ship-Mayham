@@ -9,7 +9,7 @@ namespace ShipMayham
         public PrototypeView View;
         public Transform ShipGate;
         public Transform[] PortRoots;
-        // Board / food / drink / maintenance, departure first then destination.
+        // HarborAction 1..StationsPerPort, departure first then destination.
         public Transform[] ShoreMarkers;
         public TextMesh[] Labels;
         public Transform[] Walkways;
@@ -29,6 +29,9 @@ namespace ShipMayham
                 case HarborAction.BuyDrink: return "E / A: buy 8 drinks for 12 coins | storage cap 32";
                 case HarborAction.HarborMaster: return "E / A: speak to harbor master | routes / town jobs";
                 case HarborAction.PaintShop: return "E / A: visit paint dock | choose your ship colors";
+                case HarborAction.FishMarket: return "E / A: take / return fish crate for CRANE LOADING";
+                case HarborAction.CraneLoadingPad: return "E / A: deliver fish crate to loading pad";
+                case HarborAction.CraneControls: return "E / A: operate harbor crane (CRANE LOADING job)";
                 default: return "E / A: hull protection — 30 coins, absorbs 20 damage";
             }
         }

@@ -121,6 +121,7 @@ namespace ShipMayham
         {
             if (Crew[i].AtHelm) State.Speed = 0;
             Crew[i].AtHelm = false;
+            Crew[i].AtCrane = false;
             if (Crew[i].AtCannon) ReleaseCannon(i);
             int carriedPassenger = CarriedPassenger(i);
             if (carriedPassenger >= 0) ReturnPassengerToSeat(carriedPassenger);
@@ -143,7 +144,7 @@ namespace ShipMayham
         public void Jump(ulong clientId)
         {
             int i = FindCrew(clientId);
-            if (i < 0 || Crew[i].AtHelm || Crew[i].AtCannon || Crew[i].JumpHeight > 0 || Crew[i].VerticalSpeed > 0) return;
+            if (i < 0 || Crew[i].AtHelm || Crew[i].AtCannon || Crew[i].AtCrane || Crew[i].JumpHeight > 0 || Crew[i].VerticalSpeed > 0) return;
             Crew[i].VerticalSpeed = JumpSpeed;
         }
 
@@ -175,10 +176,12 @@ namespace ShipMayham
                     State.Speed = Mathf.Clamp(State.Speed + input.y * dt * 3, 0, 4 + State.EngineLevel * 1.5f);
                     State.Heading = Mathf.Repeat(State.Heading + input.x * dt * 40, 360);
                 }
+                else if (Crew[i].AtCrane) MoveHarborCrane(i, input, dt);
                 else if (Crew[i].OnShore) MoveShoreCrew(i, input * (4.2f * dt));
                 else if (!Crew[i].AtCannon) MoveCrew(i, input * (4.2f * dt * (CarriedPassenger(i) >= 0 ? .7f : Crew[i].Carrying == ServiceItem.Ammo ? .8f : 1)));
             }
             TickPassengers(dt);
+            if (State.DockJobActive && State.DockJobType == DockJobKind.CraneLoading && HarborOpen) State.CraneSwayTime += dt;
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Elapsed += dt;
             float radians = State.Heading * Mathf.Deg2Rad;
@@ -357,6 +360,7 @@ namespace ShipMayham
             if (Crew[crew].Carrying == ServiceItem.Drink) State.DrinkStock++;
             if (Crew[crew].Carrying == ServiceItem.Ammo) Encounter.MagazineAmmo++;
             if (Crew[crew].Carrying == ServiceItem.RepairKit) State.RepairKitStock++;
+            if (Crew[crew].Carrying == ServiceItem.CraneCrate) State.CraneStock++;
             Crew[crew].Carrying = ServiceItem.None;
         }
 
@@ -450,6 +454,7 @@ namespace ShipMayham
             {
                 Crew[i].AtHelm = false;
                 Crew[i].AtCannon = false;
+                Crew[i].AtCrane = false;
                 Crew[i].OnShore = false;
                 Crew[i].Carrying = ServiceItem.None;
                 Crew[i].Position = new Vector2(-1.5f + i, -6);
