@@ -465,11 +465,20 @@ namespace ShipMayham
             if (e.Phase == VoyageEventPhase.Resolved) return "EVENT SOLVED — +15 on arrival";
             if (e.Phase == VoyageEventPhase.Failed) return "EVENT FAILED — consequences applied";
             string timer = $"{e.Remaining:0}s";
-            return e.Kind == VoyageEventKind.ContrabandInspection
-                ? $"CONTRABAND INSPECTION — {timer}\nCheck passenger tickets with F / Y."
-                : e.Kind == VoyageEventKind.GalleyRush
-                    ? $"GALLEY RUSH — {e.Progress}/{e.Goal} orders — {timer}"
-                    : $"LOOSE CARGO — repair panel {e.Progress}/{e.Goal} — {timer}";
+            string target = $"passenger {e.TargetPassenger + 1}";
+            switch (e.Kind)
+            {
+                case VoyageEventKind.ContrabandInspection: return $"CONTRABAND — {timer}\nCheck tickets with F / Y to find the suspect.";
+                case VoyageEventKind.GalleyRush: return $"GALLEY RUSH — {e.Progress}/{e.Goal} orders — {timer}";
+                case VoyageEventKind.LooseCargo: return $"LOOSE CARGO — repair panel {e.Progress}/{e.Goal} — {timer}";
+                case VoyageEventKind.VipService: return $"VIP SERVICE — {timer}\nServe {target}'s order with E / A.";
+                case VoyageEventKind.TicketAudit: return $"TICKET AUDIT — {e.Progress}/{e.Goal} — {timer}\nF / Y: check different passengers.";
+                case VoyageEventKind.FuseOverload: return $"FUSE OVERLOAD — {timer}\nReset POWER breakers: {e.Progress}/{e.Goal}";
+                case VoyageEventKind.EngineOverheat: return $"ENGINE HOT — {timer}\nSlow below 1 m/s for 8s ({e.CoolingTime:0.0}/8), or vent twice at REPAIR.";
+                case VoyageEventKind.SeatShuffle: return $"SEAT SHUFFLE — {timer}\nG / B: carry {target} at least 1.5m from their seat; put down safely.";
+                default: return "Ship event pending.";
+            }
         }
+
     }
 }

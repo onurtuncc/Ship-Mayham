@@ -40,7 +40,7 @@ namespace ShipMayham
                 Vector3 p = ShipRoot.InverseTransformPoint(PassengerAnchors[i].position);
                 seats[i] = new Vector2(p.x, p.z);
             }
-            Simulation = new VoyageSimulation(stations, seats, Harbor != null);
+            Simulation = new VoyageSimulation(stations, seats, Harbor != null, (uint)UnityEngine.Random.Range(1, int.MaxValue));
             CareerProgressStore.Load(ref Simulation.State);
             VoyageMigrationDataHandler.RestorePending(Simulation);
             NetworkManager.OnClientConnectedCallback += Connected;

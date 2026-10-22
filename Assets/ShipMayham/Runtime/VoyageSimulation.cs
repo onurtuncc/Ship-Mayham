@@ -23,13 +23,14 @@ namespace ShipMayham
         private float clock;
         private float nextLeak = 25;
 
-        public VoyageSimulation(StationDefinition[] stations, Vector2[] seats, bool harborEnabled = false)
+        public VoyageSimulation(StationDefinition[] stations, Vector2[] seats, bool harborEnabled = false, uint eventSeed = 1)
         {
             if (seats.Length != MaxPassengers) throw new ArgumentException("Exactly eight seat anchors required.");
             Stations = stations;
             Seats = seats;
             HarborEnabled = harborEnabled;
             State = new VoyageState { Health = 100, Voyage = 1, FoodStock = 16, DrinkStock = 16 };
+            eventRandomState = eventSeed == 0 ? 1u : eventSeed;
             ResetEncounter();
             ResetEvents();
         }
@@ -256,6 +257,7 @@ namespace ShipMayham
                 case StationKind.Power:
                     if (!Encounter.PowerOut) return "Power is online.";
                     Encounter.PowerRepairSteps++;
+                    PowerRepairedForEvent();
                     if (Encounter.PowerRepairSteps < 3) return $"Resetting breakers: {Encounter.PowerRepairSteps}/3";
                     Encounter.PowerOut = false;
                     return "Power restored. Service counters are online.";
@@ -319,7 +321,7 @@ namespace ShipMayham
             p.Satisfaction = Mathf.Min(100, p.Satisfaction + 15);
             Crew[crew].Carrying = ServiceItem.None;
             State.Served++;
-            RecordServiceForEvent();
+            RecordServiceForEvent(passenger);
             React(passenger, PassengerReaction.Thanks);
             return "Order delivered! +8 service income, paid on arrival.";
         }

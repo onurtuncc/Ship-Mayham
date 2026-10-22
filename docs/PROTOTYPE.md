@@ -2,7 +2,7 @@
 
 **22 Ekim 2026 doğrulaması:** Gövde boyaları/kargo korumaları sonrasında 105/105, soketsiz solo başlangıcı eklendikten sonra 106/106 Unity testi geçti (`Logs/Livery.xml`, `Logs/WebSolo.xml`). GitHub Pages'ta gerçek tarayıcı testi önce UDP solo başlangıcını ve URP shader hatasını ortaya çıkardı. `SoloTransport`, Forward/klasik-probe WebGL profili ve içerik hash'li dosya URL'leriyle son yayında solo oturum ve görünür gemi/iskele geometrisi doğrulandı; son yüklemede konsol hatası görülmedi. Kanıt ekranı `Logs/WebGL-Solo-Verified.png`. Relay üzerinden oturum oluşturma da tarayıcıda doğrulandı; çok istemcili internet/migration ve insanlarla oyun dengesi kabul testi henüz tamamlanmadı.
 
-Bu sürüm GDD'nin ilk dokuz geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık.
+Bu sürüm GDD'nin ilk on geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık.
 
 ## Çalıştırma
 
@@ -45,6 +45,25 @@ Netcode'un editörde sahne senkronizasyonu yapabilmesi için prototip sahnesi Bu
 Bu ilk döngüde yeni sefer başlangıç limanına geri yerleştirir. Yolcular binme/yürüme animasyonu olmadan koltuklarda belirir. İki limanda da dar bir yürünebilir iskele/hazırlık alanı vardır; terminal binalarının içi, açık kara dünyası ve görevler yoktur. Başarılı yanaşmada gemi sabit rıhtım konumuna/yönüne hizalanır. Geçişler E/A ile anlıktır; yürüyerek kesintisiz plank geçişi değildir. Başarısız seferde limana geçiş kapalıdır; önce Manifest ile ücretsiz yeni sefere hazırlan.
 
 Ortak para, itibar, motor/kapasite/konfor seviyeleri ve tamamlanan kargo işi sayısı host cihazında sürümlemeli yerel kariyer kaydı olarak tutulur. WebGL'de bu kayıt tarayıcının kalıcı depolamasını kullanır. Sağlık, aktif rota, yolcular ve devam eden olaylar kariyer kaydına girmez; çevrimiçi host migration bunları ayrı snapshot ile taşır.
+
+## Olay destesi
+
+Host her oturumda bir seed üretir. Deste mevcut istasyon ve stoklara göre uygun kartlardan rota ağırlıklarıyla seçim yapar; aynı kart, o turdaki uygun kartlar bitmeden tekrar gelmez. Market Run servis/VIP kartlarına, Storm Passage teknik kartlara daha fazla ağırlık verir. Yeni tur sınırında da mümkünse art arda aynı kart gelmez. Deste, hedef yolcu, denetlenen yolcu maskesi ve hararetin soğuma süresi host migration snapshot v3 ile devam eder; tüm oyuncular aynı sürümü kullanmalıdır.
+
+| Olay | Çözüm | Süre dolarsa |
+|---|---|---|
+| Contraband | F/Y ile gizli şüpheli yolcuyu kontrol et; önceden bakılan bilet tekrar kontrol edilebilir | 5 gövde hasarı ve elektrik arızası |
+| Galley Rush | İki sipariş servis et | Aktif yolculara 8 memnuniyet kaybı |
+| Loose Cargo | Sızıntıyı giderdikten sonra REPAIR noktasında üç sabitleme | 12 gövde hasarı |
+| VIP Service | HUD'da belirtilen yolcunun siparişini servis et | VIP'de 20 memnuniyet kaybı |
+| Ticket Audit | F/Y ile iki farklı yolcuyu kontrol et | Aktif yolculara 8 memnuniyet kaybı |
+| Fuse Overload | POWER noktasındaki gerçek sigortaları sıfırla | 8 gövde hasarı; kesinti onarılana kadar sürer |
+| Engine Overheat | Hızı 1 m/s veya altına indirip 8 saniye bekle ya da bu hızda REPAIR noktasında iki vana aç | 15 gövde hasarı ve motor durması |
+| Seat Shuffle | HUD'daki yolcuyu G/B ile taşı, özgün koltuğundan en az 1,5 m uzağa güvenle bırak | Yolcuda 20 memnuniyet kaybı |
+
+Her başarı başarılı varışta ödenen 15 para olay bonusu kazandırır. Fırlatmak, Seat Shuffle görevini tamamlamaz. Bilet denetiminde aynı yolcuyu tekrar kontrol etmek ilerleme kazandırmaz.
+
+Sekiz kartlı deste Unity 6000.4.6f1 ile ayrı doğrulama projesinde `-runTests -testPlatform EditMode -assemblyNames ShipMayham.Tests` kullanılarak test edildi: **113/113 geçti, process exit 0**. Rapor `Logs/EventDeckEight-Final.xml`, günlük `Logs/EventDeckEight-Final.log`. Kapsam sekiz kartı gerçek etkileşimlerle çözme, denetim/VIP hedefleri, hararetin iki çözümü ve hız kesintisi, yetersiz istasyonların filtrelenmesi, karışık sınırlı erzak, 256 seed üzerinde rota ağırlıkları ve migration sonrasında sekiz gelecek çekimin eşitliğidir.
 
 ## Sahne ve model değiştirme sözleşmesi
 

@@ -60,6 +60,7 @@ namespace ShipMayham
                 held.Position = SafePassengerPosition(carried, Crew[slot].Position + new Vector2(ahead.x, ahead.z));
                 held.Velocity = Vector3.zero;
                 React(carried, PassengerReaction.Complaint);
+                if (PassengerPlacedForEvent(carried)) return "New seat found! +15 event bonus on arrival.";
                 return "Passenger put down. They can be served at their new position.";
             }
             if (airborne) return "Land before interacting.";
