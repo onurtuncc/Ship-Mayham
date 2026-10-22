@@ -17,13 +17,21 @@ Unity Hub'da **Installs → 6000.4.6f1 → Manage → Add modules → Web Build 
 Script şu işlemleri yapar:
 
 1. Projenin kayıtlı Unity sürümünü bulur.
-2. `ShipPrototype` sahnesini `Builds/WebGL/` klasörüne derler.
-3. Çıktıyı geçici bir Git worktree ile `gh-pages` dalına gönderir.
+2. `Assets`, `Packages` ve `ProjectSettings` klasörlerini `Builds/WebGLWorkspace/` içindeki kalıcı WebGL çalışma alanına yansıtır (robocopy `/MIR`) ve `ShipPrototype` sahnesini orada derler.
+3. Çıktıyı `Builds/WebGL/` klasörüne kopyalar ve geçici bir Git worktree ile `gh-pages` dalına gönderir.
 4. Geçici worktree'yi temizler.
 
-Ana proje Unity Editor'de açıksa script, proje kilidine çarpmamak için `Builds/ShipPrototypeValidation/` altındaki kalıcı ve cache'li build workspace'ini günceller. İlk senkronizasyon sonraki yayınlardan daha uzun sürebilir.
+### Build süresi
 
-Cache'li proje zaten Unity'de test/derleme için açıksa script dosyaları senkronize etmeden hata verir; mevcut işlemin bitmesini bekleyip tekrar çalıştır. Kilit dosyasını silerek zorlamayın. Bu kontrol, çalışan bir Unity workspace'inin üstüne kopyalamayı engeller; iki yayın komutunu aynı anda başlatmak desteklenmez.
+Build'i hızlandıran üç şey vardır:
+
+- **Ayrı WebGL çalışma alanı:** Ana projeyi WebGL'ye çevirmek tüm asset'leri yeniden içe aktarıp Windows'a dönerken tekrar aktarıyordu ve ana projeyi kirletiyordu (`ProjectSettings`, `WebBuildSettings`). Çalışma alanı kendi `Library` klasörünü (WebGL import, shader ve IL2CPP/Bee önbelleği) korur; yalnızca ilk build soğuktur. `Builds/WebGLWorkspace` silinirse bir sonraki yayın yeniden soğuk başlar.
+- **IL2CPP ayarları (`WebGLBuild.Build` uygular, sonra geri alır):** `Il2CppCodeGeneration.OptimizeSize` ("Faster (smaller) builds"), `Il2CppCompilerConfiguration.Release` ve artımlı IL2CPP. C++ derleme ve wasm bağlama adımı toplam sürenin çoğunu oluşturuyordu.
+- **Artımlı build:** Değişmeyen C++ nesneleri yeniden kullanılır.
+
+Ölçüm (22 Ekim 2026, aynı kaynak): eski akış ana projede yaklaşık 27 dk (tek bir Bee adımı 12,5 dk), `.wasm` 74,4 MB. Yeni akışta soğuk çalışma alanı 9,0 dk, değişiklik olmadan tekrar 0,5 dk, `.wasm` 50,5 MB (tarayıcıda indirme de daha küçük). `OptimizeSize` çalışma zamanında jenerik kodu biraz daha yavaş yapabilir; oyun yerel tarayıcıda açılıp SOLO başlatılarak doğrulandı.
+
+`-InPlace` ana projeyi doğrudan derler (Unity'de açık olmamalı); `-BuildOnly` yayınlamadan yalnızca build alır. Script Windows PowerShell 5.1'de de çalışır: git'in stderr çıktısı hata sayılmaz, yalnızca çıkış kodu kontrol edilir.
 
 Unity farklı bir konumdaysa yolu açıkça verebilirsin:
 

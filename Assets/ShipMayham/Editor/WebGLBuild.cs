@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -22,8 +23,18 @@ namespace ShipMayham.Editor
 
             // GitHub Pages cannot add the Content-Encoding headers Unity's pre-compressed
             // files require. Disabled compression is larger, but works without a custom server.
+            var webGL = NamedBuildTarget.WebGL;
+            var originalCompression = PlayerSettings.WebGL.compressionFormat;
+            var originalCodeGeneration = PlayerSettings.GetIl2CppCodeGeneration(webGL);
+            var originalCompilerConfiguration = PlayerSettings.GetIl2CppCompilerConfiguration(webGL);
+            bool originalIncremental = PlayerSettings.GetIncrementalIl2CppBuild(webGL);
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
             PlayerSettings.WebGL.decompressionFallback = false;
+            // The IL2CPP C++ and wasm link step dominates build time. "Faster (smaller) builds" emits far less generic
+            // code, Release skips the slow Master/LTO configuration, and incremental builds reuse unchanged C++ objects.
+            PlayerSettings.SetIl2CppCodeGeneration(webGL, Il2CppCodeGeneration.OptimizeSize);
+            PlayerSettings.SetIl2CppCompilerConfiguration(webGL, Il2CppCompilerConfiguration.Release);
+            PlayerSettings.SetIncrementalIl2CppBuild(webGL, true);
 
             Directory.CreateDirectory(OutputPath);
             string graphicsBackup = File.ReadAllText("ProjectSettings/GraphicsSettings.asset");
@@ -56,6 +67,10 @@ namespace ShipMayham.Editor
             }
             finally
             {
+                PlayerSettings.WebGL.compressionFormat = originalCompression;
+                PlayerSettings.SetIl2CppCodeGeneration(webGL, originalCodeGeneration);
+                PlayerSettings.SetIl2CppCompilerConfiguration(webGL, originalCompilerConfiguration);
+                PlayerSettings.SetIncrementalIl2CppBuild(webGL, originalIncremental);
                 GraphicsSettings.defaultRenderPipeline = originalPipeline;
                 quality.Update();
                 for (int i = 0; i < originalQualityPipelines.Length; i++)
