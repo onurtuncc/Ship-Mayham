@@ -67,7 +67,7 @@ Build sonrasında loader, data, framework ve wasm URL'lerine dosyanın SHA-256 �
 
 Prototip artık Unity Multiplayer Services oturumlarını, Relay'i ve güvenli WebSocket (`WSS`) aktarımını kullanır. Bu nedenle hem GitHub Pages'taki WebGL sürümü hem de Windows sürümü internet üzerinden aynı oturuma bağlanabilir:
 
-Vinç mini oyununu içeren güncel kaynakta snapshot ve NGO bağlantı protokolü **9**'dur; son doğrulanmış `fa132b5` Pages paketi **v8**'dir. Kaynak/Windows v9 ile canlı web v8 aynı oturuma giremez. Sonraki toplu kara yayınında web de güncellenecektir. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular aynı build'i kullanmalıdır. Son yayımlanmış paket kanıtı [PROTOTYPE.md](PROTOTYPE.md), yeni mekanik [HARBOR_CRANE.md](HARBOR_CRANE.md) içindedir.
+Vinç mini oyununu içeren güncel kaynakta snapshot ve NGO bağlantı protokolü **9**'dur. Canlı Pages paketi 22 Ekim 2026'da `gh-pages` `f888bb0` ile **v9**'a güncellendi (vinç dilimi, stilize deniz, yeniden stillendirilmiş modeller); build kaynağı `main` `64aa9d4` idi, yerel WebGL build 232/232 test sonrası alındı ve canlı dosyaların SHA-256 özeti yerel build ile eşleşti. Bu yayında `Publish-WebGL.ps1` Windows PowerShell 5.1'de git'in stderr çıktısı yüzünden `fetch` adımında düştü (betik PowerShell 7 varsayıyor); aynı adımlar elle uygulandı. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular aynı build'i kullanmalıdır. Son yayımlanmış paket kanıtı [PROTOTYPE.md](PROTOTYPE.md), yeni mekanik [HARBOR_CRANE.md](HARBOR_CRANE.md) içindedir.
 
 1. İlk oyuncu **CREATE ONLINE VOYAGE** ile özel bir oturum açar.
 2. Ekrandaki kodu diğer oyuncularla paylaşır.
