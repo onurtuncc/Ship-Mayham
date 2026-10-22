@@ -4,7 +4,7 @@
 
 Bu sürüm GDD'nin ilk on üç geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / topçuya gülle taşı / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık. İlk prop modeli grubu bağlanmıştır; kalan görseller hâlâ blok prototiptir.
 
-Güncel web paketi `f53bc8d`, Pages deployment `39706737575` başarılıdır: ilk prop modelleri ve Relay host başlangıcı canlı sayfada doğrulandı (`Logs/WebGL-GeneratedProps-Relay.png`). Site: [Ship Mayham](https://onurtuncc.github.io/Ship-Mayham/). Model kapsamı ve sınırlamalar [ART_PIPELINE.md](ART_PIPELINE.md) içindedir.
+Güncel web paketi `b7352e9` (kaynak `c039e55`), Pages deployment `39714573200` başarılıdır: gülle yığını, 12 toplam/11 ambar/0 top stoğu HUD'ı, Relay host başlangıcı ve Leave ile menüye dönüş canlı sayfada doğrulandı (`Logs/WebGL-AmmoFlow-Verified.png`). Tarayıcı hata kaydı boştu; QoS/WebGL destek uyarısı, depolama sync deprecation ve kullanılmayan FSR shader uyarısı sürüyor. Site: [Ship Mayham](https://onurtuncc.github.io/Ship-Mayham/). Gülle kapsamı ve son migration kabulündeki açık hata [AMMO_FLOW.md](AMMO_FLOW.md), model kapsamı [ART_PIPELINE.md](ART_PIPELINE.md) içindedir.
 
 ## Çalıştırma
 
