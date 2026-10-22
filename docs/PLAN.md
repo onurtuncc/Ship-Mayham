@@ -1,5 +1,7 @@
 # Ship Mayham — Uygulama Planı
 
+**On dokuzuncu geliştirme dilimi:** Kara için iki rollü vinç yükleme mini oyunu: fiziksel yük tedariki, iki yuvalı pad, operatör kontrolü, salınan kanca ve mavnaya indirme. Yeni işin 7 odaklı kontrolü geçti; eski sefer/Relay döngüleri tekrarlanmadı. Kaynak v9; web dilim 18/v8'de, sonraki toplu kara yayınına kadar ayrı. [HARBOR_CRANE.md](HARBOR_CRANE.md).
+
 **On sekizinci geliştirme dilimi:** İki limanda geniş gezilebilir kasaba, gerçek model dükkânlar ve NPC'ler, yeni kara haritası ve üç noktadan paralel hurda toplama/teslim işi eklendi. Yalnız yeni kara alanı/iş için 7 odaklı kontrol ve build çalıştırıldı; eski uzun sefer/Relay akışları bu dilimde tekrarlanmadı. [HARBOR_TOWN.md](HARBOR_TOWN.md).
 
 **On yedinci geliştirme dilimi:** Fiziksel hızlı yama kiti deposu/taşıma/tezgâha teslim/uygulama akışı, sınırlı stok ve elle tamir alternatifi eklendi. Son sahneyle 202/202 test, Windows build ve dört süreçli tam sefer geçti; v7 Relay host kaybı da doğrulandı. Kaynak protokolü v7; canlı Pages yayını bu dilim ayrıca yayımlanana kadar v6'dır. [REPAIR_SUPPLIES.md](REPAIR_SUPPLIES.md).

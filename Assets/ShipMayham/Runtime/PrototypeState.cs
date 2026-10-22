@@ -5,16 +5,16 @@ using UnityEngine;
 namespace ShipMayham
 {
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
-    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC }
+    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing }
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
-    public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull, HarborMaster, PaintShop }
+    public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull, HarborMaster, PaintShop, FishMarket, CraneLoadingPad, CraneControls }
     public enum RouteProfile : byte { CoastalFerry, MarketRun, StormPassage }
     public enum ShipLivery : byte { Classic, Seafoam, Sunset }
-    public enum DockJobKind : byte { CargoRelay, LuggageSort, SalvageRun }
+    public enum DockJobKind : byte { CargoRelay, LuggageSort, SalvageRun, CraneLoading }
 
     [Serializable]
     public struct VoyageState : INetworkSerializable, IEquatable<VoyageState>
@@ -31,6 +31,10 @@ namespace ShipMayham
         public int Wallet, Voyage, Boarded, Served, FoodStock, DrinkStock, Leak, RepairSteps;
         public int DockJobProgress, DockJobPortKey, DockJobsCompleted;
         public int RepairKitStock, ReadyRepairKits, RepairKitsUsed;
+        public Vector2 CraneHook;
+        public bool CraneHolding;
+        public int CraneStock, CraneReady;
+        public float CraneSwayTime;
         public int EngineLevel, CapacityLevel, ComfortLevel;
         public int Reputation, LastReputation;
         public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty, LastEventBonus, LastRouteBonus;
@@ -48,6 +52,8 @@ namespace ShipMayham
             s.SerializeValue(ref DockJobProgress); s.SerializeValue(ref DockJobPortKey); s.SerializeValue(ref DockJobsCompleted);
             s.SerializeValue(ref FoodStock); s.SerializeValue(ref DrinkStock); s.SerializeValue(ref Leak); s.SerializeValue(ref RepairSteps);
             s.SerializeValue(ref RepairKitStock); s.SerializeValue(ref ReadyRepairKits); s.SerializeValue(ref RepairKitsUsed);
+            s.SerializeValue(ref CraneHook); s.SerializeValue(ref CraneHolding);
+            s.SerializeValue(ref CraneStock); s.SerializeValue(ref CraneReady); s.SerializeValue(ref CraneSwayTime);
             s.SerializeValue(ref EngineLevel); s.SerializeValue(ref CapacityLevel); s.SerializeValue(ref ComfortLevel);
             s.SerializeValue(ref Reputation); s.SerializeValue(ref LastReputation);
             s.SerializeValue(ref LastTickets); s.SerializeValue(ref LastServices); s.SerializeValue(ref LastTips);
@@ -64,7 +70,7 @@ namespace ShipMayham
     [Serializable]
     public struct CrewState : INetworkSerializable, IEquatable<CrewState>
     {
-        public bool Active, AtHelm, AtCannon, OnShore;
+        public bool Active, AtHelm, AtCannon, OnShore, AtCrane;
         public ulong ClientId;
         public Vector2 Position;
         public ServiceItem Carrying;
@@ -75,11 +81,12 @@ namespace ShipMayham
             s.SerializeValue(ref Position); s.SerializeValue(ref Carrying);
             s.SerializeValue(ref AtCannon);
             s.SerializeValue(ref OnShore);
+            s.SerializeValue(ref AtCrane);
             s.SerializeValue(ref JumpHeight); s.SerializeValue(ref VerticalSpeed);
         }
         public bool Equals(CrewState other) => Active == other.Active && AtHelm == other.AtHelm &&
             ClientId == other.ClientId && Position.Equals(other.Position) && Carrying == other.Carrying && AtCannon == other.AtCannon &&
-            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore;
+            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane;
     }
 
     [Serializable]

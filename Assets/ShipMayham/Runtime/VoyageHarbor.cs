@@ -21,6 +21,9 @@ namespace ShipMayham
                 case HarborAction.MaintainHull: return new Vector2(-12, 11);
                 case HarborAction.HarborMaster: return new Vector2(-7, 1);
                 case HarborAction.PaintShop: return new Vector2(-26, -12);
+                case HarborAction.FishMarket: return new Vector2(-20, 14);
+                case HarborAction.CraneLoadingPad: return new Vector2(-25, 12);
+                case HarborAction.CraneControls: return new Vector2(-23.5f, 8);
                 default: return Vector2.zero;
             }
         }
@@ -76,15 +79,17 @@ namespace ShipMayham
         {
             int slot = FindCrew(clientId);
             if (slot < 0 || !HarborOpen || !Crew[slot].OnShore) return "Go ashore to use the job board.";
-            if (kind > DockJobKind.SalvageRun) return "Unknown dock job.";
+            if (kind > DockJobKind.CraneLoading) return "Unknown dock job.";
             if (State.DockJobActive)
             {
                 if (State.DockJobType != kind) return "Finish or cancel the current job before changing contracts.";
+                if (State.CraneHolding) return "Lower the crane's load before cancelling the job.";
                 foreach (var member in Crew)
                     if (member.Active && IsPortCargo(member.Carrying)) return "Return every held item to the orange pickup before cancelling.";
                 State.DockJobActive = false;
                 State.DockJobProgress = 0;
                 State.DockJobDeliveredMask = 0;
+                ClearHarborCrane();
                 return "Port job cancelled. Departure is unlocked.";
             }
             if (State.DockJobPortKey == CurrentPortKey) return "This port's job is already complete.";
@@ -92,6 +97,12 @@ namespace ShipMayham
             State.DockJobProgress = 0;
             State.DockJobType = kind;
             State.DockJobDeliveredMask = 0;
+            if (kind == DockJobKind.CraneLoading)
+            {
+                ClearHarborCrane(); State.CraneStock = DockJobGoal;
+                State.CraneHook = HarborPoint(HarborAction.CraneLoadingPad);
+                return "Crane loading: carry 3 FISH MARKET crates to LOAD PAD. Operator: WASD moves hook, Space grabs/lands, E releases.";
+            }
             if (kind == DockJobKind.SalvageRun) return "Salvage run: find 3 marked bundles around town. Carry them to the PORT OFFICE. Food counter accepts returns.";
             if (kind == DockJobKind.LuggageSort) return "Bag sort: ORANGE pickup/return. Read A/B/C desks on the board. Deliver to BLUE or GREEN; wrong desks keep the bag.";
             return "Cargo relay started: carry 3 crates from FOOD pickup to HULL delivery. Multiple crew can relay together.";
@@ -118,9 +129,9 @@ namespace ShipMayham
         public string HarborCommand(ulong clientId, HarborAction action)
         {
             int slot = FindCrew(clientId);
-            if (slot < 0 || !HarborOpen || (int)action > (int)HarborAction.PaintShop) return "Harbor is closed.";
+            if (slot < 0 || !HarborOpen || (int)action > (int)HarborAction.CraneControls) return "Harbor is closed.";
             ref var crew = ref Crew[slot];
-            if (crew.AtHelm || crew.AtCannon) return "Release your station first.";
+            if (crew.AtHelm || crew.AtCannon || crew.AtCrane) return "Release your station first.";
             if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) return "Land before interacting.";
             if (crew.OnShore == (action == HarborAction.GoAshore)) return "Use the gangway to change areas first.";
             if (Vector2.Distance(crew.Position, HarborPoint(action)) > InteractionRange) return "Move closer to the harbor station.";
@@ -137,6 +148,9 @@ namespace ShipMayham
             }
             if (action == HarborAction.HarborMaster) return "Port office: choose a route or a paid town job on the harbor board. Salvage pays 36 coins +1 reputation.";
             if (action == HarborAction.PaintShop) return "Paint dock: Classic is free. Seafoam needs 2 reputation; Sunset needs 5. Choose your paint on the board.";
+            if (action == HarborAction.FishMarket) return TakeCraneCrate(slot);
+            if (action == HarborAction.CraneLoadingPad) return "Carry FISH MARKET crates here during CRANE LOADING. The operator collects from this pad.";
+            if (action == HarborAction.CraneControls) return TakeHarborCrane(slot);
             if (action == HarborAction.MaintainHull)
             {
                 if (State.HullShield > 0) return "Hull protection is already fitted. Use the remaining shield first.";

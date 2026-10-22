@@ -173,6 +173,7 @@ namespace ShipMayham.Editor
             EnsureDockSorting(view);
             EnsureRepairSupplies(session, view);
             EnsureHarborTown(session, view);
+            EnsureHarborCrane(session, view);
             EditorSceneManager.SaveScene(scene, ScenePath);
             RegisterScene();
             AssetDatabase.SaveAssets();
@@ -348,6 +349,22 @@ namespace ShipMayham.Editor
             bool repairPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-repair-preview") >= 0;
             bool townPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-town-preview") >= 0;
             bool streetPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-town-street-preview") >= 0;
+            bool cranePreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-crane-preview") >= 0;
+            if (cranePreview)
+            {
+                var crane = view.GetComponent<PrototypeHarborCraneView>();
+                if (crane == null) throw new System.InvalidOperationException("Upgrade harbor crane before capturing its preview.");
+                foreach (var crew in view.CrewRoots) crew.gameObject.SetActive(false);
+                foreach (var visual in view.PassengerVisuals) visual.gameObject.SetActive(false);
+                foreach (var label in view.PassengerLabels) label.gameObject.SetActive(false);
+                var sample = new VoyageState { DockJobType = DockJobKind.CraneLoading, DockJobActive = true,
+                    CraneHook = new Vector2(-31, 10), CraneHolding = true, CraneReady = 1, DockJobProgress = 1, CraneSwayTime = 1.2f };
+                crane.Present(sample, 0, true);
+                Vector2 controls = VoyageSimulation.HarborPoint(HarborAction.CraneControls) + Vector2.down * .8f;
+                view.Camera.fieldOfView = view.FirstPersonFieldOfView;
+                view.Camera.transform.position = VoyageSimulation.HarborOrigin(sample) + new Vector3(controls.x, .3f, controls.y) + PrototypeView.CraneCameraOffset;
+                view.Camera.transform.rotation = Quaternion.Euler(60, 236, 0);
+            }
             if (townPreview || streetPreview)
             {
                 Vector3 origin = VoyageSimulation.HarborOrigin(new VoyageState());
@@ -402,6 +419,7 @@ namespace ShipMayham.Editor
                     WorldLabelPresentation.UpdateLabel(label, view.Camera);
                     if ((dockPreview || repairPreview) && Vector3.Distance(label.transform.position, view.Camera.transform.position) > 10) label.gameObject.SetActive(false);
                     if ((townPreview || streetPreview) && (label.name == "PortLabel" || Vector3.Distance(label.transform.position, view.Camera.transform.position) > (townPreview ? 30 : 18))) label.gameObject.SetActive(false);
+                    if (cranePreview && (label.name == "PortLabel" || Vector3.Distance(label.transform.position, view.Camera.transform.position) > 20)) label.gameObject.SetActive(false);
                 }
             var target = new RenderTexture(1280, 800, 24);
             var texture = new Texture2D(1280, 800, TextureFormat.RGB24, false);

@@ -7,9 +7,9 @@ namespace ShipMayham
         public const int LuggageJobReward = 30, SalvageJobReward = 36;
         public static bool IsSalvage(ServiceItem item) => item >= ServiceItem.SalvageA && item <= ServiceItem.SalvageC;
         public static bool IsLuggage(ServiceItem item) => item >= ServiceItem.LuggageA && item <= ServiceItem.LuggageC;
-        public static bool IsPortCargo(ServiceItem item) => item == ServiceItem.Cargo || IsLuggage(item) || IsSalvage(item);
+        public static bool IsPortCargo(ServiceItem item) => item == ServiceItem.Cargo || IsLuggage(item) || IsSalvage(item) || item == ServiceItem.CraneCrate;
         public static string LuggageTag(ServiceItem item) => item == ServiceItem.LuggageA ? "A" : item == ServiceItem.LuggageB ? "B" : item == ServiceItem.LuggageC ? "C" : "?";
-        public static string DockJobName(DockJobKind kind) => kind == DockJobKind.SalvageRun ? "TOWN SALVAGE" : kind == DockJobKind.LuggageSort ? "BAGGAGE SORT" : "CARGO RELAY";
+        public static string DockJobName(DockJobKind kind) => kind == DockJobKind.CraneLoading ? "CRANE LOADING" : kind == DockJobKind.SalvageRun ? "TOWN SALVAGE" : kind == DockJobKind.LuggageSort ? "BAGGAGE SORT" : "CARGO RELAY";
         public string DockItemCommand(ulong clientId, HarborAction action, DockJobKind expectedKind)
         {
             // A delayed job interaction must not turn into a shared-wallet purchase.
@@ -31,6 +31,7 @@ namespace ShipMayham
 
         private string PickUpDockItem(int slot)
         {
+            if (State.DockJobType == DockJobKind.CraneLoading) return "Crane crates are at FISH MARKET. This counter only accepts returns for that job.";
             if (State.DockJobType == DockJobKind.SalvageRun) return "Find the 3 marked salvage bundles around town. This counter only accepts returns for that job.";
             if (State.DockJobType == DockJobKind.CargoRelay)
             {
@@ -56,6 +57,7 @@ namespace ShipMayham
         private string HandleDockItem(int slot, HarborAction action)
         {
             ServiceItem item = Crew[slot].Carrying;
+            if (item == ServiceItem.CraneCrate) return HandleCraneCrate(slot, action);
             if (action == HarborAction.BuyFood)
             {
                 Crew[slot].Carrying = ServiceItem.None;
@@ -81,12 +83,16 @@ namespace ShipMayham
             else if (State.DockJobType != DockJobKind.CargoRelay || action != HarborAction.MaintainHull)
                 return "Deliver cargo at HULL, or return it to the FOOD pickup.";
             Crew[slot].Carrying = ServiceItem.None;
+            return RecordDockDelivery(State.DockJobType == DockJobKind.SalvageRun ? SalvageJobReward : State.DockJobType == DockJobKind.LuggageSort ? LuggageJobReward : DockJobReward);
+        }
+
+        private string RecordDockDelivery(int reward)
+        {
             State.DockJobProgress++;
             if (State.DockJobProgress < DockJobGoal) return $"Delivered: {State.DockJobProgress}/{DockJobGoal}.";
             State.DockJobActive = false;
             State.DockJobPortKey = CurrentPortKey;
             State.DockJobsCompleted++;
-            int reward = State.DockJobType == DockJobKind.SalvageRun ? SalvageJobReward : State.DockJobType == DockJobKind.LuggageSort ? LuggageJobReward : DockJobReward;
             State.Wallet += reward;
             State.Reputation++;
             return $"{DockJobName(State.DockJobType)} complete! +{reward} shared coins and +1 reputation.";

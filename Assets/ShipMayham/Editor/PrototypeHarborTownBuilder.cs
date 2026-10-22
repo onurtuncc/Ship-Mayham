@@ -19,6 +19,7 @@ namespace ShipMayham.Editor
             if (!File.Exists("Logs/ShipPrototype-PreHarborTown.unity")) File.Copy(ScenePath, "Logs/ShipPrototype-PreHarborTown.unity");
             var scene = EditorSceneManager.OpenScene(ScenePath);
             EnsureHarborTown(Object.FindAnyObjectByType<PrototypeSession>(), Object.FindAnyObjectByType<PrototypeView>());
+            EnsureHarborCrane(Object.FindAnyObjectByType<PrototypeSession>(), Object.FindAnyObjectByType<PrototypeView>());
             PrepareLabels(scene);
             EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
             Debug.Log("SHIP_HARBOR_TOWN_READY");
@@ -45,7 +46,7 @@ namespace ShipMayham.Editor
                 town.Find("TownWelcome").localPosition = new Vector3(.5f, .3f, -2);
                 foreach (string name in new[] { "TownWelcome", "WestDirections" })
                     town.Find(name).GetComponentInChildren<TextMesh>().color = new Color(.1f, .16f, .17f);
-                Vector3[] positions = { new Vector3(-18, .3f, -16), new Vector3(-16, .3f, -3), new Vector3(-8, .3f, 7), new Vector3(-26, .3f, 12) };
+                Vector3[] positions = { new Vector3(-18, .3f, -16), new Vector3(-16, .3f, -3), new Vector3(-8, .3f, 7), new Vector3(-30, .3f, 13) };
                 for (int i = 0; i < positions.Length; i++)
                 {
                     if (town.Find("ShadeTree_" + i) != null) continue;
@@ -73,7 +74,7 @@ namespace ShipMayham.Editor
             var green = Material("Town_Green", new Color(.17f, .63f, .36f));
             var violet = Material("Town_Violet", new Color(.6f, .28f, .65f));
             var labels = new List<TextMesh>(harbor.Labels);
-            var markers = new Transform[HarborTownLayout.StationsPerPort * 2];
+            var markers = new Transform[HarborTownLayout.TownStationsPerPort * 2];
             harbor.SalvageMarkers = new Transform[HarborTownLayout.SalvageCount * 2];
             string[] titles = { "", "BOARD SHIP", "FOOD MARKET\n8 food / 12 coins", "THE SALTY GULL\n8 drinks / 12 coins", "DRYDOCK\n20 shield / 30 coins", "PORT OFFICE\nRoutes / Jobs / Salvage", "PAINT DOCK\nShip colors" };
             for (int port = 0; port < 2; port++)
@@ -120,12 +121,12 @@ namespace ShipMayham.Editor
                 TownSign(town, labels, "TownWelcome", new Vector3(-3, .3f, -4), port == 0 ? "BRASS QUAY\nMarket <-  Office ^  Ship ->" : "NORTH HAVEN\nWelcome, passengers!", cream, wood);
                 TownSign(town, labels, "WestDirections", new Vector3(-18, .3f, 0), "TAVERN <-  OFFICE ->\nMARKET v  DRYDOCK ^", cream, wood);
                 Material[] colors = { green, orange, blue, green, cream, violet };
-                for (int a = 1; a <= HarborTownLayout.StationsPerPort; a++)
+                for (int a = 1; a <= HarborTownLayout.TownStationsPerPort; a++)
                 {
                     Transform marker = a <= 4 ? harbor.ShoreMarkers[port * 4 + a - 1] : Root("Harbor_" + (HarborAction)a, root.Find("HarborStations"));
                     Vector2 p = VoyageSimulation.HarborPoint((HarborAction)a);
                     marker.localPosition = new Vector3(p.x, VoyageSimulation.ShoreHeight, p.y);
-                    markers[port * HarborTownLayout.StationsPerPort + a - 1] = marker;
+                    markers[port * HarborTownLayout.TownStationsPerPort + a - 1] = marker;
                     if (a <= 4)
                     {
                         var cube = marker.Find("Visuals/ShopCounter_Primitive"); if (cube != null) cube.gameObject.SetActive(false);

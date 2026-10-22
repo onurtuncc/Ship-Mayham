@@ -67,7 +67,7 @@ Build sonrasında loader, data, framework ve wasm URL'lerine dosyanın SHA-256 �
 
 Prototip artık Unity Multiplayer Services oturumlarını, Relay'i ve güvenli WebSocket (`WSS`) aktarımını kullanır. Bu nedenle hem GitHub Pages'taki WebGL sürümü hem de Windows sürümü internet üzerinden aynı oturuma bağlanabilir:
 
-Liman kasabasını içeren güncel kaynakta snapshot ve NGO bağlantı protokolü **8**'dir; son doğrulanmış `fa132b5` Pages paketi de **v8**'dir. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular sayfayı yenileyip aynı build'i kullanmalıdır. Son yayımlanmış paket kanıtı [PROTOTYPE.md](PROTOTYPE.md), mekanik kapsamı [HARBOR_TOWN.md](HARBOR_TOWN.md) içindedir.
+Vinç mini oyununu içeren güncel kaynakta snapshot ve NGO bağlantı protokolü **9**'dur; son doğrulanmış `fa132b5` Pages paketi **v8**'dir. Kaynak/Windows v9 ile canlı web v8 aynı oturuma giremez. Sonraki toplu kara yayınında web de güncellenecektir. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular aynı build'i kullanmalıdır. Son yayımlanmış paket kanıtı [PROTOTYPE.md](PROTOTYPE.md), yeni mekanik [HARBOR_CRANE.md](HARBOR_CRANE.md) içindedir.
 
 1. İlk oyuncu **CREATE ONLINE VOYAGE** ile özel bir oturum açar.
 2. Ekrandaki kodu diğer oyuncularla paylaşır.

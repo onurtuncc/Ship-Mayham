@@ -80,7 +80,7 @@ namespace ShipMayham.Tests
             var hud = UnityEngine.Object.FindAnyObjectByType<PrototypeHud>(); hud.ConnectSolo();
             float end = Time.realtimeSinceStartup + 5; while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < end) yield return null;
             Assert.IsTrue(hud.Session.IsSpawned); var session = hud.Session;
-            Assert.AreEqual(12, session.Harbor.ShoreMarkers.Length);
+            Assert.AreEqual(18, session.Harbor.ShoreMarkers.Length);
             Assert.IsNotNull(session.Harbor.PortRoots[0].Find("Town_Visuals/Tavern/Model_HarborHut"));
             session.Simulation.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore); yield return Wait(.4f);
             session.SelectDockJobRpc(DockJobKind.SalvageRun); yield return Wait(.4f);

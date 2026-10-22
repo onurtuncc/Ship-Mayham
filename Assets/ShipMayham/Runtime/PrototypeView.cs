@@ -41,6 +41,9 @@ namespace ShipMayham
         private Transform[] luggageItemVisuals;
         private Transform[] repairKitVisuals;
         private Transform[] salvageVisuals;
+        private Transform[] craneCrateVisuals;
+        private bool wasAtCrane;
+        public static readonly Vector3 CraneCameraOffset = new Vector3(3.5f, 18, 8.8f);
         private Renderer[] luggageTagRenderers;
         private Transform ammoPile;
         private TextMesh ammoLabel;
@@ -75,6 +78,7 @@ namespace ShipMayham
             luggageItemVisuals = new Transform[CrewRoots.Length];
             repairKitVisuals = new Transform[CrewRoots.Length];
             salvageVisuals = new Transform[CrewRoots.Length];
+            craneCrateVisuals = new Transform[CrewRoots.Length];
             luggageTagRenderers = new Renderer[CrewRoots.Length];
             carryPositions = new Vector3[CrewRoots.Length];
             carryRotations = new Quaternion[CrewRoots.Length];
@@ -103,6 +107,7 @@ namespace ShipMayham
                 luggageItemVisuals[i] = CarriedItems[i].Find("Model_Suitcase");
                 repairKitVisuals[i] = CarriedItems[i].Find("Model_Toolbox");
                 salvageVisuals[i] = CarriedItems[i].Find("Model_RopeCoil");
+                craneCrateVisuals[i] = CarriedItems[i].Find("Model_CrateStack");
                 if (luggageItemVisuals[i] != null)
                 {
                     var tag = luggageItemVisuals[i].Find("Tag_Visual");
@@ -212,7 +217,7 @@ namespace ShipMayham
                 if (keyboard != null) input = new Vector2((keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0),
                     (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0));
                 if (pad != null && pad.leftStick.ReadValue().sqrMagnitude > .04f) input = pad.leftStick.ReadValue();
-                if (!Session.Crew[local].AtHelm) input = ToDeckMovement(input, lookYaw);
+                if (!Session.Crew[local].AtHelm && !Session.Crew[local].AtCrane) input = ToDeckMovement(input, lookYaw);
                 if (Session.Crew[local].AtCannon)
                 {
                     input = Vector2.zero;
@@ -236,7 +241,8 @@ namespace ShipMayham
                 }
                 if (keyboard?.eKey.wasPressedThisFrame == true || pad?.buttonSouth.wasPressedThisFrame == true)
                 {
-                    if (FocusedTarget <= -200 && FocusedTarget > -200 - HarborTownLayout.SalvageCount)
+                    if (Session.Crew[local].AtCrane) Session.HarborCraneActionRpc(false);
+                    else if (FocusedTarget <= -200 && FocusedTarget > -200 - HarborTownLayout.SalvageCount)
                         Session.PickUpSalvageRpc(-200 - FocusedTarget);
                     else if (FocusedTarget <= -100)
                     {
@@ -249,7 +255,8 @@ namespace ShipMayham
                 }
                 if (!Session.Crew[local].AtCannon && (keyboard?.spaceKey.wasPressedThisFrame == true || pad?.buttonWest.wasPressedThisFrame == true))
                 {
-                    if (Session.Crew[local].AtHelm) Session.InteractRpc(-1, true);
+                    if (Session.Crew[local].AtCrane) Session.HarborCraneActionRpc(true);
+                    else if (Session.Crew[local].AtHelm) Session.InteractRpc(-1, true);
                     else Session.JumpRpc();
                 }
             }
@@ -270,6 +277,7 @@ namespace ShipMayham
             FocusedTarget = -1;
             if (crew.AtCannon) { FocusText = "LMB / RT: fire | R / X: reload | E / A: release cannon\nCrew: carry rounds from AMMO to CANNON."; return; }
             if (crew.AtHelm) { FocusText = "E / A: release helm   |   Space / X: depart or dock"; return; }
+            if (crew.AtCrane) { FocusText = "CRANE: WASD / stick moves hook (north up) | Space / X: lift / land | E / A: release"; return; }
             if (Session.LocalCarriedPassengerIndex >= 0) { FocusText = "G / B: put down | LMB / RT: throw (-5 happiness)\nOverboard: another -20 happiness + 15 coins. Rescue: 8s."; return; }
             if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) { FocusText = "Land before interacting"; return; }
             float bestAngle = 24f;
@@ -345,6 +353,11 @@ namespace ShipMayham
                 FocusText = PrototypeHarbor.Prompt(action);
                 if (Session.Voyage.Value.DockJobActive)
                 {
+                    if (Session.Voyage.Value.DockJobType == DockJobKind.CraneLoading)
+                    {
+                        if (crew.Carrying == ServiceItem.CraneCrate) FocusText = "E / A: deliver crate at LOAD PAD | FISH MARKET / FOOD accepts returns";
+                        continue;
+                    }
                     if (Session.Voyage.Value.DockJobType == DockJobKind.SalvageRun)
                     {
                         if (VoyageSimulation.IsSalvage(crew.Carrying)) FocusText = "E / A: deliver salvage at PORT OFFICE | FOOD accepts returns";
@@ -438,6 +451,7 @@ namespace ShipMayham
                 CrewLabels[i].gameObject.SetActive(!me);
                 CrewLabels[i].text = $"P{i + 1}{(me ? " (YOU)" : "")}{(crew.AtHelm ? " / HELM" : "")}";
                 if (crew.AtCannon) CrewLabels[i].text += " / GUNNER";
+                if (crew.AtCrane) CrewLabels[i].text += " / CRANE";
                 if (crew.OnShore) CrewLabels[i].text += " / ASHORE";
                 CarriedItems[i].gameObject.SetActive(crew.Carrying != ServiceItem.None);
                 SetItemColor(i, crew.Carrying);
@@ -452,7 +466,11 @@ namespace ShipMayham
             Camera.nearClipPlane = .05f;
             if (firstPerson)
             {
-                Camera.transform.SetPositionAndRotation(CrewRoots[local].position + ship.up * EyeHeight,
+                bool atCrane = Session.Crew[local].AtCrane;
+                if (atCrane && !wasAtCrane) { lookYaw = 236; lookPitch = 60; }
+                if (!atCrane && wasAtCrane) lookPitch = 12;
+                wasAtCrane = atCrane;
+                Camera.transform.SetPositionAndRotation(CrewRoots[local].position + (atCrane ? CraneCameraOffset : ship.up * EyeHeight),
                     (Session.Crew[local].OnShore ? Quaternion.identity : ship.rotation) * Quaternion.Euler(lookPitch, lookYaw, 0));
                 CarriedItems[local].SetPositionAndRotation(Camera.transform.TransformPoint(HeldItemOffset), Camera.transform.rotation);
                 FindTarget(Session.Crew[local]);
@@ -525,10 +543,12 @@ namespace ShipMayham
             bool luggage = VoyageSimulation.IsLuggage(item);
             bool repairKit = item == ServiceItem.RepairKit;
             bool salvage = VoyageSimulation.IsSalvage(item);
+            bool craneCrate = item == ServiceItem.CraneCrate;
+            if (craneCrateVisuals[slot] != null) craneCrateVisuals[slot].gameObject.SetActive(craneCrate);
             if (salvageVisuals[slot] != null) salvageVisuals[slot].gameObject.SetActive(salvage);
             if (repairKitVisuals[slot] != null) repairKitVisuals[slot].gameObject.SetActive(repairKit);
             if (luggageItemVisuals[slot] != null) luggageItemVisuals[slot].gameObject.SetActive(luggage);
-            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && !luggage && !repairKit && !salvage);
+            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && !luggage && !repairKit && !salvage && !craneCrate);
             if (item == ServiceItem.None) return;
             Color color = item == ServiceItem.Ammo ? new Color(.12f, .14f, .18f) : item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
             if (luggage) color = VoyageSimulation.LuggageColor(item);
@@ -538,6 +558,7 @@ namespace ShipMayham
                 if (luggageItemVisuals[slot] != null && renderer.transform.IsChildOf(luggageItemVisuals[slot]) && renderer != luggageTagRenderers[slot]) continue;
                 if (repairKitVisuals[slot] != null && renderer.transform.IsChildOf(repairKitVisuals[slot])) continue;
                 if (salvageVisuals[slot] != null && renderer.transform.IsChildOf(salvageVisuals[slot])) continue;
+                if (craneCrateVisuals[slot] != null && renderer.transform.IsChildOf(craneCrateVisuals[slot])) continue;
                 renderer.GetPropertyBlock(itemProperties);
                 itemProperties.SetColor(BaseColorId, color);
                 itemProperties.SetColor(ColorId, color);
