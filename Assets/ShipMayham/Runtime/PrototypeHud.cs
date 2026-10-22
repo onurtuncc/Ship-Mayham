@@ -17,6 +17,7 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
+        public const ushort NetworkProtocolVersion = 3;
         public NetworkManager Manager;
         public PrototypeSession Session;
         public PrototypeView View;
@@ -97,6 +98,7 @@ namespace ShipMayham
 
         private void PrepareNetworkConfig()
         {
+            Manager.NetworkConfig.ProtocolVersion = NetworkProtocolVersion;
             // Crew live in scene slots; NGO must never inspect/spawn a player prefab here.
             // Assigning real null also handles Unity's serialized fake-null references.
             Manager.NetworkConfig.PlayerPrefab = null;

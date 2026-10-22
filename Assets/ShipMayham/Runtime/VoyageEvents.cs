@@ -182,6 +182,7 @@ namespace ShipMayham
         {
             if (Event.Phase != VoyageEventPhase.Active) return;
             Event.Phase = VoyageEventPhase.Resolved;
+            Event.Progress = Event.Goal;
             Event.ResolvedCount++;
             Event.Reward += 15;
             Event.Remaining = 0;

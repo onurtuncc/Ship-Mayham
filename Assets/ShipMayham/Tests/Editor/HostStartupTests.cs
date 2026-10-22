@@ -41,6 +41,7 @@ namespace ShipMayham.Tests
             float deadline = Time.realtimeSinceStartup + 5;
             while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.IsTrue(manager.IsHost, "Host must start through the same Connect path as the HUD button.");
+            Assert.AreEqual(PrototypeHud.NetworkProtocolVersion, manager.NetworkConfig.ProtocolVersion);
             Assert.IsTrue(hud.Session.IsSpawned);
             Assert.AreEqual(0, hud.Session.LocalCrewIndex);
             Assert.IsNull(manager.LocalClient.PlayerObject, "Crew slots are scene objects, not spawned player prefabs.");
