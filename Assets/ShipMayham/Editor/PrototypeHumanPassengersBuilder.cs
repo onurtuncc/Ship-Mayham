@@ -44,21 +44,7 @@ namespace ShipMayham.Editor
             for (int i = 0; i < view.PassengerVisuals.Length; i++)
             {
                 string model = $"Character_Human{i % HumanVariants + 1}_Rigged";
-                string modelPath = GeneratedModels + model + ".fbx";
-                if (AssetDatabase.LoadAssetAtPath<GameObject>(modelPath) == null)
-                    throw new FileNotFoundException("Rigged passenger model is missing.", modelPath);
-                Transform container = AddProp(view.PassengerVisuals[i], model, Vector3.zero, HumanScale);
-                var instance = container.GetChild(0);
-                var humanAnimator = instance.GetComponent<Animator>();
-                if (humanAnimator == null) humanAnimator = instance.gameObject.AddComponent<Animator>();
-                if (humanAnimator.avatar == null)
-                    humanAnimator.avatar = AssetDatabase.LoadAllAssetsAtPath(modelPath).OfType<Avatar>().FirstOrDefault();
-                if (humanAnimator.avatar == null || !humanAnimator.avatar.isHuman)
-                    throw new InvalidOperationException("Passenger model did not import as a Humanoid avatar: " + model);
-                humanAnimator.runtimeAnimatorController = controller;
-                humanAnimator.applyRootMotion = false;
-                humanAnimator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
-                animator.Animators[i] = humanAnimator;
+                animator.Animators[i] = AddHumanAnimator(view.PassengerVisuals[i], model, HumanScale, controller, out Transform container);
                 HidePrimitive(view.PassengerVisuals[i], "Passenger_Primitive");
                 if (cues != null && i < cues.Bodies.Length) cues.Bodies[i] = container;
             }
@@ -66,27 +52,46 @@ namespace ShipMayham.Editor
             EditorUtility.SetDirty(animator);
         }
 
-        private static AnimatorController EnsurePassengerController()
+        private static AnimatorController EnsurePassengerController() => EnsureAnimatorController(PassengerControllerPath,
+            ("Seated", "SittingIdle"), ("Pleading", "Waving"), ("Fidgeting", "Talking"), ("Panicked", "Terrified"));
+
+        // State names double as the strings the runtime animators cross-fade to; the first state is the default.
+        private static AnimatorController EnsureAnimatorController(string controllerPath, params (string state, string clip)[] map)
         {
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(PassengerControllerPath);
-            if (controller == null) controller = AnimatorController.CreateAnimatorControllerAtPath(PassengerControllerPath);
+            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
+            if (controller == null) controller = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
             var machine = controller.layers[0].stateMachine;
-            (PassengerPose pose, string clip)[] map =
+            for (int i = 0; i < map.Length; i++)
             {
-                (PassengerPose.Seated, "SittingIdle"), (PassengerPose.Pleading, "Waving"),
-                (PassengerPose.Fidgeting, "Talking"), (PassengerPose.Panicked, "Terrified")
-            };
-            foreach (var (pose, clipName) in map)
-            {
-                string path = AnimationsPath + "Mixamo_" + clipName + ".fbx";
+                string path = AnimationsPath + "Mixamo_" + map[i].clip + ".fbx";
                 var clip = AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().FirstOrDefault(c => !c.name.StartsWith("__preview"));
-                if (clip == null) throw new FileNotFoundException("Passenger animation clip is missing.", path);
-                var state = machine.states.Select(s => s.state).FirstOrDefault(s => s.name == pose.ToString()) ?? machine.AddState(pose.ToString());
+                if (clip == null) throw new FileNotFoundException("Animation clip is missing.", path);
+                var state = machine.states.Select(s => s.state).FirstOrDefault(s => s.name == map[i].state) ?? machine.AddState(map[i].state);
                 state.motion = clip;
-                if (pose == PassengerPose.Seated) machine.defaultState = state;
+                if (i == 0) machine.defaultState = state;
             }
             EditorUtility.SetDirty(controller);
             return controller;
+        }
+
+        // Adds a rigged human under a visuals parent and returns its Animator wired to the controller.
+        private static Animator AddHumanAnimator(Transform parent, string model, float scale, RuntimeAnimatorController controller, out Transform container)
+        {
+            string modelPath = GeneratedModels + model + ".fbx";
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(modelPath) == null)
+                throw new FileNotFoundException("Rigged human model is missing.", modelPath);
+            container = AddProp(parent, model, Vector3.zero, scale);
+            var instance = container.GetChild(0);
+            var humanAnimator = instance.GetComponent<Animator>();
+            if (humanAnimator == null) humanAnimator = instance.gameObject.AddComponent<Animator>();
+            if (humanAnimator.avatar == null)
+                humanAnimator.avatar = AssetDatabase.LoadAllAssetsAtPath(modelPath).OfType<Avatar>().FirstOrDefault();
+            if (humanAnimator.avatar == null || !humanAnimator.avatar.isHuman)
+                throw new InvalidOperationException("Model did not import as a Humanoid avatar: " + model);
+            humanAnimator.runtimeAnimatorController = controller;
+            humanAnimator.applyRootMotion = false;
+            humanAnimator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+            return humanAnimator;
         }
     }
 }

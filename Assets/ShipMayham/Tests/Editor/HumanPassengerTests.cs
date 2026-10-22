@@ -1,13 +1,9 @@
-using System.Collections;
 using NUnit.Framework;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.TestTools;
 
 namespace ShipMayham.Tests
 {
-    public class HumanPassengerTests
+    public class HumanPassengerTests : PrototypeSceneFixture
     {
         private static PassengerState Active(PassengerMotion motion = PassengerMotion.OnDeck) =>
             new PassengerState { Active = true, Motion = motion, Satisfaction = 100 };
@@ -32,12 +28,10 @@ namespace ShipMayham.Tests
         [Test] public void InactivePassengersStaySeated() =>
             Assert.AreEqual(PassengerPose.Seated, PassengerPresentation.PoseFor(default, PassengerCue.Impatient));
 
-        [UnityTest] public IEnumerator SceneUsesHumanoidPassengersDrivenByTheAnimator()
+        [Test] public void SceneUsesHumanoidPassengersDrivenByTheAnimator()
         {
-            yield return new EnterPlayMode();
-            yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/ShipMayham/Scenes/ShipPrototype.unity", new LoadSceneParameters(LoadSceneMode.Single));
-            var hud = Object.FindAnyObjectByType<PrototypeHud>();
-            var animator = hud.View.GetComponent<PrototypePassengerAnimator>();
+            var view = FindInScene<PrototypeView>();
+            var animator = view.GetComponent<PrototypePassengerAnimator>();
             Assert.IsNotNull(animator);
             Assert.AreEqual(VoyageSimulation.MaxPassengers, animator.Animators.Length);
             for (int i = 0; i < animator.Animators.Length; i++)
@@ -45,10 +39,9 @@ namespace ShipMayham.Tests
                 Assert.IsNotNull(animator.Animators[i], "Passenger animator missing: " + i);
                 Assert.IsTrue(animator.Animators[i].isHuman, "Passenger avatar is not Humanoid: " + i);
                 Assert.IsNotNull(animator.Animators[i].runtimeAnimatorController);
-                var capsule = hud.View.PassengerVisuals[i].Find("Passenger_Primitive");
+                var capsule = view.PassengerVisuals[i].Find("Passenger_Primitive");
                 Assert.IsFalse(capsule.GetComponent<Renderer>().enabled, "Capsule body should be hidden: " + i);
             }
-            yield return new ExitPlayMode();
         }
     }
 }

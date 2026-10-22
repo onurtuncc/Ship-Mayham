@@ -1,16 +1,14 @@
 using NUnit.Framework;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace ShipMayham.Tests
 {
-    public class PlayerShipSceneTests
+    public class PlayerShipSceneTests : PrototypeSceneFixture
     {
         [Test] public void AuthoredShipUsesTheGeneratedHullAndKeepsItPaintable()
         {
-            EditorSceneManager.OpenScene("Assets/ShipMayham/Scenes/ShipPrototype.unity");
-            var session = Object.FindAnyObjectByType<PrototypeSession>();
-            var view = Object.FindAnyObjectByType<PrototypeView>();
+            var session = FindInScene<PrototypeSession>();
+            var view = FindInScene<PrototypeView>();
             Transform visuals = session.ShipRoot.Find("Visuals");
             Assert.IsNotNull(visuals.Find("Model_PlayerShipHull"));
             Assert.IsNotNull(visuals.Find("Model_PlayerShipDeco"));
@@ -21,8 +19,7 @@ namespace ShipMayham.Tests
 
         [Test] public void GeneratedShipCoversTheGameplayDeckAndLeadsAlongPositiveZ()
         {
-            EditorSceneManager.OpenScene("Assets/ShipMayham/Scenes/ShipPrototype.unity");
-            Transform visuals = Object.FindAnyObjectByType<PrototypeSession>().ShipRoot.Find("Visuals");
+            Transform visuals = FindInScene<PrototypeSession>().ShipRoot.Find("Visuals");
             var bounds = new Bounds();
             bool first = true;
             foreach (var renderer in visuals.Find("Model_PlayerShipDeco").GetComponentsInChildren<Renderer>())
