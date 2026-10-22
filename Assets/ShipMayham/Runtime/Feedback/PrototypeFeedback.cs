@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
 namespace ShipMayham
@@ -20,6 +21,7 @@ namespace ShipMayham
         public FeedbackFx Fx;
         [Tooltip("Optional: passenger body roots that hop when delighted (same order as the passengers).")]
         public PrototypePassengerAnimator PassengerAnimator;
+        public PrototypeCrewAnimator CrewAnimator;
 
         private FeedbackSnapshot previous, current;
         private readonly List<FeedbackEvent> events = new List<FeedbackEvent>(16);
@@ -54,7 +56,7 @@ namespace ShipMayham
                 voices[i].playOnAwake = false; voices[i].spatialBlend = 0;
             }
             sea = gameObject.AddComponent<AudioSource>();
-            sea.clip = ProceduralSfx.SeaLoop(); sea.loop = true; sea.volume = 0; sea.spatialBlend = 0; sea.playOnAwake = false;
+            sea.loop = true; sea.volume = 0; sea.spatialBlend = 0; sea.playOnAwake = false;
         }
 
         private void OnEnable()
@@ -73,8 +75,13 @@ namespace ShipMayham
         {
             var session = View != null ? View.Session : null;
             bool live = session != null && session.IsSpawned;
-            if (live && !sea.isPlaying) sea.Play();
-            sea.volume = Mathf.MoveTowards(sea.volume, live ? SeaVolume : 0, Time.unscaledDeltaTime * .3f);
+            if (live && !sea.isPlaying)
+            {
+                if (sea.clip == null) sea.clip = ProceduralSfx.SeaLoop();
+                sea.Play();
+            }
+            if (Keyboard.current?.mKey.wasPressedThisFrame == true) FeedbackSettings.Muted = !FeedbackSettings.Muted;
+            sea.volume = Mathf.MoveTowards(sea.volume, live ? SeaVolume * FeedbackSettings.Gain : 0, Time.unscaledDeltaTime * .6f);
             Capture(live ? session : null, ref current);
             events.Clear();
             FeedbackDetector.Detect(previous, current, events);
@@ -105,7 +112,7 @@ namespace ShipMayham
             {
                 if (i >= session.Passengers.Count) { snapshot.Passengers[i] = default; continue; }
                 var p = session.Passengers[i];
-                snapshot.Passengers[i] = new PassengerSnapshot { Active = p.Active, Request = p.Request, Reaction = p.Reaction, Motion = p.Motion, Reacting = p.ReactionRemaining > 0 };
+                snapshot.Passengers[i] = new PassengerSnapshot { Active = p.Active, Request = p.Request, Reaction = p.Reaction, Motion = p.Motion, Carrier = p.CarrierSlot, Reacting = p.ReactionRemaining > 0 };
             }
             for (int i = 0; i < FeedbackSnapshot.MaxCrew; i++)
             {
@@ -130,7 +137,17 @@ namespace ShipMayham
                 case FeedbackKind.PassengerBoarded:
                     Fx.Burst(FxKind.Sparkle, passenger, 8); Sfx(SfxKind.Pop, .8f, 1.05f, passenger); break;
                 case FeedbackKind.ServiceDelivered:
-                    Fx.Burst(FxKind.Sparkle, passenger, 12); Sfx(SfxKind.Pop, 1, 1.2f, passenger); break;
+                    Fx.Burst(FxKind.Sparkle, passenger, 12); Sfx(SfxKind.Pop, 1, 1.2f, passenger);
+                    if (PassengerAnimator != null)
+                    {
+                        if (e.Value == (int)ServiceItem.Drink) PassengerAnimator.PlayOneShot(e.Slot, PassengerPose.Drinking, 3.2f);
+                        else if (e.Value == (int)ServiceItem.Food) PassengerAnimator.PlayOneShot(e.Slot, PassengerPose.Clapping, 2.4f);
+                    }
+                    break;
+                case FeedbackKind.PassengerThrown:
+                    Fx.Burst(FxKind.Splash, passenger, 8); Sfx(SfxKind.Whoosh, .9f, 1.1f, passenger);
+                    if (CrewAnimator != null) CrewAnimator.PlayOneShot(e.Value, CrewPose.Throw, 1.2f);
+                    break;
                 case FeedbackKind.PassengerThanked:
                     Fx.Burst(FxKind.Hearts, passenger); Fx.Popup("Thanks!", passenger + Vector3.up * .3f, Pink); Sfx(SfxKind.Chime, .9f, 1, passenger); StartHop(e.Slot); break;
                 case FeedbackKind.PassengerComplained:
@@ -156,11 +173,15 @@ namespace ShipMayham
                     Fx.Burst(FxKind.Stars, ship + Vector3.up * 2, 12); Fx.Popup($"+{e.Value} REP", ship + Vector3.up * 2.2f, new Color(1, .6f, 1f), 1.1f); Sfx(SfxKind.Sparkle, .8f); break;
                 case FeedbackKind.UpgradePurchased:
                     ShowBanner("UPGRADED!", "Your ship got better", new Color(.75f, .5f, 1f));
-                    Fx.Burst(FxKind.Stars, ship + Vector3.up * 1.5f, 16); Sfx(SfxKind.Chime); Sfx(SfxKind.Sparkle, .8f); break;
+                    Fx.Burst(FxKind.Stars, ship + Vector3.up * 1.5f, 16); Sfx(SfxKind.Chime); Sfx(SfxKind.Sparkle, .8f);
+                    if (CrewAnimator != null) CrewAnimator.PlayOneShotAll(CrewPose.Salute, 2.2f);
+                    break;
                 case FeedbackKind.DockJobDone:
                     ShowBanner("JOB COMPLETE!", "Nice teamwork", Gold); Fx.Burst(FxKind.Confetti, CrewPoint(0) + Vector3.up, 50); Sfx(SfxKind.Fanfare, .8f); break;
                 case FeedbackKind.EventResolved:
-                    ShowBanner("NICE SAVE!", null, Cyan); Fx.Burst(FxKind.Stars, ship + Vector3.up * 2, 12); Sfx(SfxKind.Chime); break;
+                    ShowBanner("NICE SAVE!", null, Cyan); Fx.Burst(FxKind.Stars, ship + Vector3.up * 2, 12); Sfx(SfxKind.Chime);
+                    if (CrewAnimator != null) CrewAnimator.PlayOneShotAll(CrewPose.Clap, 2.6f);
+                    break;
                 case FeedbackKind.EventFailed:
                     ShowBanner("OH NO!", null, Red); AddTrauma(.3f); Sfx(SfxKind.Thud, .9f, .8f); break;
                 case FeedbackKind.CannonFired:
@@ -177,9 +198,13 @@ namespace ShipMayham
                     }
                 case FeedbackKind.PirateDefeated:
                     ShowBanner("PIRATES DEFEATED!", "The seas are safe... for now", Gold);
-                    Fx.Burst(FxKind.Confetti, ship + Vector3.up * 2, 90); Sfx(SfxKind.Fanfare); break;
+                    Fx.Burst(FxKind.Confetti, ship + Vector3.up * 2, 90); Sfx(SfxKind.Fanfare);
+                    if (CrewAnimator != null) CrewAnimator.PlayOneShotAll(CrewPose.Victory, 4f);
+                    break;
                 case FeedbackKind.ItemPickedUp:
-                    Fx.Burst(FxKind.Sparkle, crew, 6); Sfx(SfxKind.Pop, .6f, .9f, crew); break;
+                    Fx.Burst(FxKind.Sparkle, crew, 6); Sfx(SfxKind.Pop, .6f, .9f, crew);
+                    if (CrewAnimator != null) CrewAnimator.PlayOneShot(e.Slot, CrewPose.PickUp, .9f);
+                    break;
                 case FeedbackKind.ItemDelivered:
                     Fx.Burst(FxKind.Sparkle, crew, 8); Sfx(SfxKind.Pop, .7f, 1.15f, crew); break;
             }
@@ -199,7 +224,7 @@ namespace ShipMayham
         {
             if (Time.unscaledTime - lastPlayed[(int)kind] < .05f) return;
             lastPlayed[(int)kind] = Time.unscaledTime;
-            float gain = volume;
+            float gain = volume * FeedbackSettings.Gain;
             if (at.HasValue && View != null && View.Camera != null)
                 gain *= Mathf.Clamp01(1.25f - Vector3.Distance(at.Value, View.Camera.transform.position) / 45f);
             if (gain <= .01f) return;
@@ -275,6 +300,7 @@ namespace ShipMayham
 
         private void OnGUI()
         {
+            DrawSoundToggle();
             if (flash > 0)
             {
                 GUI.depth = -90;
@@ -299,6 +325,14 @@ namespace ShipMayham
             DrawShadowed(area, banner.Title, titleStyle, banner.Color, alpha);
             if (!string.IsNullOrEmpty(banner.Subtitle))
                 DrawShadowed(new Rect(0, area.yMax - Screen.height * .01f, Screen.width, Screen.height * .06f), banner.Subtitle, subtitleStyle, Color.white, alpha);
+        }
+
+        private void DrawSoundToggle()
+        {
+            if (View == null || View.Session == null || !View.Session.IsSpawned) return;
+            GUI.depth = -50;
+            var rect = new Rect(Screen.width - 150, Screen.height - 34, 138, 24);
+            if (GUI.Button(rect, FeedbackSettings.Muted ? "Sound: OFF  (M)" : "Sound: ON  (M)")) FeedbackSettings.Muted = !FeedbackSettings.Muted;
         }
 
         private static void DrawShadowed(Rect rect, string text, GUIStyle style, Color color, float alpha)

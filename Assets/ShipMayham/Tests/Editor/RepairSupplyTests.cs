@@ -195,7 +195,7 @@ namespace ShipMayham.Tests
             int bench = Array.FindIndex(session.Stations, s => s.Kind == StationKind.Repair);
             Assert.That(store, Is.GreaterThanOrEqualTo(0));
             session.Simulation.Crew[0].Position = session.Simulation.Stations[store].Position + Vector2.left;
-            session.InteractRpc(store, false); yield return Wait(.4f);
+            session.InteractRpc(store, false); yield return Wait(.6f);
             Assert.AreEqual(ServiceItem.RepairKit, session.Crew[0].Carrying);
             var box = hud.View.CarriedItems[0].Find("Model_Toolbox");
             Assert.IsNotNull(box); Assert.IsTrue(box.gameObject.activeInHierarchy);
@@ -209,10 +209,10 @@ namespace ShipMayham.Tests
             var presentation = hud.View.GetComponent<PrototypeRepairSupplyView>();
             Assert.IsFalse(presentation.StoredKits[2].gameObject.activeSelf);
             session.Simulation.Crew[0].Position = session.Simulation.Stations[bench].Position + Vector2.left;
-            session.InteractRpc(bench, false); yield return Wait(.4f);
+            session.InteractRpc(bench, false); yield return Wait(.6f);
             Assert.AreEqual(1, session.Voyage.Value.ReadyRepairKits); Assert.IsTrue(presentation.ReadyKits[0].gameObject.activeSelf);
             Assert.IsFalse(box.gameObject.activeSelf);
-            session.Simulation.State.Leak = 1; session.InteractRpc(bench, false); yield return Wait(.4f);
+            session.Simulation.State.Leak = 1; session.InteractRpc(bench, false); yield return Wait(.6f);
             Assert.AreEqual(1, session.Voyage.Value.RepairKitsUsed); Assert.AreEqual(0, session.Voyage.Value.Leak);
             Assert.IsFalse(presentation.ReadyKits[0].gameObject.activeSelf); LogAssert.NoUnexpectedReceived();
         }

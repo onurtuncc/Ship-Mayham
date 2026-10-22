@@ -182,7 +182,7 @@ namespace ShipMayham.Tests
             Assert.IsTrue(hud.Session.IsSpawned);
             var session = hud.Session; var s = session.Simulation;
             s.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore);
-            yield return Wait(.4f); session.SelectDockJobRpc(DockJobKind.LuggageSort);
+            yield return Wait(.6f); session.SelectDockJobRpc(DockJobKind.LuggageSort);
             s.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.BuyFood) + Vector2.right;
             session.DockItemCommandRpc(HarborAction.BuyFood, DockJobKind.LuggageSort); yield return Wait(.3f);
             Assert.AreEqual(ServiceItem.LuggageA, session.Crew[0].Carrying);

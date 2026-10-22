@@ -105,7 +105,7 @@ namespace ShipMayham.Tests
             Vector3 anchor = session.PassengerAnchors[2].localPosition;
             Quaternion body = cues.Bodies[2].localRotation;
             sim.Crew[0].Position = sim.Stations[0].Position + Vector2.right;
-            session.InteractRpc(0, false); yield return Wait(.4f);
+            session.InteractRpc(0, false); yield return Wait(.6f);
             sim.State.Phase = VoyagePhase.Sailing;
             sim.Event = new VoyageEventState { Kind = VoyageEventKind.ContrabandInspection, Phase = VoyageEventPhase.Active, TargetPassenger = 2, Remaining = 100, Goal = 1 };
             yield return Wait(.6f);

@@ -50,6 +50,7 @@ namespace ShipMayham.Editor
             var feedback = view.GetComponent<PrototypeFeedback>();
             if (feedback == null) feedback = view.gameObject.AddComponent<PrototypeFeedback>();
             feedback.View = view; feedback.Fx = fx; feedback.PassengerAnimator = view.GetComponent<PrototypePassengerAnimator>();
+            feedback.CrewAnimator = view.GetComponent<PrototypeCrewAnimator>();
             EditorUtility.SetDirty(feedback);
 
             var ambient = view.GetComponent<PrototypeAmbientLife>();

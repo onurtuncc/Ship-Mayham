@@ -82,16 +82,16 @@ namespace ShipMayham.Tests
             Assert.IsTrue(hud.Session.IsSpawned); var session = hud.Session;
             Assert.AreEqual(18, session.Harbor.ShoreMarkers.Length);
             Assert.IsNotNull(session.Harbor.PortRoots[0].Find("Town_Visuals/Tavern/Model_HarborHut"));
-            session.Simulation.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore); yield return Wait(.4f);
-            session.SelectDockJobRpc(DockJobKind.SalvageRun); yield return Wait(.4f);
+            session.Simulation.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore); yield return Wait(.6f);
+            session.SelectDockJobRpc(DockJobKind.SalvageRun); yield return Wait(.6f);
             Assert.IsTrue(session.Harbor.SalvageMarkers[0].gameObject.activeSelf);
             session.Simulation.Crew[0].Position = HarborTownLayout.SalvagePoint(0) + Vector2.right;
-            session.PickUpSalvageRpc(0); yield return Wait(.4f);
+            session.PickUpSalvageRpc(0); yield return Wait(.6f);
             Assert.AreEqual(ServiceItem.SalvageA, session.Crew[0].Carrying);
             Assert.IsFalse(session.Harbor.SalvageMarkers[0].gameObject.activeSelf);
             Assert.IsTrue(hud.View.CarriedItems[0].Find("Model_RopeCoil").gameObject.activeInHierarchy);
             session.Simulation.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.HarborMaster) + Vector2.down;
-            session.DockItemCommandRpc(HarborAction.HarborMaster, DockJobKind.SalvageRun); yield return Wait(.4f);
+            session.DockItemCommandRpc(HarborAction.HarborMaster, DockJobKind.SalvageRun); yield return Wait(.6f);
             Assert.AreEqual(1, session.Voyage.Value.DockJobDeliveredMask); Assert.AreEqual(ServiceItem.None, session.Crew[0].Carrying);
             LogAssert.NoUnexpectedReceived();
         }

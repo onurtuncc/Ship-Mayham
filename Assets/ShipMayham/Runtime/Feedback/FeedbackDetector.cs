@@ -6,7 +6,8 @@ namespace ShipMayham
     {
         CoinsEarned, PassengerBoarded, ServiceDelivered, PassengerThanked, PassengerComplained, FareCollected, PassengerRescued,
         HullDamaged, LeakStarted, LeakFixed, VoyageStarted, VoyageArrived, VoyageFailed, ReputationGained, UpgradePurchased,
-        DockJobDone, EventResolved, EventFailed, CannonFired, CannonballLanded, PirateHit, PirateDefeated, ItemPickedUp, ItemDelivered
+        DockJobDone, EventResolved, EventFailed, CannonFired, CannonballLanded, PirateHit, PirateDefeated, ItemPickedUp, ItemDelivered,
+        PassengerThrown
     }
 
     /// <summary>One cosmetic reaction to a replicated state change. Slot is a passenger or crew index when relevant.</summary>
@@ -48,6 +49,7 @@ namespace ShipMayham
         public ServiceItem Request;
         public PassengerReaction Reaction;
         public PassengerMotion Motion;
+        public int Carrier;
     }
 
     public static class FeedbackDetector
@@ -96,7 +98,9 @@ namespace ShipMayham
                 if (after.Active && !before.Active) output.Add(new FeedbackEvent(FeedbackKind.PassengerBoarded, i));
                 if (!after.Active) continue;
                 if (before.Request != ServiceItem.None && after.Request == ServiceItem.None && after.Motion == PassengerMotion.OnDeck)
-                    output.Add(new FeedbackEvent(FeedbackKind.ServiceDelivered, i));
+                    output.Add(new FeedbackEvent(FeedbackKind.ServiceDelivered, i, (int)before.Request));
+                if (before.Motion == PassengerMotion.Carried && after.Motion == PassengerMotion.Airborne)
+                    output.Add(new FeedbackEvent(FeedbackKind.PassengerThrown, i, before.Carrier));
                 if (after.Reacting && (!before.Reacting || after.Reaction != before.Reaction))
                 {
                     if (after.Reaction == PassengerReaction.Thanks) output.Add(new FeedbackEvent(FeedbackKind.PassengerThanked, i));

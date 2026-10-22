@@ -31,7 +31,9 @@ namespace ShipMayham.Editor
         {
             if (view == null || view.CrewRoots == null || view.CrewRoots.Length == 0)
                 throw new InvalidOperationException("Authored crew slots are required.");
-            var controller = EnsureAnimatorController(CrewControllerPath, ("Idle", "Idle"), ("Walking", "Walking"), ("Carrying", "Carrying"));
+            var controller = EnsureAnimatorController(CrewControllerPath, ("Idle", "Idle"), ("Walking", "Walking"), ("Carrying", "Carrying"), ("Jump", "Jump"), ("PickUp", "PickingUp"),
+                ("Throw", "Throwing"), ("Interact", "ButtonPushing"), ("Dance", "HipHopDancing"), ("Dance2", "SambaDancing"),
+                ("Victory", "VictoryIdle"), ("Defeated", "Defeated"), ("Salute", "Salute"), ("Clap", "StandingClap"), ("LookAround", "LookingAround"));
             var animator = view.GetComponent<PrototypeCrewAnimator>();
             if (animator == null) animator = view.gameObject.AddComponent<PrototypeCrewAnimator>();
             animator.View = view;

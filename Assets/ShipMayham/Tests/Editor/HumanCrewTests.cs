@@ -18,6 +18,23 @@ namespace ShipMayham.Tests
         public void CarryingOverridesMovement(float speed) =>
             Assert.AreEqual(CrewPose.Carrying, CrewPresentation.PoseFor(new CrewState { Active = true, Carrying = ServiceItem.Ammo }, speed));
 
+        [Test] public void ArrivalMakesTheCrewDanceInTwoStyles()
+        {
+            var crew = new CrewState { Active = true };
+            Assert.AreEqual(CrewPose.Dance, CrewPresentation.PoseFor(crew, 0, VoyagePhase.Arrived, 0));
+            Assert.AreEqual(CrewPose.Dance2, CrewPresentation.PoseFor(crew, 0, VoyagePhase.Arrived, 1));
+        }
+
+        [Test] public void ALostShipLeavesTheCrewDefeated() =>
+            Assert.AreEqual(CrewPose.Defeated, CrewPresentation.PoseFor(new CrewState { Active = true, Carrying = ServiceItem.Food }, 2, VoyagePhase.Failed, 0));
+
+        [Test] public void JumpingWinsOverWalkingAndCarrying() =>
+            Assert.AreEqual(CrewPose.Jump, CrewPresentation.PoseFor(new CrewState { Active = true, JumpHeight = .4f, Carrying = ServiceItem.Ammo }, 3));
+
+        [TestCase(true, false)] [TestCase(false, true)]
+        public void OperatingTheCannonOrCraneUsesTheInteractionPose(bool cannon, bool crane) =>
+            Assert.AreEqual(CrewPose.Interact, CrewPresentation.PoseFor(new CrewState { Active = true, AtCannon = cannon, AtCrane = crane }, 0));
+
         [Test] public void SceneUsesHumanoidCrewDrivenByTheAnimator()
         {
             var view = FindInScene<PrototypeView>();

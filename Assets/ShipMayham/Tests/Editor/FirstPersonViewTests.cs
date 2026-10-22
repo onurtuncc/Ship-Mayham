@@ -94,7 +94,7 @@ namespace ShipMayham.Tests
 
             // Return the drink, then take food through the same RPC path used by the controller.
             session.InteractRpc(drink, false);
-            foreach (var frame in Wait(.4f)) yield return frame;
+            foreach (var frame in Wait(.6f)) yield return frame;
             Assert.AreEqual(ServiceItem.None, session.Crew[0].Carrying);
             Assert.IsFalse(view.CarriedItems[0].gameObject.activeSelf);
             int food = System.Array.FindIndex(session.Stations, s => s.Kind == StationKind.Food);

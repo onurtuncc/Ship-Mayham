@@ -73,8 +73,9 @@ namespace ShipMayham
             if (foamTimer > 0) return;
             foamTimer = .22f;
             // Bow wave and stern wash at the waterline (world y just above the ocean mesh).
-            foreach (float side in new[] { -1f, 1f })
+            for (int i = 0; i < 2; i++)
             {
+                float side = i == 0 ? -1f : 1f;
                 Vector3 bow = ship.TransformPoint(new Vector3(side * 2.4f, 0, 11.5f));
                 Vector3 stern = ship.TransformPoint(new Vector3(side * 5.4f, 0, -9.5f));
                 bow.y = stern.y = .08f;
@@ -103,7 +104,7 @@ namespace ShipMayham
                 var cam = View.Camera != null ? View.Camera.transform.position : center;
                 float distance = Vector3.Distance(cam, gulls[0].position);
                 voice.pitch = Random.Range(.9f, 1.2f);
-                voice.PlayOneShot(ProceduralSfx.Get(SfxKind.Gull), Mathf.Clamp01(1f - distance / 70f) * .35f);
+                voice.PlayOneShot(ProceduralSfx.Get(SfxKind.Gull), Mathf.Clamp01(1f - distance / 70f) * .35f * FeedbackSettings.Gain);
             }
         }
 

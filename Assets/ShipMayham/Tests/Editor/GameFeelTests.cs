@@ -109,6 +109,25 @@ namespace ShipMayham.Tests
             Assert.AreEqual(FeedbackKind.ItemDelivered, Detect(carrying, Baseline())[0].Kind);
         }
 
+        [Test] public void ServedItemsAreReportedSoTheRightGestureCanPlay()
+        {
+            var waiting = Baseline(); waiting.Passengers[1].Request = ServiceItem.Drink;
+            var events = Detect(waiting, Baseline());
+            Assert.AreEqual(FeedbackKind.ServiceDelivered, events[0].Kind);
+            Assert.AreEqual((int)ServiceItem.Drink, events[0].Value);
+        }
+
+        [Test] public void ThrowingAPassengerNamesTheCarrier()
+        {
+            var carried = Baseline(); carried.Passengers[4].Motion = PassengerMotion.Carried; carried.Passengers[4].Carrier = 2;
+            var thrown = Baseline(); thrown.Passengers[4].Motion = PassengerMotion.Airborne;
+            var events = Detect(carried, thrown);
+            Assert.AreEqual(1, events.Count);
+            Assert.AreEqual(FeedbackKind.PassengerThrown, events[0].Kind);
+            Assert.AreEqual(4, events[0].Slot);
+            Assert.AreEqual(2, events[0].Value);
+        }
+
         [Test] public void CannonShotsReportFireAndLanding()
         {
             var flying = Baseline(); flying.CrewBallActive = true;
@@ -139,6 +158,21 @@ namespace ShipMayham.Tests
                 if (kind != SfxKind.Gull || peak > 0) Assert.Greater(peak, .02f, kind + " is silent");
                 Assert.LessOrEqual(peak, 1.0001f, kind + " clips");
             }
+        }
+
+        [Test] public void MuteSettingPersistsAndSilencesTheGain()
+        {
+            bool original = FeedbackSettings.Muted;
+            try
+            {
+                FeedbackSettings.Muted = true;
+                FeedbackSettings.Reset();
+                Assert.IsTrue(FeedbackSettings.Muted, "The setting should be read back from storage.");
+                Assert.AreEqual(0f, FeedbackSettings.Gain);
+                FeedbackSettings.Muted = false;
+                Assert.AreEqual(1f, FeedbackSettings.Gain);
+            }
+            finally { FeedbackSettings.Muted = original; }
         }
 
         [Test] public void SeaLoopWrapsWithoutAJump()

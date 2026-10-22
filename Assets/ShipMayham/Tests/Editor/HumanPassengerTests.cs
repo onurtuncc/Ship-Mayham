@@ -25,6 +25,17 @@ namespace ShipMayham.Tests
         public void PhysicalComedyPanicsRegardlessOfCue(PassengerMotion motion) =>
             Assert.AreEqual(PassengerPose.Panicked, PassengerPresentation.PoseFor(Active(motion), PassengerCue.Impatient));
 
+        [TestCase(PassengerReaction.Thanks, PassengerPose.Delighted)] [TestCase(PassengerReaction.Complaint, PassengerPose.Yelling)]
+        [TestCase(PassengerReaction.TicketDue, PassengerPose.Disbelief)] [TestCase(PassengerReaction.FareCollected, PassengerPose.Disbelief)]
+        [TestCase(PassengerReaction.Rescued, PassengerPose.Laughing)]
+        public void ActiveReactionsPickTheMatchingGesture(PassengerReaction reaction, PassengerPose expected)
+        {
+            var passenger = Active(); passenger.Reaction = reaction; passenger.ReactionRemaining = 2;
+            Assert.AreEqual(expected, PassengerPresentation.PoseFor(passenger, PassengerCue.Relaxed));
+            passenger.ReactionRemaining = 0;
+            Assert.AreEqual(PassengerPose.Seated, PassengerPresentation.PoseFor(passenger, PassengerCue.Relaxed), "An expired reaction must not keep the pose.");
+        }
+
         [Test] public void InactivePassengersStaySeated() =>
             Assert.AreEqual(PassengerPose.Seated, PassengerPresentation.PoseFor(default, PassengerCue.Impatient));
 

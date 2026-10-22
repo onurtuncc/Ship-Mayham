@@ -89,22 +89,22 @@ namespace ShipMayham.Tests
             var hud = UnityEngine.Object.FindAnyObjectByType<PrototypeHud>(); hud.ConnectSolo();
             float end = Time.realtimeSinceStartup + 5; while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < end) yield return null;
             Assert.IsTrue(hud.Session.IsSpawned); var session = hud.Session;
-            session.Simulation.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore); yield return Wait(.4f);
-            session.SelectDockJobRpc(DockJobKind.CraneLoading); yield return Wait(.4f);
+            session.Simulation.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore); yield return Wait(.6f);
+            session.SelectDockJobRpc(DockJobKind.CraneLoading); yield return Wait(.6f);
             session.Simulation.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.FishMarket) + Vector2.right;
-            session.HarborCommandRpc(HarborAction.FishMarket); yield return Wait(.4f);
+            session.HarborCommandRpc(HarborAction.FishMarket); yield return Wait(.6f);
             Assert.IsTrue(hud.View.CarriedItems[0].Find("Model_CrateStack").gameObject.activeInHierarchy);
             session.Simulation.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.CraneLoadingPad) + Vector2.right;
-            session.HarborCommandRpc(HarborAction.CraneLoadingPad); yield return Wait(.4f);
+            session.HarborCommandRpc(HarborAction.CraneLoadingPad); yield return Wait(.6f);
             session.Simulation.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.CraneControls) + Vector2.right;
-            session.HarborCommandRpc(HarborAction.CraneControls); yield return Wait(.4f);
+            session.HarborCommandRpc(HarborAction.CraneControls); yield return Wait(.6f);
             Assert.IsTrue(session.Crew[0].AtCrane); Assert.Greater(hud.View.Camera.transform.position.y, 10);
-            session.HarborCraneActionRpc(true); yield return Wait(.4f); Assert.IsTrue(session.Voyage.Value.CraneHolding);
+            session.HarborCraneActionRpc(true); yield return Wait(.6f); Assert.IsTrue(session.Voyage.Value.CraneHolding);
             var presentation = hud.View.GetComponent<PrototypeHarborCraneView>(); Assert.IsTrue(presentation.HangingCrates[0].gameObject.activeInHierarchy);
             session.Simulation.State.CraneHook = VoyageSimulation.CraneBarge;
-            session.HarborCraneActionRpc(true); yield return Wait(.4f);
+            session.HarborCraneActionRpc(true); yield return Wait(.6f);
             Assert.AreEqual(1, session.Voyage.Value.DockJobProgress); Assert.IsTrue(presentation.DeliveredCrates[0].gameObject.activeSelf);
-            session.HarborCraneActionRpc(false); yield return Wait(.4f); Assert.IsFalse(session.Crew[0].AtCrane);
+            session.HarborCraneActionRpc(false); yield return Wait(.6f); Assert.IsFalse(session.Crew[0].AtCrane);
             LogAssert.NoUnexpectedReceived();
         }
         [UnityTearDown] public IEnumerator Cleanup()

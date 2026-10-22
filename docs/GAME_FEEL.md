@@ -34,6 +34,41 @@ Ses, `AudioSource` havuzuyla (8 ses) çalınır; dünya olayları kamera uzaklı
 
 Kamera sarsıntısı yalnızca kamera çizilirken uygulanır (`RenderPipelineManager.beginCameraRendering/endCameraRendering`) ve hemen geri alınır; oyun mantığı kamera dönüşümünü sarsıntısız görür.
 
+## Mixamo animasyon seti
+
+`Art/Generated/Animations/Mixamo_*.fbx` (30 fps, "Without Skin", Humanoid). `Passenger.controller` ve `Crew.controller` durum adlarıyla `PassengerPose`/`CrewPose` enum'larını eşler; yeni durum eklemek için enum'a ekle, builder'daki eşlemeye klip adını yaz ve `Upgrade Prototype (Human Passengers/Crew)` çalıştır.
+
+| Kim | Durum (klip) | Ne zaman |
+|---|---|---|
+| Yolcu | `Seated` (SittingIdle), `Fidgeting` (Talking), `Pleading` (Waving), `Panicked` (Terrified) | Sakin, şüpheli davranış, sabırsız, taşınma/fırlatılma |
+| Yolcu | `Delighted` (CheeringWhileSitting), `Yelling` (SittingYell), `Disbelief` (SittingDisbelief), `Laughing` (SittingLaughing) | Teşekkür, şikâyet, bilet itirazı/ücret, kurtarılma |
+| Yolcu | `Drinking` (SittingDrinking), `Clapping` (SittingClap) | İçecek / yiyecek servisi sonrası (tek seferlik) |
+| Yolcu | rastgele `Laughing/Clapping/Fidgeting` | Sakin otururken 12–30 sn'de bir, 2,5–4 sn |
+| Mürettebat | `Idle`, `Walking`, `Carrying`, `Jump`, `Interact` (ButtonPushing: top/vinç başı) | Sürekli durum (`CrewPresentation.PoseFor`) |
+| Mürettebat | `Dance` (HipHop) / `Dance2` (Samba) | Sefer bitince (varış) |
+| Mürettebat | `Defeated` | Gemi kaybedilince |
+| Mürettebat | `PickUp`, `Throw`, `Clap`, `Victory`, `Salute`, `LookAround` | Eşya alma, yolcu fırlatma, olay çözüldü, korsan yenildi, yükseltme, boştayken 9–22 sn'de bir |
+
+Tek seferlik jestler `PlayOneShot` ile belirli süre oynar, sonra sürekli duruma döner; replike duruma hiç dokunulmaz.
+
+## Gemi yükseltmeleri ve hasar
+
+`Runtime/Ship/`: `ShipProgression` (saf kurallar), `PrototypeShipUpgradeView` (modülleri gösterir), `PrototypeShipEffects` (duman/alev). Oyuncu yükseltme aldığında modül zıplayarak belirir; sahne başlarken ya da istemci katılırken mevcut seviyeler animasyonsuz görünür.
+
+| Yükseltme | Görünüm |
+|---|---|
+| Koltuk (kapasite 4 → 6 → 8) | Kullanılmayan bankolar gizli, açılınca belirir |
+| Motor 1 | Baca (`ShipFunnel`), hızla artan duman |
+| Motor 2 | İkinci baca + kıç dümen itici roketleri (`ShipBoost`) ve alev |
+| Konfor 1 | Halı (`ShipCarpet`), 4 çiçeklik (`ShipPlanter`), iki yan flama (`ShipBunting`) |
+| Hasar < %60 / < %30 | Güvertede duman / duman + alev + kıvılcım |
+
+Modeller `Tools/BlenderAssets/assets/Ship*.py` ile üretilir; `Ship Mayham → Upgrade Prototype (Ship Upgrades)` bunları `Ship_Player/Visuals/Upgrades` altına yerleştirir (statik FBX'lerde Blender +Y Unity -Z'dir; itici lüleleri geriye bakar).
+
+## Ses ayarı
+
+`M` tuşu veya sağ alttaki düğme sesi kapatır/açar; tercih `PlayerPrefs`'te saklanır (depolama hatası oyunu durdurmaz).
+
 ## Görsel cila
 
 - **Z-fighting:** `Ship Mayham → Audit Coplanar Surfaces` aynı üst yüzeyi paylaşan ince plakaları `Logs/OverlapAudit.txt`'ye yazar. Yaya geçidi/iskele/karşılama paspası aynı yükseklikteydi; katmanlar artık 16 mm arayla (`PrototypeVisualPolishBuilder`, `PrototypeHarborTownBuilder`). Kalan "BOTTOM" satırları gömülü alt yüzlerdir, görünmez.
@@ -44,4 +79,4 @@ Kamera sarsıntısı yalnızca kamera çizilirken uygulanır (`RenderPipelineMan
 
 ## Doğrulama
 
-`GameFeelTests`: algılayıcı kuralları (kasa, hasar, sızıntı, yolcu slotları, taşıma, top, olay çıktıları), ses üretimi (NaN/sessizlik/kırpma yok), deniz döngüsü dikişi ve gerçek sahnede olayların parçacık/yazı üretmesi. `SHIPMAYHAM_CAPTURE=1` ortam değişkeniyle son test `Logs/GameFeel.png` yazar (efektli görüntü).
+`GameFeelTests`, `ShipUpgradeTests`, `HumanCrewTests`, `HumanPassengerTests`: algılayıcı kuralları (kasa, hasar, sızıntı, yolcu slotları, taşıma, top, olay çıktıları), ses üretimi (NaN/sessizlik/kırpma yok), deniz döngüsü dikişi ve gerçek sahnede olayların parçacık/yazı üretmesi. `SHIPMAYHAM_CAPTURE=1` ortam değişkeniyle son test `Logs/GameFeel.png` yazar (efektli görüntü).

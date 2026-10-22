@@ -54,7 +54,8 @@ namespace ShipMayham.Editor
 
         private static AnimatorController EnsurePassengerController() => EnsureAnimatorController(PassengerControllerPath,
             ("Seated", "SittingIdle"), ("Pleading", "Waving"), ("Fidgeting", "Talking"), ("Panicked", "Terrified"),
-            ("Delighted", "CheeringWhileSitting"));
+            ("Delighted", "CheeringWhileSitting"), ("Yelling", "SittingYell"), ("Disbelief", "SittingDisbelief"), ("Laughing", "SittingLaughing"),
+            ("Clapping", "SittingClap"), ("Drinking", "SittingDrinking"));
 
         // State names double as the strings the runtime animators cross-fade to; the first state is the default.
         private static AnimatorController EnsureAnimatorController(string controllerPath, params (string state, string clip)[] map)

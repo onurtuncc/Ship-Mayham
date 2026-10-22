@@ -27,6 +27,8 @@ namespace ShipMayham.Editor
             var scene = EditorSceneManager.OpenScene("Assets/ShipMayham/Scenes/ShipPrototype.unity");
             var session = Object.FindAnyObjectByType<PrototypeSession>();
             var view = Object.FindAnyObjectByType<PrototypeView>();
+            var upgrades = view.GetComponent<PrototypeShipUpgradeView>();
+            if (upgrades != null) upgrades.Apply(2, 2, 1, false);   // show every upgrade module; never saved
             foreach (var crew in view.CrewRoots) crew.gameObject.SetActive(true);
             for (int i = 0; i < view.PassengerVisuals.Length; i++) view.PassengerVisuals[i].gameObject.SetActive(true);
             foreach (var label in Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None)) label.gameObject.SetActive(false);

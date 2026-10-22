@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ShipMayham
 {
-    public enum FxKind { Sparkle, Hearts, Anger, Confetti, Coins, Splash, Smoke, Stars, Foam }
+    public enum FxKind { Sparkle, Hearts, Anger, Confetti, Coins, Splash, Smoke, Stars, Foam, Flame }
 
     /// <summary>
     /// Pooled particle bursts and floating text popups. One ParticleSystem per kind lives under this object and is fired with
@@ -34,24 +34,32 @@ namespace ShipMayham
         private void Awake()
         {
             if (ParticleMaterial == null) { Debug.LogError("FeedbackFx needs the particle material.", this); enabled = false; return; }
-            foreach (FxKind kind in System.Enum.GetValues(typeof(FxKind))) systems[kind] = CreateSystem(kind);
-            if (PopupTemplate != null)
+            // Systems, textures and the popup pool are created on first use so scene start-up stays cheap.
+            if (PopupTemplate != null) PopupTemplate.gameObject.SetActive(false);
+        }
+
+        private ParticleSystem SystemFor(FxKind kind)
+        {
+            if (!systems.TryGetValue(kind, out var system) || system == null)
             {
-                PopupTemplate.gameObject.SetActive(false);
-                for (int i = 0; i < PopupPool; i++) popups.Add(CreatePopup());
+                system = CreateSystem(kind);
+                systems[kind] = system;
             }
+            return system;
         }
 
         public void Burst(FxKind kind, Vector3 position, int count = -1)
         {
-            if (!systems.TryGetValue(kind, out var system) || system == null) return;
+            var system = SystemFor(kind);
+            if (system == null) return;
             var emit = new ParticleSystem.EmitParams { position = position };
             system.Emit(emit, count > 0 ? count : DefaultCount(kind));
         }
 
         public void Popup(string text, Vector3 position, Color color, float scale = 1)
         {
-            if (PopupTemplate == null || popups.Count == 0) return;
+            if (PopupTemplate == null) return;
+            if (popups.Count == 0) for (int i = 0; i < PopupPool; i++) popups.Add(CreatePopup());
             PopupInstance popup = null;
             foreach (var candidate in popups) if (!candidate.Active) { popup = candidate; break; }
             if (popup == null) popup = Oldest();
@@ -120,6 +128,7 @@ namespace ShipMayham
                 case FxKind.Splash: return 20;
                 case FxKind.Smoke: return 8;
                 case FxKind.Foam: return 3;
+                case FxKind.Flame: return 2;
                 default: return 9;
             }
         }
@@ -168,6 +177,10 @@ namespace ShipMayham
                     life = new ParticleSystem.MinMaxCurve(.6f, .9f); speed = new ParticleSystem.MinMaxCurve(2f, 5f); size = new ParticleSystem.MinMaxCurve(.1f, .22f);
                     color = Fade(new Color(.85f, .95f, 1f), new Color(1, 1, 1)); gravity = 1.6f;
                     shape.shapeType = ParticleSystemShapeType.Cone; shape.angle = 30; shape.rotation = new Vector3(-90, 0, 0); break;
+                case FxKind.Flame:
+                    life = new ParticleSystem.MinMaxCurve(.3f, .5f); speed = new ParticleSystem.MinMaxCurve(.8f, 2f); size = new ParticleSystem.MinMaxCurve(.25f, .4f);
+                    color = Fade(new Color(1, .75f, .2f), new Color(1, .25f, .1f)); gravity = -.3f;
+                    shape.shapeType = ParticleSystemShapeType.Cone; shape.angle = 14; shape.radius = .08f; break;
                 case FxKind.Foam:
                     life = new ParticleSystem.MinMaxCurve(1.3f, 2f); speed = new ParticleSystem.MinMaxCurve(.1f, .5f); size = new ParticleSystem.MinMaxCurve(.45f, .8f);
                     color = Fade(new Color(1, 1, 1, .55f), new Color(.85f, .96f, 1, .55f)); grow = true;

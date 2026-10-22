@@ -2,35 +2,44 @@ using UnityEngine;
 
 namespace ShipMayham
 {
-    /// <summary>Cosmetic only: cross-fades each passenger Animator to the pose implied by the replicated state.</summary>
+    /// <summary>
+    /// Cosmetic only: cross-fades each passenger Animator to the pose implied by the replicated state, plays short one-shot
+    /// gestures (drinking, clapping) on request and sprinkles idle flavour so a calm deck never looks frozen.
+    /// </summary>
     [DefaultExecutionOrder(160)]
     [RequireComponent(typeof(PrototypeView))]
     public sealed class PrototypePassengerAnimator : MonoBehaviour
     {
         private const float FadeSeconds = .25f;
+        private const PassengerPose None = (PassengerPose)255;
+        private static readonly PassengerPose[] Flavours = { PassengerPose.Laughing, PassengerPose.Clapping, PassengerPose.Fidgeting, PassengerPose.Laughing };
 
         public PrototypeView View;
         public Animator[] Animators = System.Array.Empty<Animator>();
         private PassengerPose[] current;
+        private float[] oneShotUntil, nextFlavour;
+        private bool[] phased;
 
         private void Awake()
         {
             if (View == null) View = GetComponent<PrototypeView>();
-            current = new PassengerPose[Animators.Length];
-            Desynchronize();
+            int n = Animators.Length;
+            current = new PassengerPose[n]; oneShotUntil = new float[n]; nextFlavour = new float[n]; phased = new bool[n];
+            // Identical clips in lockstep look robotic: every body gets its own tempo, and its own phase once it first becomes active.
+            for (int i = 0; i < n; i++)
+            {
+                if (Animators[i] != null) Animators[i].speed = Random.Range(.92f, 1.08f);
+                nextFlavour[i] = Random.Range(6f, 20f);
+            }
         }
 
-        // Identical clips in lockstep look robotic: every body gets its own tempo, and its own phase once it first becomes active.
-        private bool[] phased;
-
-        private void Desynchronize()
+        /// <summary>Plays a gesture for a short time, then returns to the continuous pose. Safe on missing animators.</summary>
+        public void PlayOneShot(int index, PassengerPose gesture, float seconds)
         {
-            phased = new bool[Animators.Length];
-            foreach (var animator in Animators)
-            {
-                if (animator == null) continue;
-                animator.speed = Random.Range(.92f, 1.08f);
-            }
+            if (index < 0 || index >= Animators.Length || Animators[index] == null || !Animators[index].isActiveAndEnabled) return;
+            oneShotUntil[index] = Time.time + seconds;
+            Animators[index].CrossFadeInFixedTime(gesture.ToString(), FadeSeconds);
+            current[index] = None;
         }
 
         private void LateUpdate()
@@ -42,9 +51,16 @@ namespace ShipMayham
                 var animator = Animators[i];
                 if (animator == null || !animator.isActiveAndEnabled || i >= session.Passengers.Count) continue;
                 if (!phased[i]) { phased[i] = true; animator.Play(0, 0, Random.value); }
+                if (Time.time < oneShotUntil[i]) continue;
                 var passenger = session.Passengers[i];
                 var cue = PassengerPresentation.CueFor(passenger, session.ActiveEvent.Value, session.Voyage.Value, i);
                 var pose = PassengerPresentation.PoseFor(passenger, cue);
+                if (pose == PassengerPose.Seated && passenger.Active && Time.time >= nextFlavour[i])
+                {
+                    nextFlavour[i] = Time.time + Random.Range(12f, 30f);
+                    PlayOneShot(i, Flavours[Random.Range(0, Flavours.Length)], Random.Range(2.5f, 4f));
+                    continue;
+                }
                 if (pose == current[i]) continue;
                 current[i] = pose;
                 animator.CrossFadeInFixedTime(pose.ToString(), FadeSeconds, 0, Random.Range(0f, 1.5f));
