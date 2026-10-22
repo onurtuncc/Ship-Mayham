@@ -56,6 +56,8 @@ Bu oturumun sonraki çıkış kontrolünde, Esc/imleç geçişi sırasında ayn�
 
 Pointer-lock korumasının Node testi başarılıdır; Unity Editor regresyon paketi de **118/118**, exit 0 (`Logs/WebCursor-EditMode.xml`). WebGL'ye özel JS bağlantısı, Esc ile bırakma/merkezden yeniden yakalama ve görünür Leave düğmesi sonraki WebGL build/tarayıcı kabulünde ayrıca doğrulanmalıdır.
 
+Sonraki WebGL `1f0705e` build'i Unity exit 0 ile tamamlandı; Pages işi `39705329746` başarılıdır. Canlı solo kontrolde yeni rota eşikleri ve üst sağdaki Leave düğmesi göründü. İki merkez tıklaması/Esc geçişinde tarayıcı kilidi `UnknownError` ve `WrongDocumentError` ile reddetti; bunlar yalnız `[ShipMayham] Pointer lock was not granted...` **uyarısı** olarak yakalandı, hata diyaloğu açılmadı ve error seviyesinde konsol kaydı oluşmadı. Leave menüye döndü (`Logs/WebGL-Cursor-Guard-Verified.png`, `Logs/WebGL-Leave-Verified.png`). Bu, kilit reddinde güvenli davranışı doğrular; bu gömülü tarayıcı ortamında başarılı pointer-lock/bakış kontrolü kanıtlanmadı ve normal masaüstü tarayıcıda manuel kontrol gerekir. Unity'nin kalıcı depolama API'si deprecation ve kullanılmayan FSR shader'ı için ayrı uyarıları vardır; günlük tamamen uyarısız değildir.
+
 ## Olay destesi
 
 Host her oturumda bir seed üretir. Deste mevcut istasyon ve stoklara göre uygun kartlardan rota ağırlıklarıyla seçim yapar; aynı kart, o turdaki uygun kartlar bitmeden tekrar gelmez. Market Run servis/VIP kartlarına, Storm Passage teknik kartlara daha fazla ağırlık verir. Yeni tur sınırında da mümkünse art arda aynı kart gelmez. Deste, hedef yolcu, denetlenen yolcu maskesi ve hararetin soğuma süresi host migration snapshot v3 ile devam eder; tüm oyuncular aynı sürümü kullanmalıdır.
