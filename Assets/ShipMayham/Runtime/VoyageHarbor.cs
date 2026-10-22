@@ -70,21 +70,27 @@ namespace ShipMayham
                     : "Coastal Ferry selected: standard risk with no contract condition.";
         }
 
-        public string ToggleDockJob(ulong clientId)
+        public string ToggleDockJob(ulong clientId, DockJobKind kind = DockJobKind.CargoRelay)
         {
             int slot = FindCrew(clientId);
-            if (slot < 0 || !HarborOpen || !Crew[slot].OnShore) return "Go ashore to use the cargo board.";
+            if (slot < 0 || !HarborOpen || !Crew[slot].OnShore) return "Go ashore to use the job board.";
+            if (kind > DockJobKind.LuggageSort) return "Unknown dock job.";
             if (State.DockJobActive)
             {
+                if (State.DockJobType != kind) return "Finish or cancel the current job before changing contracts.";
                 foreach (var member in Crew)
-                    if (member.Active && member.Carrying == ServiceItem.Cargo) return "Return every cargo crate to the orange pickup before cancelling.";
+                    if (member.Active && IsPortCargo(member.Carrying)) return "Return every held item to the orange pickup before cancelling.";
                 State.DockJobActive = false;
                 State.DockJobProgress = 0;
-                return "Cargo relay cancelled. Departure is unlocked.";
+                State.DockJobDeliveredMask = 0;
+                return "Port job cancelled. Departure is unlocked.";
             }
-            if (State.DockJobPortKey == CurrentPortKey) return "This port's cargo relay is already complete.";
+            if (State.DockJobPortKey == CurrentPortKey) return "This port's job is already complete.";
             State.DockJobActive = true;
             State.DockJobProgress = 0;
+            State.DockJobType = kind;
+            State.DockJobDeliveredMask = 0;
+            if (kind == DockJobKind.LuggageSort) return "Bag sort: ORANGE pickup/return. Read A/B/C desks on the board. Deliver to BLUE or GREEN; wrong desks keep the bag.";
             return "Cargo relay started: carry 3 crates from FOOD pickup to HULL delivery. Multiple crew can relay together.";
         }
 
@@ -116,27 +122,7 @@ namespace ShipMayham
             if (Vector2.Distance(crew.Position, HarborPoint(action)) > InteractionRange) return "Move closer to the harbor station.";
             if (clock < interactionReady[slot]) return string.Empty;
             interactionReady[slot] = clock + .35f;
-            if (crew.Carrying == ServiceItem.Cargo)
-            {
-                if (action == HarborAction.BuyFood && State.DockJobActive)
-                {
-                    crew.Carrying = ServiceItem.None;
-                    return "Cargo crate returned to the pickup.";
-                }
-                if (action == HarborAction.MaintainHull && State.DockJobActive)
-                {
-                    crew.Carrying = ServiceItem.None;
-                    State.DockJobProgress++;
-                    if (State.DockJobProgress < DockJobGoal) return $"Cargo delivered: {State.DockJobProgress}/{DockJobGoal}.";
-                    State.DockJobActive = false;
-                    State.DockJobPortKey = CurrentPortKey;
-                    State.DockJobsCompleted++;
-                    State.Wallet += DockJobReward;
-                    State.Reputation++;
-                    return "Cargo relay complete! +24 shared coins and +1 reputation.";
-                }
-                return "Deliver cargo at HULL, or return it to the FOOD pickup.";
-            }
+            if (IsPortCargo(crew.Carrying)) return HandleDockItem(slot, action);
             if (crew.Carrying != ServiceItem.None || CarriedPassenger(slot) >= 0) return "Return your item or put the passenger down first.";
             if (action == HarborAction.GoAshore || action == HarborAction.BoardShip)
             {
@@ -154,14 +140,7 @@ namespace ShipMayham
                 return "Hull protected: absorbs the next 20 damage, including leaks and pirate fire.";
             }
             if (action == HarborAction.BuyFood && State.DockJobActive)
-            {
-                int committed = State.DockJobProgress;
-                foreach (var member in Crew)
-                    if (member.Active && member.Carrying == ServiceItem.Cargo) committed++;
-                if (committed >= DockJobGoal) return "All remaining crates are already being carried. Help the crew deliver them.";
-                crew.Carrying = ServiceItem.Cargo;
-                return $"Cargo crate picked up. Deliver it to HULL ({State.DockJobProgress}/{DockJobGoal}).";
-            }
+                return PickUpDockItem(slot);
             bool food = action == HarborAction.BuyFood;
             int stock = food ? State.FoodStock : State.DrinkStock;
             // Include items held aboard so returning them cannot exceed the storage cap.

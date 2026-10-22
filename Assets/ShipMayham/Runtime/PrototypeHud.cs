@@ -17,7 +17,7 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
-        public const ushort NetworkProtocolVersion = 5;
+        public const ushort NetworkProtocolVersion = 6;
         public NetworkManager Manager;
         public PrototypeSession Session;
         public PrototypeView View;
@@ -469,11 +469,23 @@ namespace ShipMayham
             if (GUILayout.Button("STORM (5)")) Session.SelectRouteRpc(RouteProfile.StormPassage);
             GUILayout.EndHorizontal();
             GUI.enabled = true;
-            GUILayout.Label(s.DockJobActive ? $"CARGO RELAY {s.DockJobProgress}/{VoyageSimulation.DockJobGoal}" : $"Cargo relays completed: {s.DockJobsCompleted}", body);
+            GUILayout.Label(s.DockJobActive ? $"{VoyageSimulation.DockJobName(s.DockJobType)} {s.DockJobProgress}/{VoyageSimulation.DockJobGoal}" : $"Port jobs completed: {s.DockJobsCompleted}", body);
             GUI.enabled = local >= 0 && Session.Crew[local].OnShore;
-            if (GUILayout.Button(s.DockJobActive ? "CANCEL CARGO RELAY" : "START CARGO RELAY")) Session.ToggleDockJobRpc();
+            if (s.DockJobActive)
+            {
+                if (GUILayout.Button("CANCEL JOB")) Session.SelectDockJobRpc(s.DockJobType);
+            }
+            else
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("CARGO")) Session.SelectDockJobRpc(DockJobKind.CargoRelay);
+                if (GUILayout.Button("BAG SORT")) Session.SelectDockJobRpc(DockJobKind.LuggageSort);
+                GUILayout.EndHorizontal();
+            }
             GUI.enabled = true;
-            GUILayout.Label("Green gangway: E / A\nFood +8: 12 coins\nDrink +8: 12 coins\nHull shield: 30 coins", body);
+            if (s.DockJobActive && s.DockJobType == DockJobKind.LuggageSort)
+                GUILayout.Label($"ORANGE: pickup / return\nA: {VoyageSimulation.LuggageDesk(s, ServiceItem.LuggageA)}\nB: {VoyageSimulation.LuggageDesk(s, ServiceItem.LuggageB)}\nC: {VoyageSimulation.LuggageDesk(s, ServiceItem.LuggageC)}", body);
+            else GUILayout.Label("Green gangway: E / A\nFood +8: 12 coins\nDrink +8: 12 coins\nHull shield: 30 coins", body);
             GUILayout.Label("Supplies carry over. Storage cap: 32 each. Shared wallet.", body);
             if (s.Phase == VoyagePhase.Arrived)
                 GUILayout.Label($"Unpaid: {s.LastUnpaid}\nMissing: {s.LastMissing}\nRescue costs: {s.LastRescueCosts}", body);

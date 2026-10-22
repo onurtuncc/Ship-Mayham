@@ -1,5 +1,7 @@
 # İlk oynanabilir prototip
 
+**Son kaynak — dilim 16:** Limanda bagaj ayırma eklendi; **182/182 EditMode**, dört süreçli tam sefer/bagaj teslimatı ve v6 gerçek Relay host kaybı geçti. Son kaynak protokolü **6**, eski sekmeler yenilenmelidir. Aşağıdaki 167 test/v5/web bilgileri önceki dilimin tarihsel kaydıdır; yeni yayın kanıtı doğrulandıktan sonra ayrıca kaydedilir. [DOCK_SORTING.md](DOCK_SORTING.md).
+
 **22 Ekim 2026 doğrulaması:** Yolcu ipuçları, uçuşlu gülle ve migration temizliğini içeren EditMode paketi **167/167 geçti** (`Logs/PassengerCues-Final.xml`). Son dört Windows sürecinde tam sefer, hareketli mermi, taşıma ve liman akışı geçti; v5 Relay/WSS host kaybı balistik diliminde ayrıca doğrulandı. Yeni ipuçları [PASSENGER_CUES.md](PASSENGER_CUES.md), balistik ağ kanıtı [BALLISTICS.md](BALLISTICS.md), önceki aralıklı hata ve üyelik düzeltmesi [AMMO_FLOW.md](AMMO_FLOW.md) içinde ayrılır. Normal tarayıcıda gerçek bakış ve dört insanla oyun dengesi kabulü hâlâ gereklidir.
 
 Bu sürüm GDD'nin ilk on beş geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → davranışları gözleyip biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / topçuya gülle taşı / uçuşlu atışlarla korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık. İlk prop modeli grubu ve yolcu valizleri bağlanmıştır; karakterler hâlâ blok prototiptir.

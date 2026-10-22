@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ShipMayham
 {
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
-    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo }
+    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing }
@@ -14,6 +14,7 @@ namespace ShipMayham
     public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull }
     public enum RouteProfile : byte { CoastalFerry, MarketRun, StormPassage }
     public enum ShipLivery : byte { Classic, Seafoam, Sunset }
+    public enum DockJobKind : byte { CargoRelay, LuggageSort }
 
     [Serializable]
     public struct VoyageState : INetworkSerializable, IEquatable<VoyageState>
@@ -25,6 +26,8 @@ namespace ShipMayham
         public RouteProfile Route;
         public ShipLivery Livery;
         public bool DockJobActive;
+        public DockJobKind DockJobType;
+        public int DockJobDeliveredMask;
         public int Wallet, Voyage, Boarded, Served, FoodStock, DrinkStock, Leak, RepairSteps;
         public int DockJobProgress, DockJobPortKey, DockJobsCompleted;
         public int EngineLevel, CapacityLevel, ComfortLevel;
@@ -39,6 +42,7 @@ namespace ShipMayham
             s.SerializeValue(ref Route);
             s.SerializeValue(ref Livery);
             s.SerializeValue(ref DockJobActive);
+            s.SerializeValue(ref DockJobType); s.SerializeValue(ref DockJobDeliveredMask);
             s.SerializeValue(ref Wallet); s.SerializeValue(ref Voyage); s.SerializeValue(ref Boarded); s.SerializeValue(ref Served);
             s.SerializeValue(ref DockJobProgress); s.SerializeValue(ref DockJobPortKey); s.SerializeValue(ref DockJobsCompleted);
             s.SerializeValue(ref FoodStock); s.SerializeValue(ref DrinkStock); s.SerializeValue(ref Leak); s.SerializeValue(ref RepairSteps);

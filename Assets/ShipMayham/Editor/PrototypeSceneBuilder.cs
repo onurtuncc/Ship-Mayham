@@ -170,6 +170,7 @@ namespace ShipMayham.Editor
             EnsurePhaseFour(session, view);
             EnsureAmmoFlow(session, view);
             EnsurePassengerCues(view);
+            EnsureDockSorting(view);
             EditorSceneManager.SaveScene(scene, ScenePath);
             RegisterScene();
             AssetDatabase.SaveAssets();
@@ -340,11 +341,31 @@ namespace ShipMayham.Editor
                 view.Camera.transform.position = view.Session.ShipRoot.TransformPoint(new Vector3(-3.5f, 2.8f, 2.5f));
                 view.Camera.transform.LookAt(view.Session.ShipRoot.TransformPoint(new Vector3(-1.4f, 1.8f, .2f)));
             }
+            bool dockPreview = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-dock-sort-preview") >= 0;
+            if (dockPreview)
+            {
+                Vector3 origin = VoyageSimulation.HarborOrigin(new VoyageState { Phase = VoyagePhase.Boarding });
+                view.Camera.fieldOfView = view.FirstPersonFieldOfView;
+                view.Camera.transform.position = origin + new Vector3(2, view.EyeHeight + VoyageSimulation.ShoreHeight, -8.5f);
+                view.Camera.transform.LookAt(origin + new Vector3(0, 1, -7));
+                foreach (var visual in view.PassengerVisuals) visual.gameObject.SetActive(false);
+                foreach (var label in view.PassengerLabels) label.gameObject.SetActive(false);
+                view.CrewRoots[0].Find("Visuals").gameObject.SetActive(false);
+                Transform socket = view.CarriedItems[0], bag = socket.Find("Model_Suitcase");
+                if (bag == null) throw new System.InvalidOperationException("Upgrade dock sorting before capturing its preview.");
+                socket.gameObject.SetActive(true); bag.gameObject.SetActive(true);
+                socket.Find("Visuals").gameObject.SetActive(false); socket.Find("Ammo_Visual").gameObject.SetActive(false);
+                socket.SetPositionAndRotation(view.Camera.transform.TransformPoint(view.HeldItemOffset), view.Camera.transform.rotation);
+                var block = new MaterialPropertyBlock();
+                block.SetColor("_BaseColor", VoyageSimulation.LuggageColor(ServiceItem.LuggageA));
+                bag.Find("Tag_Visual").GetComponent<Renderer>().SetPropertyBlock(block);
+            }
             foreach (var root in scene.GetRootGameObjects())
                 foreach (var label in root.GetComponentsInChildren<TextMesh>(true))
                 {
                     AssignFont(label);
                     WorldLabelPresentation.UpdateLabel(label, view.Camera);
+                    if (dockPreview && Vector3.Distance(label.transform.position, view.Camera.transform.position) > 10) label.gameObject.SetActive(false);
                 }
             var target = new RenderTexture(1280, 800, 24);
             var texture = new Texture2D(1280, 800, TextureFormat.RGB24, false);

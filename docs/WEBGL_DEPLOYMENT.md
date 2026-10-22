@@ -67,7 +67,7 @@ Build sonrasında loader, data, framework ve wasm URL'lerine dosyanın SHA-256 �
 
 Prototip artık Unity Multiplayer Services oturumlarını, Relay'i ve güvenli WebSocket (`WSS`) aktarımını kullanır. Bu nedenle hem GitHub Pages'taki WebGL sürümü hem de Windows sürümü internet üzerinden aynı oturuma bağlanabilir:
 
-Uçuşlu gülleyi içeren güncel kaynakta snapshot ve NGO bağlantı protokolü **5**'tir. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular aynı yeni build'i kullanıp sayfayı yenilemelidir. Kaynak sürümüyle canlı Pages paketini karıştırmayın: son yayımlanmış paket kanıtı [PROTOTYPE.md](PROTOTYPE.md), mekanik kapsamı [BALLISTICS.md](BALLISTICS.md) içindedir.
+Uçuşlu gülle ve bagaj ayırmayı içeren güncel kaynakta snapshot ve NGO bağlantı protokolü **6**'dır. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular aynı yeni build'i kullanıp sayfayı yenilemelidir. Kaynak sürümüyle canlı Pages paketini karıştırmayın: son yayımlanmış paket kanıtı [PROTOTYPE.md](PROTOTYPE.md), mekanik kapsamı [BALLISTICS.md](BALLISTICS.md) ve [DOCK_SORTING.md](DOCK_SORTING.md) içindedir.
 
 1. İlk oyuncu **CREATE ONLINE VOYAGE** ile özel bir oturum açar.
 2. Ekrandaki kodu diğer oyuncularla paylaşır.

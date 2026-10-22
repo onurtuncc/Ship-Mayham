@@ -17,7 +17,7 @@ $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
 function Start-Participant([string]$Name, [bool]$HostRole) {
     $role = if ($HostRole) { '--ship-smoke-host' } else { '--ship-smoke-client' }
     $log = Join-Path $output "$Name.log"
-    $instance = Start-Process -FilePath $ExecutablePath -ArgumentList @('-batchmode', '-nographics', $role, '-logFile', "`"$log`"") -WindowStyle Hidden -PassThru
+    $instance = Start-Process -FilePath $ExecutablePath -ArgumentList @('-batchmode', '-nographics', $role, '--ship-smoke-timeout', $TimeoutSeconds.ToString(), '-logFile', "`"$log`"") -WindowStyle Hidden -PassThru
     $entry = [pscustomobject]@{ Name = $Name; Process = $instance; Log = $log }
     $participants.Add($entry)
     return $entry

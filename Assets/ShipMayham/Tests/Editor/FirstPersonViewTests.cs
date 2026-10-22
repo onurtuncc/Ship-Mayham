@@ -159,6 +159,7 @@ namespace ShipMayham.Tests
             var properties = new MaterialPropertyBlock();
             foreach (var renderer in item.GetComponentsInChildren<Renderer>(true))
             {
+                if (!renderer.gameObject.activeInHierarchy) continue;
                 renderer.GetPropertyBlock(properties);
                 Color actual = properties.GetColor("_BaseColor");
                 Assert.That(Vector4.Distance(actual, expected), Is.LessThan(.001f));

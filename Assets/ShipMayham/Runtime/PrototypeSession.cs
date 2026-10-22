@@ -114,6 +114,16 @@ namespace ShipMayham
                 if (Passengers.Count <= i) Passengers.Add(Simulation.Passengers[i]); else if (!Passengers[i].Equals(Simulation.Passengers[i])) Passengers[i] = Simulation.Passengers[i];
         }
 
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void DockItemCommandRpc(HarborAction action, DockJobKind expectedKind, RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.DockItemCommand(sender, action, expectedKind);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
         public int LocalCrewIndex
         {
             get
@@ -172,6 +182,16 @@ namespace ShipMayham
             if (Simulation == null) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.ToggleDockJob(sender);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void SelectDockJobRpc(DockJobKind kind, RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.ToggleDockJob(sender, kind);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
             Publish();
         }

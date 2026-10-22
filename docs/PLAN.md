@@ -1,5 +1,7 @@
 # Ship Mayham — Uygulama Planı
 
+**On altıncı geliştirme dilimi — 22 Ekim:** Limanda A/B/C valizlerini değişen mavi/yeşil hedeflere ayırma, ortak 30 para/1 itibar ödülü, iade/iptal ve snapshot/protokol v6 eklendi. 182 EditMode testi, dört süreçli tam sefer/bagaj teslimatı ve v6 Relay host kaybı geçti. Kapsam ve kanıt: [DOCK_SORTING.md](DOCK_SORTING.md). GDD'nin tüm fazları tamamlanmış değildir.
+
 Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her fazın sonunda oynanabilir bir build alınmalı ve oyuncu testi yapılmalıdır.
 
 ## Uygulama durumu — 20 Ekim 2026

@@ -19,12 +19,16 @@ namespace ShipMayham
         private PrototypeSession session;
         private PrototypeView view;
         private float deadline;
-        private bool sawSailing, sawFour, sawPowerOut, sawPiratesDefeated, sawCarriedPassenger, sawRescue, sawShore, sawBallFlight;
+        private bool sawSailing, sawFour, sawPowerOut, sawPiratesDefeated, sawCarriedPassenger, sawRescue, sawShore, sawBallFlight, sawBagSort;
         private readonly bool[] sawJump = new bool[VoyageSimulation.MaxCrew];
 
         private IEnumerator Start()
         {
-            deadline = Time.realtimeSinceStartup + 130;
+            var smokeArgs = Environment.GetCommandLineArgs();
+            int timeout = 180, timeoutIndex = Array.IndexOf(smokeArgs, "--ship-smoke-timeout");
+            if (timeoutIndex >= 0 && (timeoutIndex + 1 >= smokeArgs.Length || !int.TryParse(smokeArgs[timeoutIndex + 1], out timeout) || timeout < 60 || timeout > 300))
+            { Fail("Invalid smoke test timeout"); yield break; }
+            deadline = Time.realtimeSinceStartup + timeout;
             var hud = FindAnyObjectByType<PrototypeHud>();
             session = FindAnyObjectByType<PrototypeSession>();
             view = FindAnyObjectByType<PrototypeView>();
@@ -156,6 +160,24 @@ namespace ShipMayham
                     session.HarborCommandRpc(HarborAction.GoAshore);
                     yield return new WaitForSeconds(.5f);
                     if (!session.Crew[slot].OnShore) { Fail("Remote gangway disembark failed"); yield break; }
+                    session.SelectDockJobRpc(DockJobKind.LuggageSort);
+                    yield return new WaitForSeconds(.5f);
+                    for (int bag = 0; bag < VoyageSimulation.DockJobGoal; bag++)
+                    {
+                        yield return WalkTo(new Vector2(1.2f, -7));
+                        session.DockItemCommandRpc(HarborAction.BuyFood, DockJobKind.LuggageSort);
+                        yield return new WaitForSeconds(.5f);
+                        ServiceItem item = session.Crew[slot].Carrying;
+                        if (!VoyageSimulation.IsLuggage(item)) { Fail("Remote tagged bag pickup failed"); yield break; }
+                        HarborAction desk = VoyageSimulation.LuggageDestination(session.Voyage.Value, item);
+                        yield return WalkTo(new Vector2(1.2f, VoyageSimulation.HarborPoint(desk).y));
+                        session.DockItemCommandRpc(desk, DockJobKind.LuggageSort);
+                        yield return new WaitForSeconds(.5f);
+                        if (session.Crew[slot].Carrying != ServiceItem.None || session.Voyage.Value.DockJobProgress != bag + 1)
+                        { Fail("Remote bag delivery failed"); yield break; }
+                    }
+                    if (session.Voyage.Value.Wallet != settledWallet + VoyageSimulation.LuggageJobReward)
+                    { Fail("Baggage contract reward mismatch"); yield break; }
                     yield return WalkTo(new Vector2(2, -6));
                     yield return WalkTo(new Vector2(2, -7));
                     session.HarborCommandRpc(HarborAction.BuyFood);
@@ -275,7 +297,8 @@ namespace ShipMayham
         private bool HarborPreparationValid(int settledWallet)
         {
             var s = session.Voyage.Value;
-            return sawShore && s.Voyage == 2 && s.Phase == VoyagePhase.Boarding && s.Wallet == settledWallet - 54 &&
+            return sawShore && sawBagSort && s.Voyage == 2 && s.Phase == VoyagePhase.Boarding && s.Wallet == settledWallet + VoyageSimulation.LuggageJobReward - 54 &&
+                s.DockJobsCompleted == 1 && s.DockJobDeliveredMask == 0 &&
                 s.FoodStock == 23 && s.DrinkStock == 24 && s.HullShield == 20 && !session.Crew[3].OnShore;
         }
 
@@ -300,6 +323,11 @@ namespace ShipMayham
             if (session == null || !session.IsSpawned) return;
             sawSailing |= session.Voyage.Value.Phase == VoyagePhase.Sailing;
             sawPowerOut |= session.Encounter.Value.PowerOut;
+            if (!sawBagSort && session.Voyage.Value.DockJobType == DockJobKind.LuggageSort && session.Voyage.Value.DockJobDeliveredMask == 7 && !session.Voyage.Value.DockJobActive)
+            {
+                sawBagSort = true;
+                Debug.Log("SHIP_SMOKE_BAG_SORT replicated complete delivery mask and reward");
+            }
             if (!sawBallFlight && session.Encounter.Value.CrewBall.Active &&
                 Vector3.Distance(session.Encounter.Value.CrewBall.Position, session.Encounter.Value.ShotFrom) > 1)
             {
