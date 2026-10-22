@@ -24,7 +24,7 @@ Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her f
 
 **Onuncu geliştirme dilimi:** Sekiz kartlı, rota ağırlıklarıyla karılan ve tur bitmeden kart tekrarlamayan olay destesi eklendi. VIP servisi, farklı yolcuların bilet denetimi, elektrik sigortası arızası, kaptan/mühendis koordinasyonlu motor harareti ve güvenli koltuk değiştirme mevcut üç olayı tamamlar. Hararet düşük hızda bekleyerek veya düşük hızda iki kez vana açarak çözülebilir. Kart seçimi mevcut istasyon ve kaynaklara göre filtrelenir; rastgelelik durumu ve kalan kartlar migration snapshot v3 içinde taşınır.
 
-Fazlar henüz bütünüyle tamamlanmış değildir: uçuşlu fiziksel mermi, daha gelişmiş arıza mini oyunları, kapsamlı kara görevleri ve gelişmiş yolcu davranışları sonraki dilimlerde yapılacaktır. Taşınan gülle uygulanmıştır. Deste sekiz olay içerir; rota profilleri aynı fiziksel iki limanı kullanır. Yerel kariyer kaydı, itibar ve temel kozmetik seçimi uygulanmıştır. Önceki gerçek Relay/WSS host kaybı koşuları geçti; son v4 tekrarında slot yeniden bağlama hatası görüldüğü için ağ kabulü yeniden açıktır. Tarayıcılar/farklı cihazlar ve dört insanla tempo/denge kabulü de gereklidir. Doğrulama kapsamı ve mevcut sınırlamalar [PROTOTYPE.md](PROTOTYPE.md) ve [RELAY_MIGRATION_TEST.md](RELAY_MIGRATION_TEST.md) içinde tutulur.
+Fazlar henüz bütünüyle tamamlanmış değildir: daha gelişmiş arıza mini oyunları, kapsamlı kara görevleri, gelişmiş yolcu davranışları ve ses/efekt/karakter polish'i sonraki dilimlerde yapılacaktır. Taşınan gülle ve uçuşlu atış uygulanmıştır. Deste sekiz olay içerir; rota profilleri aynı fiziksel iki limanı kullanır. Yerel kariyer kaydı, itibar ve temel kozmetik seçimi uygulanmıştır. Aralıklı slot silme hatası güncel Lobby üyeliğiyle uzlaştırma eklenerek sınandı; sonraki v4 ve v5 Relay tekrarları geçti. Tarayıcılar/farklı cihazlar ve dört insanla tempo/denge kabulü hâlâ gereklidir. Doğrulama kapsamı ve mevcut sınırlamalar [PROTOTYPE.md](PROTOTYPE.md) ve [RELAY_MIGRATION_TEST.md](RELAY_MIGRATION_TEST.md) içinde tutulur.
 
 **Dokuzuncu geliştirme dilimi:** Limanda itibarla açılan Classic, Seafoam (2 itibar) ve Sunset (5 itibar) gövde boyaları seçilebilir. Renk ağ durumuyla tüm oyunculara ulaşır, kariyer kaydı ve host migration ile korunur; mekanik güç veya ücret etkisi yoktur. Kargo teslimatlarında mesafe/cooldown doğrulaması ve dört kişilik ekipte fazla kasa alma engeli eklendi.
 
@@ -34,7 +34,10 @@ Fazlar henüz bütünüyle tamamlanmış değildir: uçuşlu fiziksel mermi, dah
 
 **On üçüncü geliştirme dilimi:** Mühimmat ambardan oyuncunun eline, oradan üç yuvalı top stoğuna fiziksel olarak taşınır. Topçu teslim edilmiş gülleyi elle doldurur; teslimat topçuyu görevinden çıkarmaz. Mühimmat korunumu, doldurma iptali, bağlantı ayrılması ve snapshot/protokol v4 eklendi. Bu, fiziksel taşıma/tedarik dilimidir; atışlar henüz uçuşlu mermi değildir. Kapsam ve kanıt [AMMO_FLOW.md](AMMO_FLOW.md) içindedir.
 
+**On dördüncü geliştirme dilimi:** Mürettebat ve korsan gülleleri yerçekimli uçuş ve segment taramalı çarpışma kullanır; hasar ateş anında değil isabette oluşur. Kaptanın atış sonrası manevrası sonucu değiştirir. İki tarafın aktif mermisi v5 snapshot/ağ şemasında taşınır; geçmiş anlık ışın efektinin yerine sphere ve kısa iz vardır. 151 EditMode test, dört süreçli tam sefer ve v5 Relay host kaybı doğrulandı. Kapsam ve açık kabul kapıları [BALLISTICS.md](BALLISTICS.md) içinde ayrılır.
+
 ## Faz 0 — Proje ve test altyapısı
+
 
 **Amaç:** Mevcut Unity projesini gemi prototipine hazır hale getirmek.
 

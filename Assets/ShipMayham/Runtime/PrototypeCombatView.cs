@@ -13,8 +13,7 @@ namespace ShipMayham
         public Renderer PowerIndicator;
         public LineRenderer CannonTrace, PirateTrace;
         public Transform[] ReadyAmmoVisuals = System.Array.Empty<Transform>();
-        private int lastShot, lastEnemyShot, voyage;
-        private float shotUntil, enemyShotUntil;
+        public Transform CrewProjectileVisual, PirateProjectileVisual;
         private MaterialPropertyBlock properties;
 
         private void Awake() { properties = new MaterialPropertyBlock(); }
@@ -25,6 +24,8 @@ namespace ShipMayham
             {
                 PirateRoot.gameObject.SetActive(false);
                 CannonTrace.enabled = PirateTrace.enabled = false;
+                if (CrewProjectileVisual != null) CrewProjectileVisual.gameObject.SetActive(false);
+                if (PirateProjectileVisual != null) PirateProjectileVisual.gameObject.SetActive(false);
                 foreach (var round in ReadyAmmoVisuals) if (round != null) round.gameObject.SetActive(false);
                 return;
             }
@@ -44,30 +45,22 @@ namespace ShipMayham
             properties.SetColor("_BaseColor", color);
             properties.SetColor("_Color", color);
             PowerIndicator.SetPropertyBlock(properties);
-            // A late join or new voyage must not replay historical shots.
-            if (voyage != Session.Voyage.Value.Voyage)
+            // Active replicated flight, not a historical 90 m hitscan flash.
+            ShowBall(e.CrewBall, CrewProjectileVisual, CannonTrace);
+            ShowBall(e.PirateBall, PirateProjectileVisual, PirateTrace);
+        }
+
+        private static void ShowBall(CannonballState ball, Transform visual, LineRenderer trail)
+        {
+            if (visual != null)
             {
-                voyage = Session.Voyage.Value.Voyage;
-                lastShot = e.ShotsFired;
-                lastEnemyShot = e.PirateShotsFired;
-                shotUntil = enemyShotUntil = 0;
+                visual.gameObject.SetActive(ball.Active);
+                if (ball.Active) visual.position = ball.Position;
             }
-            if (lastShot != e.ShotsFired)
-            {
-                lastShot = e.ShotsFired;
-                shotUntil = Time.time + .25f;
-                CannonTrace.SetPosition(0, e.ShotFrom);
-                CannonTrace.SetPosition(1, e.ShotTo);
-            }
-            if (lastEnemyShot != e.PirateShotsFired)
-            {
-                lastEnemyShot = e.PirateShotsFired;
-                enemyShotUntil = Time.time + .35f;
-                PirateTrace.SetPosition(0, e.EnemyShotFrom);
-                PirateTrace.SetPosition(1, e.EnemyShotTo);
-            }
-            CannonTrace.enabled = Time.time < shotUntil;
-            PirateTrace.enabled = Time.time < enemyShotUntil;
+            trail.enabled = ball.Active;
+            if (!ball.Active) return;
+            trail.SetPosition(0, ball.Position - ball.Velocity.normalized * .8f);
+            trail.SetPosition(1, ball.Position);
         }
     }
 }

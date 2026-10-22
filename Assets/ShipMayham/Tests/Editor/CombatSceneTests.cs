@@ -61,7 +61,9 @@ namespace ShipMayham.Tests
             Assert.AreEqual(11, session.Encounter.Value.Ammo);
             Assert.IsFalse(session.Encounter.Value.CannonLoaded);
             Assert.IsTrue(visual.CannonTrace.enabled);
-            Assert.That(Vector3.Distance(visual.CannonTrace.GetPosition(0), visual.MuzzleAnchor.position), Is.LessThan(.01f));
+            Assert.IsTrue(visual.CrewProjectileVisual.gameObject.activeSelf);
+            Assert.Greater(Vector3.Distance(session.Encounter.Value.CrewBall.Position, session.Encounter.Value.ShotFrom), 1);
+            Assert.That(Vector3.Distance(visual.CannonTrace.GetPosition(1), visual.CrewProjectileVisual.position), Is.LessThan(.01f));
             session.InteractRpc(-1, false); // solo gunner must leave to fetch a physical round
             foreach (var frame in Wait(.4f)) yield return frame;
             sim.Crew[0].Position = new Vector2(3, 3);

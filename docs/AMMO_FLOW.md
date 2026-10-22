@@ -46,4 +46,8 @@ Proje düzeltmesi SDK kaynaklarını değiştirmez: bekleyen ayrılmalar güncel
 
 Üyelik korumalı Windows build'iyle `Logs/RelayMigration-20261022-061932-a64f7b/` **başarılıdır**: client2 slot 3'te yeni host, client1 slot 2, client3 slot 1; üç katılımcı exit 0, kasa 321/olay 777/aktif ekip 3, mühimmat 12/11/0 ve yeni authority üzerinden zıplama. Supervisor `SHIP_RELAY_MIGRATION_PASS`, exit 0. Bu koşuda eski üyeyi yanlış işaretleyen callback görülmedi; korumanın negatif regresyonu deterministik testte kanıtlandı, internet soak tekrarı sürdürülür.
 
+İkinci bağımsız üyelik korumalı tekrar `Logs/RelayMigration-20261022-062301-d2771e/` de üç katılımcı ve supervisor exit 0 ile geçti: client1 slot 3'te host, diğerleri 2 ve 1; kasa 321/olay 777/aktif ekip 3/mühimmat 12/11/0. İki başarılı tekrarda `DEPART_IGNORED` dalı görülmedi; yanlış callback'in deterministik koruma testi kanıtı ayrı tutulur.
+
+Kaynak `5f85c1a`, WebGL `f60e2c1`, Pages deployment `39717290282` success. Canlı Relay host açılışı, mühimmat HUD'ı ve Leave ile menüye dönüş doğrulandı; browser error kaydı boştu (`Logs/WebGL-RelayRoster-Verified.png`). Bu yayımlanmış sürüm v4 ve anlık atışlıdır; uçuşlu gülle v5 geliştirmesi [BALLISTICS.md](BALLISTICS.md) içinde ayrı izlenir.
+
 Dört insanla tempo/denge, farklı cihazlar, gerçek yeniden bağlanma ve tarayıcı pointer-lock kabulü otomatik testlerin yerine geçmediği ayrı kapılardır.

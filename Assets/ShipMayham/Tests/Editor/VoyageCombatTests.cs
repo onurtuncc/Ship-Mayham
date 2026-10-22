@@ -180,9 +180,12 @@ namespace ShipMayham.Tests
         {
             Depart(); Supply(2); Advance(19);
             sim.State.Heading = 35; // aim is ship-relative, not world-relative
+            Vector3 escort = VoyageSimulation.DeckToWorld(sim.State, new Vector3(26, 0, 25));
+            sim.Encounter.PiratePosition = new Vector2(escort.x, escort.z);
             for (int shot = 0; shot < 3; shot++)
             {
                 sim.FireCannon(Gunner, TargetAim());
+                Advance(1); // Damage is authoritative only when the round arrives.
                 if (shot < 2) { sim.ReloadCannon(Gunner); Advance(3); }
             }
             Assert.AreEqual(PiratePhase.Defeated, sim.Encounter.Pirate);

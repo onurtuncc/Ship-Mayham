@@ -15,6 +15,8 @@ namespace ShipMayham
         public int MagazineAmmo, ReadyAmmo;
         public float CannonYaw, CannonPitch, ReloadRemaining;
         public Vector3 ShotFrom, ShotTo, EnemyShotFrom, EnemyShotTo;
+        public CannonballState CrewBall, PirateBall;
+        public int PirateHits;
 
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
@@ -26,6 +28,7 @@ namespace ShipMayham
             s.SerializeValue(ref ShotsFired); s.SerializeValue(ref PirateShotsFired); s.SerializeValue(ref Hits);
             s.SerializeValue(ref CannonYaw); s.SerializeValue(ref CannonPitch); s.SerializeValue(ref ReloadRemaining);
             s.SerializeValue(ref ShotFrom); s.SerializeValue(ref ShotTo); s.SerializeValue(ref EnemyShotFrom); s.SerializeValue(ref EnemyShotTo);
+            s.SerializeValue(ref CrewBall); s.SerializeValue(ref PirateBall); s.SerializeValue(ref PirateHits);
         }
         public bool Equals(EncounterState other) => ValueType.Equals(this, other);
     }

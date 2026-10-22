@@ -170,6 +170,8 @@ namespace ShipMayham.Tests
             sim.Encounter.Pirate = PiratePhase.Attacking;
             sim.Encounter.AttackRemaining = 30; sim.Encounter.EnemyShotRemaining = .01f;
             sim.Encounter.PiratePosition = new Vector2(26, 25); sim.Tick(.1f);
+            Assert.AreEqual(3, sim.State.HullShield, "Firing cannot damage the shield before impact.");
+            Advance(1);
             Assert.AreEqual(0, sim.State.HullShield); Assert.AreEqual(95, sim.State.Health);
         }
         [Test] public void ArrivalSnapsToBerthAndResetWaitsForShoreCrew()

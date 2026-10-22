@@ -182,11 +182,13 @@ namespace ShipMayham
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Elapsed += dt;
             float radians = State.Heading * Mathf.Deg2Rad;
+            Vector2 previousShip = State.Position, previousPirate = Encounter.PiratePosition;
             State.Position += new Vector2(Mathf.Sin(radians), Mathf.Cos(radians)) * (State.Speed * dt);
             // Prototype sailing area: visible map bounds, no possibility of sailing away forever.
             State.Position.x = Mathf.Clamp(State.Position.x, -90, 90);
             State.Position.y = Mathf.Clamp(State.Position.y, -20, 250);
             TickEncounter(dt);
+            TickCannonballs(dt, previousShip, previousPirate);
             TickEvents(dt);
             if (State.Elapsed >= nextLeak && State.Leak == 0)
             {
@@ -383,6 +385,7 @@ namespace ShipMayham
         {
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Phase = success ? VoyagePhase.Arrived : VoyagePhase.Failed;
+            Encounter.CrewBall.Active = Encounter.PirateBall.Active = false;
             State.Speed = 0;
             // A fixed berth aligns the gangway with the destination pier.
             if (success && HarborEnabled) { State.Position = Destination; State.Heading = 0; }

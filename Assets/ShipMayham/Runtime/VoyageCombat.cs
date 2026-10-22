@@ -64,9 +64,12 @@ namespace ShipMayham
             Encounter.PirateShotsFired++;
             Encounter.EnemyShotFrom = new Vector3(Encounter.PiratePosition.x, 1.5f, Encounter.PiratePosition.y);
             Encounter.EnemyShotTo = DeckToWorld(State, new Vector3(4, 1, -3));
-            DamageHull(8);
-            // The first hit creates work for the engineer as well as the gunner.
-            if (Encounter.PirateShotsFired == 1) CutPower();
+            Vector3 delta = Encounter.EnemyShotTo - Encounter.EnemyShotFrom;
+            float flight = new Vector2(delta.x, delta.z).magnitude / CannonballSpeed;
+            float heading = State.Heading * Mathf.Deg2Rad;
+            Vector3 lead = new Vector3(Mathf.Sin(heading), 0, Mathf.Cos(heading)) * (State.Speed * flight);
+            delta += lead + Vector3.up * (.5f * CannonballGravity * flight * flight);
+            Encounter.PirateBall = LaunchBall(Encounter.EnemyShotFrom, delta / Mathf.Max(.1f, flight));
         }
 
         private void CutPower()
@@ -162,6 +165,7 @@ namespace ShipMayham
             if (State.Phase != VoyagePhase.Sailing) return "Cannon firing is disabled at port.";
             if (!Encounter.CannonLoaded || Encounter.ReloadRemaining > 0) return "Press R / X to reload.";
             if (Encounter.Ammo <= 0) return "No ammunition.";
+            if (Encounter.CrewBall.Active) return "Previous cannonball is still in flight.";
             AimCannon(clientId, aim);
             Vector3 direction = AimDirection(State.Heading, new Vector2(Encounter.CannonYaw, Encounter.CannonPitch));
             Vector2 station = Stations[CannonStation].Position;
@@ -171,18 +175,8 @@ namespace ShipMayham
             Encounter.ShotsFired++;
             Encounter.ShotFrom = origin;
             Encounter.ShotTo = origin + direction * CannonRange;
-            if (Encounter.Pirate != PiratePhase.Attacking) return "Shot fired. No active target hit.";
-            Vector3 target = new Vector3(Encounter.PiratePosition.x, 1.5f, Encounter.PiratePosition.y);
-            float alongRay = Vector3.Dot(target - origin, direction);
-            if (alongRay < 0 || alongRay > CannonRange || Vector3.Distance(origin + direction * alongRay, target) > 3.5f)
-                return "Miss! Reload and adjust your aim.";
-            Encounter.ShotTo = origin + direction * alongRay;
-            Encounter.Hits++;
-            Encounter.PirateHealth = Mathf.Max(0, Encounter.PirateHealth - 34);
-            if (Encounter.PirateHealth > 0) return $"Hit! Pirate hull: {Encounter.PirateHealth:0}%";
-            Encounter.Pirate = PiratePhase.Defeated;
-            Encounter.Bounty = 50;
-            return "Pirates repelled! +50 bounty if you reach port.";
+            Encounter.CrewBall = LaunchBall(origin, direction * CannonballSpeed);
+            return "Cannonball away! Lead moving targets; raise the barrel for distant shots.";
         }
     }
 }

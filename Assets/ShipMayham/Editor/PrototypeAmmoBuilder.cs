@@ -66,6 +66,7 @@ namespace ShipMayham.Editor
             }
             EditorUtility.SetDirty(session);
             EditorUtility.SetDirty(combat);
+            EnsureBallisticVisuals(combat);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace ShipMayham
         private PrototypeSession session;
         private PrototypeView view;
         private float deadline;
-        private bool sawSailing, sawFour, sawPowerOut, sawPiratesDefeated, sawCarriedPassenger, sawRescue, sawShore;
+        private bool sawSailing, sawFour, sawPowerOut, sawPiratesDefeated, sawCarriedPassenger, sawRescue, sawShore, sawBallFlight;
         private readonly bool[] sawJump = new bool[VoyageSimulation.MaxCrew];
 
         private IEnumerator Start()
@@ -146,7 +146,7 @@ namespace ShipMayham
                     if (slot == 2 && encounter.PowerOut) session.InteractRpc(FindStation(StationKind.Power), false);
                     yield return new WaitForSeconds(.4f);
                 }
-                if (!sawFour || !sawSailing || !sawPowerOut || !sawPiratesDefeated || session.Voyage.Value.LastBounty != 50 || session.Voyage.Value.Wallet <= 0 || !PassengerSettlementValid())
+                if (!sawFour || !sawSailing || !sawPowerOut || !sawBallFlight || !sawPiratesDefeated || session.Voyage.Value.LastBounty != 50 || session.Voyage.Value.Wallet <= 0 || !PassengerSettlementValid())
                 { Fail("Client snapshot missing crew, power, combat or settlement"); yield break; }
                 int settledWallet = session.Voyage.Value.Wallet;
                 Debug.Log("SHIP_SMOKE_VOYAGE CLIENT wallet=" + settledWallet + " bounty=" + session.Voyage.Value.LastBounty);
@@ -212,7 +212,7 @@ namespace ShipMayham
             session.InteractRpc(-1, true);
             yield return new WaitForSeconds(.5f);
             if (session.Voyage.Value.Phase != VoyagePhase.Arrived || session.Voyage.Value.Wallet <= 0 ||
-                !sawPowerOut || !sawPiratesDefeated || session.Encounter.Value.PowerRepairSteps != 3 || session.Voyage.Value.LastBounty != 50 ||
+                !sawPowerOut || !sawBallFlight || !sawPiratesDefeated || session.Encounter.Value.PowerRepairSteps != 3 || session.Voyage.Value.LastBounty != 50 ||
                 Array.Exists(sawJump, seen => !seen) || !PassengerSettlementValid())
             { Fail("Arrival/settlement failed"); yield break; }
             int arrivalWallet = session.Voyage.Value.Wallet;
@@ -286,6 +286,10 @@ namespace ShipMayham
             Vector3 origin = VoyageSimulation.DeckToWorld(state, new Vector3(station.x, 1.8f, station.y));
             Vector2 pirate = session.Encounter.Value.PiratePosition;
             Vector3 delta = new Vector3(pirate.x, 1.5f, pirate.y) - origin;
+            float flight = new Vector2(delta.x, delta.z).magnitude / VoyageSimulation.CannonballSpeed;
+            Vector3 escort = VoyageSimulation.DeckToWorld(state, new Vector3(26, 0, 25));
+            Vector3 chase = escort - new Vector3(pirate.x, 0, pirate.y);
+            delta += Vector3.ClampMagnitude(chase, 7 * flight) + Vector3.up * (.5f * VoyageSimulation.CannonballGravity * flight * flight);
             return new Vector2(Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg - state.Heading,
                 -Mathf.Atan2(delta.y, new Vector2(delta.x, delta.z).magnitude) * Mathf.Rad2Deg);
         }
@@ -296,6 +300,12 @@ namespace ShipMayham
             if (session == null || !session.IsSpawned) return;
             sawSailing |= session.Voyage.Value.Phase == VoyagePhase.Sailing;
             sawPowerOut |= session.Encounter.Value.PowerOut;
+            if (!sawBallFlight && session.Encounter.Value.CrewBall.Active &&
+                Vector3.Distance(session.Encounter.Value.CrewBall.Position, session.Encounter.Value.ShotFrom) > 1)
+            {
+                sawBallFlight = true;
+                Debug.Log("SHIP_SMOKE_BALL_FLIGHT observed replicated moving cannonball");
+            }
             sawPiratesDefeated |= session.Encounter.Value.Pirate == PiratePhase.Defeated;
             if (session.Passengers.Count > 0)
             {
