@@ -69,8 +69,18 @@ Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre. Üçgen sayıları
 
 ## Durum ve sınırlar
 
-- Varlıklar yalnızca projeye eklendi; `ShipPrototype` sahnesindeki primitive `Visuals` nesnelerine **bağlanmadı**. Değiştirirken [PROTOTYPE.md](PROTOTYPE.md) sözleşmesindeki kök, `InteractionAnchor` ve `CarrySocket` referanslarını koru.
+- İlk prop dilimi `ShipPrototype` sahnesine bağlandı: dümen, manifest/bilet tezgâhı, servis tabak/şişesi, tamir çantası, elektrik kutusu, sekiz bank, korsan gemisi, iki liman kulübesi ve iskele baba/halat detayları. Toplam 21 `Model_*` yerleşimi vardır. Diğer modeller, karakterler ve elde taşınan ürünler henüz bağlanmadı. Oynanış kökleri, `InteractionAnchor`, `CarrySocket` ve mevcut Renderer referansları korunur.
 - Karakterlerde iskelet/animasyon yoktur (statik poz). Hareket için ayrı rig gerekir; mevcut `StylizedCharacterPack` animasyonları bu modellere uymaz.
-- FBX'ler Unity Editör'de açılıp görsel olarak doğrulanmadı; Blender'da üretim ve önizleme render'ı yapıldı. İlk açılışta ölçek, yön ve malzeme eşlemesi bir kez gözle kontrol edilmelidir.
+- Bağlanan prop dilimi Unity Camera.Render ile incelendi (`Logs/GeneratedProps-Layout.png`); dümenin dik/metre ölçeği ve tüm model materyallerinin URP/Lit kullanımı otomatik sahne testindedir. Bu ilk genel kadraj; her varlığın yakın planı, hareketli korsan kadrajı ve insanlarla birinci şahıs okunurluk testi değildir.
 - `CannonballPile` 3612 üçgenle diğerlerinden ağırdır (10 ayrı küre).
 - Üretim yöntemi: modeller bu depodaki Blender betikleriyle elle yazıldı. Yerel LLM (llama.cpp + Blender MCP) denemeleri tutarlı sonuç vermedi (sandık ve kupa testlerinde eksik/yığılmış parçalar); bu nedenle çıktılar LLM'den değil betiklerden gelir.
+
+## İlk prop sahne entegrasyonu — 22 Ekim 2026
+
+**Ship Mayham → Upgrade Prototype (Generated Props)** mevcut sahneyi eklemeli günceller. `Visuals/Model_<FBX adı>` wrapper'ı yerleşim/ölçeği, içindeki FBX instance kendi eksen/birim dönüşümünü korur. Oynanış Collider'ları değişmez; eklenen model Collider'ları kapalıdır. Eski primitive nesneler silinmez, yalnız ilgili Renderer gizlenir. Önceki sahne `Logs/ShipPrototype-PreGeneratedProps.unity` altında tutulur. Geri dönüş için model wrapper'ını kaldırıp eski Renderer'ı etkinleştirmek de mümkündür.
+
+FBX düz renkleri, `Art/Materials/Generated_*` altındaki 32 paylaşılan URP/Lit materyaline eşlenir. Model dosyaları ve gömülü materyalleri değiştirilmez; hazır URP materyalleri sonraki çalıştırmalarda yeniden yazılmaz. Renk düzenlemesi bu materyallerden yapılabilir. Gemi gövdesi boyaları ve elektrik durum göstergesi kendi mevcut Renderer'larını kullanmayı sürdürür.
+
+Doğrulama: eski 775 serialized nesne/component ID'si, adları, parent/local transformları ve istasyon anchor/visual/label bağları korunmuştur. Güncelleyicinin tekrar çalışması sahne SHA-256 özetini değiştirmedi (`BAF85CB983400DF1801F939B3FD8254049AAE5B2F0F8609501C6786F66622C0E`). `Logs/GeneratedProps-Isolated.xml` içinde 119/119 test geçti; ilk test denemelerinde yeni testin meta biçimi ve sahne izolasyonu sorunları ayrıca giderildi, başarısız raporlar korunur. `CaptureGeneratedPropsPreview` mevcut sahne preview yolunu kullanır; örnek karakter etkinleştirmeleri sahneye kaydedilmez.
+
+Render/etiket hazırlığından sonra repoya alınan son sahneyle **119/119 tekrar geçti**, Unity exit 0 (`Logs/GeneratedProps-Authored.xml`). Bu sahne henüz `1f0705e` WebGL paketinde yoktur; bir sonraki yayınla dağıtılmalıdır. Unity'nin ürettiği prefab YAML'ındaki boş `value:` satırlarının trailing space biçimi korunur; kaynak kodda whitespace kontrolü temizdir.

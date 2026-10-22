@@ -30,6 +30,8 @@ Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gü
 
 **On birinci geliştirme dilimi:** Sözleşmeler itibarla açılır: Coastal Ferry 0, Market Run 2, Storm Passage 5. Sunucu kuralı ve liman HUD'ı aynı eşikleri kullanır; seçim para/itibar tüketmez. Kariyer kaydı ve host migration ortak itibarı koruyarak açılımı da taşır. Bu, Faz 8'in temel rota açılımını tamamlar; farklı fiziksel liman/rota geometrisi değildir.
 
+**On ikinci geliştirme dilimi:** Üretilmiş Blender prop'larının ilk grubu sahneye bağlandı: istasyon detayları, banklar, korsan gemisi ve liman kulübe/dekorları. Eski 775 serialized kimlik ve oynanış transform/anchor bağları korundu; modeller URP/Lit paletine eşlendi. Güncelleyici eklemeli/idempotenttir. Karakter modelleri, eldeki ürün modelleri, yeni fiziksel oynanış veya tam sanat dönüşümü bu dilimin kapsamında değildir. Kanıt ve kullanım [ART_PIPELINE.md](ART_PIPELINE.md) içindedir.
+
 ## Faz 0 — Proje ve test altyapısı
 
 **Amaç:** Mevcut Unity projesini gemi prototipine hazır hale getirmek.
@@ -188,4 +190,4 @@ Her prototip build’inde aşağıdaki ölçümler toplanmalıdır:
 
 ## Sonraki karar noktası
 
-On birinci dilimden sonra başlıca uygulama boşlukları korsan karşılaşmasında fiziksel mühimmat/mermi akışı, sızmacının davranış ipuçları ve daha çeşitli kara mini oyunlarıdır. Üretilmiş Blender modellerinin oynanış anchor'larını koruyarak sahneye entegrasyonu da görsel kalite için gereklidir. Sekiz kartlı deste, üç rota profili ve itibarla açılım uygulanmıştır; aynı fiziksel iki limanı kullanırlar. Dört insanla testte görev paylaşımı, olay yığılmaları, liman geçişleri, HUD okunurluğu ve tekrar oynama isteği değerlendirilmelidir. Bu insan testi otomatik testlerin yerini tutmayan ayrı bir kabul kapısıdır.
+On ikinci dilimden sonra başlıca uygulama boşlukları korsan karşılaşmasında fiziksel mühimmat/mermi akışı, sızmacının davranış ipuçları ve daha çeşitli kara mini oyunlarıdır. İlk prop grubu sahneye bağlandı; kalan karakter/eldeki ürün modellerinin oynanış anchor'larını koruyarak entegrasyonu da görsel kalite için gereklidir. Sekiz kartlı deste, üç rota profili ve itibarla açılım uygulanmıştır; aynı fiziksel iki limanı kullanırlar. Dört insanla testte görev paylaşımı, olay yığılmaları, liman geçişleri, HUD okunurluğu ve tekrar oynama isteği değerlendirilmelidir. Bu insan testi otomatik testlerin yerini tutmayan ayrı bir kabul kapısıdır.

@@ -1,8 +1,8 @@
 # İlk oynanabilir prototip
 
-**22 Ekim 2026 doğrulaması:** Güncel EditMode paketi **115/115 geçti** (`Logs/MigrationIds-After.xml`). Dört ayrı Windows development süreciyle gerçek internet Relay/WSS testi de geçti: ilk host zorla kapatıldı, kalan üç oyuncu kendi slotlarıyla ve korunmuş kasa/olay ilerlemesiyle yeni host üzerinden oynamaya devam etti. Bu testin SDK uyarıları, kanıtları ve kapsam sınırları [RELAY_MIGRATION_TEST.md](RELAY_MIGRATION_TEST.md) içindedir. WebGL'de solo, görünür geometri ve Relay host oluşturma ayrıca doğrulandı; tarayıcı konsolunda daha önce görülen genel Chromium hatası ve dört insanla oyun dengesi kabulü hâlâ açık işlerdir.
+**22 Ekim 2026 doğrulaması:** Güncel, ilk prop modellerini içeren EditMode paketi **119/119 geçti** (`Logs/GeneratedProps-Authored.xml`). Daha önce dört ayrı Windows development süreciyle gerçek internet Relay/WSS testi de geçti: ilk host zorla kapatıldı, kalan üç oyuncu kendi slotlarıyla ve korunmuş kasa/olay ilerlemesiyle yeni host üzerinden oynamaya devam etti. Bu testin SDK uyarıları, kanıtları ve kapsam sınırları [RELAY_MIGRATION_TEST.md](RELAY_MIGRATION_TEST.md) içindedir. WebGL'de solo, görünür geometri ve Relay host oluşturma ayrıca doğrulandı; pointer-lock reddi kontrollü karşılanır, normal tarayıcıda gerçek bakış ve dört insanla oyun dengesi kabulü hâlâ gereklidir.
 
-Bu sürüm GDD'nin ilk on geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık.
+Bu sürüm GDD'nin ilk on iki geliştirme dilimini içerir: karada rota sözleşmesini seç → yolcu al → biletleri kontrol et → gemiyi sür → siparişleri karşıla / yolcu kaosunu ve olayları yönet → arızaları onar / korsanları püskürt → limana yanaş → ödeme ve itibar al → karada erzak/bakım, boya veya gemide yükseltme seç → ekibi topla → tekrar sefere çık. İlk prop modeli grubu bağlanmıştır; kalan görseller hâlâ blok prototiptir.
 
 ## Çalıştırma
 
