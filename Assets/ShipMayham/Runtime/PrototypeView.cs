@@ -425,6 +425,8 @@ namespace ShipMayham
                 PassengerLabels[i].transform.position = PassengerVisuals[i].position + ship.rotation * passengerLabelOffsets[i];
                 PassengerLabels[i].text = $"{i + 1}: {(p.Request == ServiceItem.None ? "Happy" : p.Request.ToString())} / {p.Satisfaction:0}%\n{PassengerPresentation.TicketText(p)}";
                 if (focused || rescuing) PassengerLabels[i].text += "\n" + PassengerPresentation.ReactionText(p);
+                if (focused && p.Motion == PassengerMotion.OnDeck)
+                    PassengerLabels[i].text += "\n" + PassengerPresentation.CueText(PassengerPresentation.CueFor(p, Session.ActiveEvent.Value, state, i));
                 PassengerLabels[i].color = p.Motion == PassengerMotion.Rescuing || (p.TicketChecked && !p.FarePaid) ? new Color(1, .65f, .2f) : Color.white;
                 WorldLabelPresentation.UpdateLabel(PassengerLabels[i], Camera);
             }

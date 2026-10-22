@@ -19,6 +19,8 @@ Snapshot ve NGO protokolü **5**'tir. İki merminin aktifliği, konumu, hızı, 
 
 ## Doğrulama durumu
 
+WebGL kaynak `d091e03`, `gh-pages` paketi `0115215`, Pages deployment `39719323498` success. Unity WebGL build exit 0 (`Logs/Ballistics-WebGLBuild.log`). Canlı tarayıcıda açılış, Relay host başlangıcı ve Leave ile menüye dönüş doğrulandı; error kaydı boştu (`Logs/WebGL-Ballistics-Relay.png`). Bu tarayıcı kontrolü uçuşlu atışın elle oynanması veya dört tarayıcı kabulü değildir; hareketli mermi kanıtı aşağıdaki sahne/RPC ve dört Windows sürecindedir.
+
 İlk koşu 147/150'ydi: iki yeni testin topçusu istasyondan uzaktaydı; bir eski test hâlâ anlık korsan hasarı bekliyordu. Test kurulumu ve çarpışma zamanı beklentisi düzeltildi. Dönmüş gemi ve iki tarafın uçuştaki mermilerini taşıyan snapshot kontrolleri dahil son paket **151/151**, Unity exit 0 (`Logs/Ballistics-Final.xml`). Windows development build exit 0 (`Logs/Ballistics-WindowsBuild.log`); bu build'den sonra yalnız test kapsamı genişledi, runtime değişmedi.
 
 Dört gerçek Windows süreci `Logs/VoyageSmoke-20261022-064040-f4cdbf/` koşusunda hareketli mermiyi replikasyonla gördü (`SHIP_SMOKE_BALL_FLIGHT` dört logda). Tedarikçi iki gülle teslim etti, topçu korsanı üç isabetle yendi, yolcu/liman/yeni sefer tamamlandı. Dördünde `SHIP_SMOKE_PASS`/exit 0; ortak son durum **166 kasa / 23 yiyecek / 24 içecek / 20 koruma**, varış ödülü 220 ve bounty 50. Supervisor `SHIP_VOYAGE_TEST_PASS`, exit 0.

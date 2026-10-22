@@ -513,7 +513,8 @@ namespace ShipMayham
             GUILayout.Label($"Ammo: {e.Ammo}/12 total | magazine {e.MagazineAmmo}\nCannon rack: {rack}/{VoyageSimulation.CannonBufferCapacity} | " + (e.ReloadRemaining > 0 ? $"Reloading {e.ReloadRemaining:0.0}s" : e.CannonLoaded ? "LOADED" : "R / X: reload"), body);
             GUILayout.Label("At CANNON: mouse / right stick aims\nLMB / RT fires • R / X reloads • E / A releases", body);
             GUILayout.Space(4);
-            GUILayout.Label(EventText(voyageEvent), body);
+            GUILayout.Label(Session.Voyage.Value.Phase == VoyagePhase.Arrived || Session.Voyage.Value.Phase == VoyagePhase.Failed
+                ? "SHIP EVENTS CLOSED — prepare a new voyage" : EventText(voyageEvent), body);
             GUILayout.EndArea();
         }
 
@@ -526,7 +527,7 @@ namespace ShipMayham
             string target = $"passenger {e.TargetPassenger + 1}";
             switch (e.Kind)
             {
-                case VoyageEventKind.ContrabandInspection: return $"CONTRABAND — {timer}\nCheck tickets with F / Y to find the suspect.";
+                case VoyageEventKind.ContrabandInspection: return $"CONTRABAND — {timer}\nClutched suitcase? F / Y: inspect their ticket.";
                 case VoyageEventKind.GalleyRush: return $"GALLEY RUSH — {e.Progress}/{e.Goal} orders — {timer}";
                 case VoyageEventKind.LooseCargo: return $"LOOSE CARGO — repair panel {e.Progress}/{e.Goal} — {timer}";
                 case VoyageEventKind.VipService: return $"VIP SERVICE — {timer}\nServe {target}'s order with E / A.";

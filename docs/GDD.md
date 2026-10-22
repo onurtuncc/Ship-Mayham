@@ -8,7 +8,7 @@
 **Oturum hedefi:** 15–30 dakika  
 **Ana referans:** Dear Passengers benzeri ortak görev, fiziksel komedi ve koordinasyon deneyimi
 
-**Uygulama notu — 22 Ekim 2026:** Prototip on dört küçük geliştirme dilimi içerir: ana sefer/servis/arıza/korsan döngüsü, bilet ve yolcu komedisi, liman işleri, sekiz olaylı deste, itibarla rota/kozmetik açılımı, kariyer kaydı, ilk model entegrasyonu, taşınan gülleyle top tedariki ve uçuşlu/çarpışmalı top atışları. WebGL ve Relay/WSS yayını vardır; kaynak ve canlı build sürümü ayrıca izlenir. Bu, aşağıdaki tam vizyonun veya insanlarla kabul testinin tamamlandığı anlamına gelmez. Uygulanmış kapsam, kontroller ve test kanıtları [PROTOTYPE.md](PROTOTYPE.md), sonraki kararlar [PLAN.md](PLAN.md) içinde ayrılır.
+**Uygulama notu — 22 Ekim 2026:** Prototip on beş küçük geliştirme dilimi içerir: ana sefer/servis/arıza/korsan döngüsü, bilet ve yolcu komedisi, liman işleri, sekiz olaylı deste, itibarla rota/kozmetik açılımı, kariyer kaydı, ilk model entegrasyonu, taşınan gülleyle top tedariki, uçuşlu/çarpışmalı top atışları ve yolcu gözlem ipuçları. WebGL ve Relay/WSS yayını vardır; kaynak ve canlı build sürümü ayrıca izlenir. Bu, aşağıdaki tam vizyonun veya insanlarla kabul testinin tamamlandığı anlamına gelmez. Uygulanmış kapsam, kontroller ve test kanıtları [PROTOTYPE.md](PROTOTYPE.md), sonraki kararlar [PLAN.md](PLAN.md) içinde ayrılır.
 
 ## 1. Yüksek konsept
 

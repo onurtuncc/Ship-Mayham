@@ -36,6 +36,8 @@ Fazlar henüz bütünüyle tamamlanmış değildir: daha gelişmiş arıza mini 
 
 **On dördüncü geliştirme dilimi:** Mürettebat ve korsan gülleleri yerçekimli uçuş ve segment taramalı çarpışma kullanır; hasar ateş anında değil isabette oluşur. Kaptanın atış sonrası manevrası sonucu değiştirir. İki tarafın aktif mermisi v5 snapshot/ağ şemasında taşınır; geçmiş anlık ışın efektinin yerine sphere ve kısa iz vardır. 151 EditMode test, dört süreçli tam sefer ve v5 Relay host kaybı doğrulandı. Kapsam ve açık kabul kapıları [BALLISTICS.md](BALLISTICS.md) içinde ayrılır.
 
+**On beşinci geliştirme dilimi:** Aktif kaçak eşya hedefi valizini göğsüne çeker; masumlarda da görülebilen cep yoklama jesti bilet UI'sini kontrol öncesinde kesin hükme dönüştürmez. Bekleme/sabırsızlık pozları, olay ve sefer kapanışı, taşıma sırasında bagaj/poz temizliği eklendi. Ağ şeması v5'te kalır; jestler mevcut snapshot'tan türetilir. 167 test ve dört süreçli sefer doğrulandı. Ayrıntı [PASSENGER_CUES.md](PASSENGER_CUES.md).
+
 ## Faz 0 — Proje ve test altyapısı
 
 
@@ -195,4 +197,4 @@ Her prototip build’inde aşağıdaki ölçümler toplanmalıdır:
 
 ## Sonraki karar noktası
 
-On üçüncü dilimden sonra başlıca uygulama boşlukları korsan karşılaşmasında uçuşlu/çarpışmalı mermi, sızmacının davranış ipuçları ve daha çeşitli kara mini oyunlarıdır. Fiziksel mühimmat taşıma ve ilk prop grubu uygulanmıştır; kalan karakter/eldeki ürün modellerinin oynanış anchor'larını koruyarak entegrasyonu da görsel kalite için gereklidir. Sekiz kartlı deste, üç rota profili ve itibarla açılım uygulanmıştır; aynı fiziksel iki limanı kullanırlar. Dört insanla testte görev paylaşımı, olay yığılmaları, liman geçişleri, HUD okunurluğu ve tekrar oynama isteği değerlendirilmelidir. Bu insan testi otomatik testlerin yerini tutmayan ayrı bir kabul kapısıdır.
+On beşinci dilimden sonra başlıca uygulama boşlukları daha çeşitli kara mini oyunları, arıza mini oyunları ve yolcunun dolaşma/kişilik davranışlarıdır. Uçuşlu atış, fiziksel mühimmat taşıma, temel yolcu ipuçları ve ilk prop grubu uygulanmıştır; kalan karakter/eldeki ürün modellerinin anchor'ları koruyarak entegrasyonu da gereklidir. Son resmî parti oyunu araştırması ve uygulanmamış kara adayları [PARTY_DESIGN_RESEARCH.md](PARTY_DESIGN_RESEARCH.md) içinde ayrılır. Sekiz kartlı deste ve üç rota profili aynı fiziksel iki limanı kullanır. Dört insanla görev paylaşımı, olay yığılmaları, liman geçişleri, HUD ve tekrar oynama isteği testi otomatik testlerin yerini tutmayan ayrı kabul kapısıdır.

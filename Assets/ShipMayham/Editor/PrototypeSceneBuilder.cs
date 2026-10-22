@@ -169,6 +169,7 @@ namespace ShipMayham.Editor
             EnsurePhaseThree(view);
             EnsurePhaseFour(session, view);
             EnsureAmmoFlow(session, view);
+            EnsurePassengerCues(view);
             EditorSceneManager.SaveScene(scene, ScenePath);
             RegisterScene();
             AssetDatabase.SaveAssets();
@@ -327,11 +328,23 @@ namespace ShipMayham.Editor
                 view.PassengerLabels[i].gameObject.SetActive(true);
                 view.PassengerLabels[i].text = i % 2 == 0 ? "Food" : "Drink";
             }
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--prototype-passenger-cues-preview") >= 0)
+            {
+                var cues = view.GetComponent<PrototypePassengerCueView>();
+                if (cues == null || cues.Bags.Length < 4) throw new System.InvalidOperationException("Upgrade passenger cues before capturing their preview.");
+                for (int i = 0; i < 4; i++) cues.Bags[i].gameObject.SetActive(true);
+                cues.Bags[2].localPosition = new Vector3(.05f, .75f, .32f);
+                cues.Bags[2].localRotation *= Quaternion.Euler(0, 0, -12);
+                cues.Bodies[2].localRotation *= Quaternion.Euler(8, 0, 0);
+                view.PassengerLabels[2].text = PassengerPresentation.CueText(PassengerCue.GuardingLuggage);
+                view.Camera.transform.position = view.Session.ShipRoot.TransformPoint(new Vector3(-3.5f, 2.8f, 2.5f));
+                view.Camera.transform.LookAt(view.Session.ShipRoot.TransformPoint(new Vector3(-1.4f, 1.8f, .2f)));
+            }
             foreach (var root in scene.GetRootGameObjects())
                 foreach (var label in root.GetComponentsInChildren<TextMesh>(true))
                 {
                     AssignFont(label);
-                    label.transform.rotation = view.Camera.transform.rotation;
+                    WorldLabelPresentation.UpdateLabel(label, view.Camera);
                 }
             var target = new RenderTexture(1280, 800, 24);
             var texture = new Texture2D(1280, 800, TextureFormat.RGB24, false);
