@@ -89,10 +89,16 @@ Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre.
 | `Character_Passenger3` | 6468 | 0,99 × 0,59 × 1,58 | Yolcu (bere) |
 | `Character_VIP` | 7516 | 0,90 × 0,86 × 1,75 | VIP yolcu (silindir şapka, baston) |
 | `Character_Pirate` | 7600 | 0,86 × 0,72 × 1,51 | Korsan karakteri |
+| `Character_Human1..3_Rigged` | ~8,6 bin | 1,84 × 0,51 × 1,75 | Yolcu (insan, büyük gözlü); Humanoid iskeletli, Mixamo kemik adları; `Passenger_01..08` |
+| `PlayerShipHull` | 128 | 12,5 × 25,6 × 4,95 | Oyuncu gemisi gövdesi (livery boyaması bunu hedefler; renderer adı `Hull_Primitive`) |
+| `PlayerShipDeco` | ~7,9 bin | 12,5 × 25,6 × 5,05 | Oyuncu gemisi güverte, korkuluk, top ağzı, pruva (`Ship_Player/Visuals`) |
 
 ## Durum ve sınırlar
 
 - Varlıklar `PrototypeGeneratedPropsBuilder` ile kısmen sahneye bağlıdır; listedeki diğerleri yalnızca projeye eklidir. Deniz sahneye uygulandı ve gerçek sahne render'ıyla doğrulandı.
-- Karakterlerde iskelet ve animasyon yoktur (statik poz). Hareket için ayrı rig gerekir; mevcut `StylizedCharacterPack` animasyonları bu modellere uymaz.
+- `Character_Crew*`, `Character_Passenger*`, `Character_VIP` ve `Character_Pirate` statik pozdadır (iskelet yok). Yolcular artık `Character_Human*_Rigged` ile gösterilir: `Ship Mayham → Upgrade Prototype (Human Passengers)` kapsül gövdeyi gizler, insanı ekler ve `PrototypePassengerAnimator`'ı bağlar.
+- Animasyonlar Mixamo'dan (FBX, 30 fps, "Without Skin") `Art/Generated/Animations/Mixamo_*.fbx` olarak alınmıştır; `HumanoidModelPostprocessor` hepsini Humanoid içe aktarır ve döngü ayarlarını yapar. `Passenger.controller` dört durumu eşler: `Seated` (SittingIdle), `Pleading` (Waving), `Fidgeting` (Talking), `Panicked` (Terrified). Durum seçimi `PassengerPresentation.PoseFor` içindedir. Idle, Walking, Carrying, CheeringWhileSitting, SitToStand ve StandToSit klipleri projede hazırdır ancak henüz bir duruma bağlı değildir.
+- Mixamo'nun otomatik iskeleti birbirinden bağımsız parçalardan oluşan bu gövdeyi reddeder ("Unknown error while generating motion"), bu yüzden iskelet ve ağırlıklar `Character_Human.py` içinde `RIG=1` ile üretilir (bölge tabanlı ağırlık; ısı difüzyonu parçaları karıştırdığı için kullanılmaz). Yeniden üretim: `RIG=1 VARIANT=1..3 Tools/BlenderAssets/build_asset.sh Character_Human1 ./out`.
+- Oyuncu gemisi `Ship Mayham → Upgrade Prototype (Player Ship)` ile uygulanır: kutu hull/deck/korkuluklar gizlenir, `PlayerShipHull` + `PlayerShipDeco` eklenir. Statik FBX'lerde Blender +Y (pruva) Unity'de -Z'ye gider, bu yüzden model 180° Y döndürülür. Betik `PART=hull|rest` ile iki parçayı aynı orijinle üretir.
 - FBX'ler ayrı bir minimal URP 17.4 Unity projesinde (Unity 6000.4.6f1) içe aktarılıp render alınarak doğrulandı; deniz ayrıca gerçek prototip sahnesinde render alınarak doğrulandı; model yerleşimlerinin görsel doğrulaması yapılmadı.
 - Üretim yöntemi: modeller bu depodaki Blender betikleriyle elle yazıldı. Yerel LLM (llama.cpp + Blender MCP) denemeleri tutarlı sonuç vermedi; çıktılar LLM'den değil betiklerden gelir.

@@ -1,5 +1,4 @@
-import os
-import sys; sys.path.insert(0, r"D:\blender")
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from assetlib import *
 reset(); globals().update(std()); b = Builder()
 
@@ -65,7 +64,7 @@ if os.environ.get("WELD") == "1":
     print("DELIVERED", src.name, len(me.polygons))
 elif os.environ.get("RIG") == "1":
     # Humanoid skeleton (Mixamo bone names, T-pose) for Unity's Humanoid avatar; Mixamo animations retarget onto it.
-    bmesh.ops.rotate(b.bm, cent=(0, 0, 0), matrix=mathutils.Matrix.Rotation(math.pi, 3, "Z"), verts=b.bm.verts)
+    # Unlike the static props this stays facing -Y: the armature export (no baked space transform) lands facing Unity +Z.
     body = b.finish("Character_Human" + V)
     # finish() recentres the mesh; the skeleton below is authored on that same bounding frame (x/y centred, feet at z=0)
     arm_data = bpy.data.armatures.new("Armature"); rig = bpy.data.objects.new("Armature", arm_data)
@@ -80,7 +79,7 @@ elif os.environ.get("RIG") == "1":
     bone("Hips", (0, 0, .9), (0, 0, 1.0)); bone("Spine", (0, 0, 1.0), (0, 0, 1.12), "Hips")
     bone("Spine1", (0, 0, 1.12), (0, 0, 1.24), "Spine"); bone("Spine2", (0, 0, 1.24), (0, 0, 1.36), "Spine1")
     bone("Neck", (0, 0, 1.36), (0, 0, 1.44), "Spine2"); bone("Head", (0, 0, 1.44), (0, 0, 1.78), "Neck")
-    for side, sx in (("Left", -1), ("Right", 1)):
+    for side, sx in (("Left", -1), ("Right", 1)):      # facing -Y, the character's left is +X
         z = 1.35
         bone(side + "Shoulder", (sx * .05, 0, z), (sx * .20, 0, z), "Spine2")
         bone(side + "Arm", (sx * .20, 0, z), (sx * .50, 0, z), side + "Shoulder")
@@ -89,24 +88,43 @@ elif os.environ.get("RIG") == "1":
         x = sx * .105
         bone(side + "UpLeg", (x, 0, .88), (x, 0, .48), "Hips")
         bone(side + "Leg", (x, 0, .48), (x, 0, .10), side + "UpLeg")
-        bone(side + "Foot", (x, 0, .10), (x, .13, .04), side + "Leg")
-        bone(side + "ToeBase", (x, .13, .04), (x, .24, .04), side + "Foot")
+        bone(side + "Foot", (x, 0, .10), (x, -.13, .04), side + "Leg")
+        bone(side + "ToeBase", (x, -.13, .04), (x, -.24, .04), side + "Foot")
     bpy.ops.object.mode_set(mode="OBJECT")
     for o in bpy.context.scene.objects: o.select_set(False)
-    body.select_set(True); rig.select_set(True); bpy.context.view_layer.objects.active = rig
-    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
-    # Heat weighting skips tiny detached parts (eyes, brows, ears); give them the weights of the nearest weighted vertex.
-    from mathutils.kdtree import KDTree
-    verts = body.data.vertices
-    weighted = [v for v in verts if any(g.weight > 0.01 for g in v.groups)]
-    kd = KDTree(len(weighted))
-    for i, v in enumerate(weighted): kd.insert(v.co, i)
-    kd.balance()
-    for v in verts:
-        if any(g.weight > 0.01 for g in v.groups): continue
-        _, i, _ = kd.find(v.co)
-        for g in weighted[i].groups:
-            body.vertex_groups[g.group].add([v.index], g.weight, "REPLACE")
+    # Rigid-by-region weights: the body is made of overlapping primitives, so heat-diffusion weighting mixes parts
+    # (floating heads, eyes on the chest). Each vertex blends between the two nearest bones along its limb axis.
+    def blend(v, stops):
+        if v <= stops[0][0]: return {stops[0][1]: 1.0}
+        for (a, na), (c, nc) in zip(stops, stops[1:]):
+            if v <= c:
+                t = (v - a) / (c - a)
+                return {na: 1 - t, nc: t}
+        return {stops[-1][1]: 1.0}
+    column = [(.90, "Hips"), (1.06, "Spine"), (1.18, "Spine1"), (1.30, "Spine2"), (1.38, "Neck"), (1.46, "Head")]
+    ymin = min(v.co.y for v in body.data.vertices)
+    def weights_for(co):
+        side = "Left" if co.x < 0 else "Right"
+        ax = abs(co.x)
+        if ax > .19 and co.z > 1.2:
+            w = blend(ax, [(.19, "Spine2"), (.24, "Shoulder"), (.38, "Arm"), (.52, "Arm"), (.60, "ForeArm"), (.74, "ForeArm"), (.80, "Hand")])
+            return {(n if n == "Spine2" else side + n): v for n, v in w.items()}
+        if co.z < .92:
+            if ax < .03 and co.z > .8: return {"Hips": 1.0}
+            if co.z < .13 and co.y < ymin + .12:
+                w = blend(ymin + .12 - co.y, [(0.0, "Foot"), (.08, "ToeBase")])
+            else:
+                w = blend(co.z, [(.06, "Foot"), (.12, "Leg"), (.42, "Leg"), (.54, "UpLeg"), (.80, "UpLeg"), (.92, "Hips")])
+            return {(n if n == "Hips" else side + n): v for n, v in w.items()}
+        return blend(co.z, column)
+    for v in body.data.vertices:
+        for bone_name, weight in weights_for(v.co).items():
+            if weight < 1e-3: continue
+            full = P + bone_name
+            group = body.vertex_groups.get(full) or body.vertex_groups.new(name=full)
+            group.add([v.index], weight, "REPLACE")
+    body.parent = rig
+    modifier = body.modifiers.new("Armature", "ARMATURE"); modifier.object = rig
     groups = len(body.vertex_groups)
     d = outdir(); os.makedirs(d, exist_ok=True)
     for o in bpy.context.scene.objects: o.select_set(o in (body, rig))

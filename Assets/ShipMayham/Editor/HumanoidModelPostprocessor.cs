@@ -10,6 +10,8 @@ namespace ShipMayham.Editor
         private const string RiggedPassengerPrefix = "Assets/ShipMayham/Art/Generated/Models/Character_Human";
         private static readonly string[] LoopingClips = { "Idle", "Walking", "SittingIdle", "CheeringWhileSitting", "Talking", "Terrified", "Carrying" };
 
+        public override uint GetVersion() => 2;
+
         private void OnPreprocessModel()
         {
             var importer = (ModelImporter)assetImporter;
@@ -20,21 +22,25 @@ namespace ShipMayham.Editor
             importer.animationType = ModelImporterAnimationType.Human;
             importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             importer.importAnimation = isClip;
-            importer.materialImportMode = isClip ? ModelImporterMaterialImportMode.None : importer.materialImportMode;
-            if (!isClip) return;
+            if (isClip) importer.materialImportMode = ModelImporterMaterialImportMode.None;
+        }
 
+        // defaultClipAnimations is only populated once the model has been read, i.e. in this later callback.
+        private void OnPreprocessAnimation()
+        {
+            if (!assetPath.StartsWith(AnimationFolder)) return;
+            var importer = (ModelImporter)assetImporter;
             string clipName = System.IO.Path.GetFileNameWithoutExtension(assetPath).Replace("Mixamo_", "");
-            var clips = importer.defaultClipAnimations;
             bool loop = System.Array.IndexOf(LoopingClips, clipName) >= 0;
+            var clips = importer.defaultClipAnimations;
             foreach (var clip in clips)
             {
                 clip.name = clipName;
                 clip.loopTime = loop;
                 clip.lockRootRotation = true;
                 clip.lockRootHeightY = true;
-                clip.keepOriginalPositionY = true;
                 clip.lockRootPositionXZ = true;
-                clip.keepOriginalPositionXZ = false;
+                clip.keepOriginalPositionY = true;
             }
             importer.clipAnimations = clips;
         }
