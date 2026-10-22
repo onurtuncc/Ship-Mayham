@@ -37,6 +37,10 @@ if (-not $SkipBuild) {
 
     if (Test-Path -LiteralPath $projectLock -PathType Leaf) {
         $buildProjectRoot = Join-Path $projectRoot "Builds\ShipPrototypeValidation"
+        $buildWorkspaceLock = Join-Path $buildProjectRoot "Temp\UnityLockfile"
+        if (Test-Path -LiteralPath $buildWorkspaceLock -PathType Leaf) {
+            throw "The cached build workspace is already open in Unity. Wait for its build/tests to finish before publishing. No project files were synchronized."
+        }
         New-Item -ItemType Directory -Path $buildProjectRoot -Force | Out-Null
         Write-Host "The main project is locked by Unity; syncing the cached build workspace..."
 

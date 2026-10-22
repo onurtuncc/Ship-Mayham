@@ -23,6 +23,8 @@ Script şu işlemleri yapar:
 
 Ana proje Unity Editor'de açıksa script, proje kilidine çarpmamak için `Builds/ShipPrototypeValidation/` altındaki kalıcı ve cache'li build workspace'ini günceller. İlk senkronizasyon sonraki yayınlardan daha uzun sürebilir.
 
+Cache'li proje zaten Unity'de test/derleme için açıksa script dosyaları senkronize etmeden hata verir; mevcut işlemin bitmesini bekleyip tekrar çalıştır. Kilit dosyasını silerek zorlamayın. Bu kontrol, çalışan bir Unity workspace'inin üstüne kopyalamayı engeller; iki yayın komutunu aynı anda başlatmak desteklenmez.
+
 Unity farklı bir konumdaysa yolu açıkça verebilirsin:
 
 ```powershell
