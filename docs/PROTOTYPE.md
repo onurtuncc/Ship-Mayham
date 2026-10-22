@@ -1,5 +1,7 @@
 # İlk oynanabilir prototip
 
+**Yeni kaynak — dilim 17:** Fiziksel hızlı yama kitleri eklendi; son sahneyle **202/202 test**, Windows build ve dört süreçli tam sefer geçti. v7 gerçek Relay host kaybı geçti. Kaynak ağ/snapshot protokolü **7**. Canlı Pages paketi aşağıdaki v6 yayınıdır; yeni kaynak için ayrı WebGL build/yayın yapılmadan v7 Windows ile aynı oturuma bağlanamaz. Kurallar ve doğrulama: [REPAIR_SUPPLIES.md](REPAIR_SUPPLIES.md).
+
 **Güncel yayın — 22 Ekim, dilim 16:** Kaynak `1e9d53d`, WebGL `e3e2bdd`, Pages işi `39725524917` **başarılı**. Canlı HTML yeni build ile eşleşti; oyun açılışı, BAG SORT arayüzü ve Relay host başlangıcı doğrulandı, tarayıcı error kaydı boştu (`Logs/WebGL-DockSorting-Relay.png`). **182/182 EditMode**, dört süreçli tam sefer/bagaj teslimatı ve v6 gerçek Relay host kaybı geçti. Protokol **6**: eski sekmeleri yenileyin. Aşağıdaki 167 test/v5/web bilgileri önceki dilimin tarihsel kaydıdır. [DOCK_SORTING.md](DOCK_SORTING.md).
 
 **22 Ekim 2026 doğrulaması:** Yolcu ipuçları, uçuşlu gülle ve migration temizliğini içeren EditMode paketi **167/167 geçti** (`Logs/PassengerCues-Final.xml`). Son dört Windows sürecinde tam sefer, hareketli mermi, taşıma ve liman akışı geçti; v5 Relay/WSS host kaybı balistik diliminde ayrıca doğrulandı. Yeni ipuçları [PASSENGER_CUES.md](PASSENGER_CUES.md), balistik ağ kanıtı [BALLISTICS.md](BALLISTICS.md), önceki aralıklı hata ve üyelik düzeltmesi [AMMO_FLOW.md](AMMO_FLOW.md) içinde ayrılır. Normal tarayıcıda gerçek bakış ve dört insanla oyun dengesi kabulü hâlâ gereklidir.

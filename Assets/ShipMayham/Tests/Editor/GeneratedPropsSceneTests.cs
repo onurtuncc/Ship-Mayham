@@ -40,10 +40,11 @@ namespace ShipMayham.Tests
             }
             Assert.IsNotNull(session);
             Assert.IsNotNull(view);
-            Assert.AreEqual(11, session.Stations.Length);
+            Assert.AreEqual(12, session.Stations.Length);
             Assert.AreEqual(StationKind.Cannon, session.Stations[8].Kind);
             Assert.AreEqual(StationKind.Power, session.Stations[9].Kind);
             Assert.AreEqual(StationKind.Ammo, session.Stations[10].Kind);
+            Assert.AreEqual(StationKind.RepairSupply, session.Stations[11].Kind);
             Assert.AreEqual(8, session.PassengerAnchors.Length);
             Transform wheel = null;
             foreach (var station in session.Stations)

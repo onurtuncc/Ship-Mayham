@@ -19,7 +19,7 @@ namespace ShipMayham
         private PrototypeSession session;
         private PrototypeView view;
         private float deadline;
-        private bool sawSailing, sawFour, sawPowerOut, sawPiratesDefeated, sawCarriedPassenger, sawRescue, sawShore, sawBallFlight, sawBagSort;
+        private bool sawSailing, sawFour, sawPowerOut, sawPiratesDefeated, sawCarriedPassenger, sawRescue, sawShore, sawBallFlight, sawBagSort, sawQuickPatch;
         private readonly bool[] sawJump = new bool[VoyageSimulation.MaxCrew];
 
         private IEnumerator Start()
@@ -96,6 +96,15 @@ namespace ShipMayham
                 }
                 if (slot == 2)
                 {
+                    yield return WalkTo(new Vector2(3.1f, -4.8f));
+                    session.InteractRpc(FindStation(StationKind.RepairSupply), false);
+                    yield return new WaitForSeconds(.5f);
+                    if (session.Crew[slot].Carrying != ServiceItem.RepairKit) { Fail("Remote repair kit pickup failed"); yield break; }
+                    yield return WalkTo(new Vector2(3.1f, -1.8f));
+                    session.InteractRpc(FindStation(StationKind.Repair), false);
+                    yield return new WaitForSeconds(.5f);
+                    if (session.Crew[slot].Carrying != ServiceItem.None || session.Voyage.Value.ReadyRepairKits != 1)
+                    { Fail("Remote repair kit delivery failed"); yield break; }
                     for (int round = 0; round < 2; round++)
                     {
                         yield return WalkTo(new Vector2(3.1f, 1.8f));
@@ -148,9 +157,18 @@ namespace ShipMayham
                         else if (encounter.ReloadRemaining <= 0) session.CannonActionRpc(aim, true);
                     }
                     if (slot == 2 && encounter.PowerOut) session.InteractRpc(FindStation(StationKind.Power), false);
+                    if (slot == 2 && session.Voyage.Value.Leak > 0 && session.Voyage.Value.ReadyRepairKits > 0)
+                    {
+                        yield return WalkTo(new Vector2(3.1f, -1.8f));
+                        session.InteractRpc(FindStation(StationKind.Repair), false);
+                        yield return new WaitForSeconds(.5f);
+                        if (session.Voyage.Value.Leak != 0 || session.Voyage.Value.RepairKitsUsed != 1)
+                        { Fail("Remote quick patch application failed"); yield break; }
+                        yield return WalkTo(new Vector2(3.1f, -1.2f));
+                    }
                     yield return new WaitForSeconds(.4f);
                 }
-                if (!sawFour || !sawSailing || !sawPowerOut || !sawBallFlight || !sawPiratesDefeated || session.Voyage.Value.LastBounty != 50 || session.Voyage.Value.Wallet <= 0 || !PassengerSettlementValid())
+                if (!sawFour || !sawSailing || !sawPowerOut || !sawBallFlight || !sawPiratesDefeated || !sawQuickPatch || session.Voyage.Value.LastBounty != 50 || session.Voyage.Value.Wallet <= 0 || !PassengerSettlementValid())
                 { Fail("Client snapshot missing crew, power, combat or settlement"); yield break; }
                 int settledWallet = session.Voyage.Value.Wallet;
                 Debug.Log("SHIP_SMOKE_VOYAGE CLIENT wallet=" + settledWallet + " bounty=" + session.Voyage.Value.LastBounty);
@@ -234,7 +252,7 @@ namespace ShipMayham
             session.InteractRpc(-1, true);
             yield return new WaitForSeconds(.5f);
             if (session.Voyage.Value.Phase != VoyagePhase.Arrived || session.Voyage.Value.Wallet <= 0 ||
-                !sawPowerOut || !sawBallFlight || !sawPiratesDefeated || session.Encounter.Value.PowerRepairSteps != 3 || session.Voyage.Value.LastBounty != 50 ||
+                !sawPowerOut || !sawBallFlight || !sawPiratesDefeated || !sawQuickPatch || session.Encounter.Value.PowerRepairSteps != 3 || session.Voyage.Value.LastBounty != 50 ||
                 Array.Exists(sawJump, seen => !seen) || !PassengerSettlementValid())
             { Fail("Arrival/settlement failed"); yield break; }
             int arrivalWallet = session.Voyage.Value.Wallet;
@@ -298,7 +316,7 @@ namespace ShipMayham
         {
             var s = session.Voyage.Value;
             return sawShore && sawBagSort && s.Voyage == 2 && s.Phase == VoyagePhase.Boarding && s.Wallet == settledWallet + VoyageSimulation.LuggageJobReward - 54 &&
-                s.DockJobsCompleted == 1 && s.DockJobDeliveredMask == 0 &&
+                s.DockJobsCompleted == 1 && s.DockJobDeliveredMask == 0 && s.RepairKitStock == VoyageSimulation.VoyageRepairKits && s.ReadyRepairKits == 0 && s.RepairKitsUsed == 0 &&
                 s.FoodStock == 23 && s.DrinkStock == 24 && s.HullShield == 20 && !session.Crew[3].OnShore;
         }
 
@@ -323,6 +341,11 @@ namespace ShipMayham
             if (session == null || !session.IsSpawned) return;
             sawSailing |= session.Voyage.Value.Phase == VoyagePhase.Sailing;
             sawPowerOut |= session.Encounter.Value.PowerOut;
+            if (!sawQuickPatch && session.Voyage.Value.RepairKitsUsed == 1 && session.Voyage.Value.ReadyRepairKits == 0)
+            {
+                sawQuickPatch = true;
+                Debug.Log("SHIP_SMOKE_QUICK_PATCH replicated consumed repair kit");
+            }
             if (!sawBagSort && session.Voyage.Value.DockJobType == DockJobKind.LuggageSort && session.Voyage.Value.DockJobDeliveredMask == 7 && !session.Voyage.Value.DockJobActive)
             {
                 sawBagSort = true;

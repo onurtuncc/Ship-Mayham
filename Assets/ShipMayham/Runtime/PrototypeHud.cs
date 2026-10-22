@@ -17,7 +17,7 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
-        public const ushort NetworkProtocolVersion = 6;
+        public const ushort NetworkProtocolVersion = 7;
         public NetworkManager Manager;
         public PrototypeSession Session;
         public PrototypeView View;
@@ -367,7 +367,7 @@ namespace ShipMayham
                 GUILayout.Label($"Passengers: {s.Boarded}    Orders served: {s.Served}", body);
                 GUILayout.Label($"Stock: {s.FoodStock} food / {s.DrinkStock} drink", body);
                 GUILayout.Label($"Engine {s.EngineLevel}/2 | Seats {s.CapacityLevel}/2 | Comfort {s.ComfortLevel}/1", body);
-                if (s.Leak != 0) GUILayout.Label($"LEAK! Repair station: {s.RepairSteps}/4 patches", body);
+                if (s.Leak != 0) GUILayout.Label($"LEAK! REPAIR: {s.RepairSteps}/4 manual | {s.ReadyRepairKits} quick kits ready", body);
                 else GUILayout.Label("Hull watertight", body);
                 if (s.Phase == VoyagePhase.Arrived || s.Phase == VoyagePhase.Failed)
                     GUILayout.Label($"Tickets {s.LastTickets} + service {s.LastServices} + tips {s.LastTips}\nBounty {s.LastBounty} + events {s.LastEventBonus} + route {s.LastRouteBonus} - costs {s.LastCosts} = net {s.LastNet}\nReputation +{s.LastReputation}. Manifest: new voyage.", body);

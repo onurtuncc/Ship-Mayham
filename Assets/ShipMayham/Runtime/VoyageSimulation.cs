@@ -29,7 +29,7 @@ namespace ShipMayham
             Stations = stations;
             Seats = seats;
             HarborEnabled = harborEnabled;
-            State = new VoyageState { Health = 100, Voyage = 1, FoodStock = 16, DrinkStock = 16 };
+            State = new VoyageState { Health = 100, Voyage = 1, FoodStock = 16, DrinkStock = 16, RepairKitStock = VoyageRepairKits };
             eventRandomState = eventSeed == 0 ? 1u : eventSeed;
             ResetEncounter();
             ResetEvents();
@@ -252,6 +252,8 @@ namespace ShipMayham
             var kind = Stations[target].Kind;
             if (Crew[i].Carrying == ServiceItem.Ammo && kind != StationKind.Ammo && kind != StationKind.Cannon)
                 return "Deliver the cannonball at CANNON or return it to AMMO first.";
+            if (Crew[i].Carrying == ServiceItem.RepairKit && kind != StationKind.RepairSupply && kind != StationKind.Repair)
+                return "Deliver the kit at REPAIR or return it to KITS first.";
             switch (kind)
             {
                 case StationKind.Manifest:
@@ -277,17 +279,28 @@ namespace ShipMayham
                 case StationKind.Food: return TakeItem(i, ServiceItem.Food);
                 case StationKind.Drink: return TakeItem(i, ServiceItem.Drink);
                 case StationKind.Repair:
+                    if (!RepairSuppliesOpen) return "Repair bench closed. Prepare a new voyage.";
+                    if (Crew[i].Carrying == ServiceItem.RepairKit) return DeliverRepairKit(i);
                     if (State.Leak == 0)
                     {
                         string cargoResult = ClearLooseCargo();
                         if (!string.IsNullOrEmpty(cargoResult)) return cargoResult;
                     }
                     if (State.Leak == 0) return "Hull is watertight.";
+                    if (State.ReadyRepairKits > 0)
+                    {
+                        if (Crew[i].Carrying != ServiceItem.None) return "Free your hands before applying a quick patch.";
+                        State.ReadyRepairKits--;
+                        State.RepairKitsUsed++;
+                        FinishLeakRepair();
+                        State.Health = Mathf.Min(100, State.Health + QuickPatchHullRecovery);
+                        return "Quick patch applied! One kit used; leak sealed and up to 8 hull restored.";
+                    }
                     State.RepairSteps++;
                     if (State.RepairSteps < 4) return $"Patching leak: {State.RepairSteps}/4";
-                    State.Leak = 0;
-                    nextLeak = State.Elapsed + 45;
+                    FinishLeakRepair();
                     return "Leak patched.";
+                case StationKind.RepairSupply: return TakeOrReturnRepairKit(i);
                 case StationKind.Cannon: return Crew[i].Carrying == ServiceItem.Ammo ? DeliverAmmo(i) : TakeCannon(i);
                 case StationKind.Ammo: return TakeOrReturnAmmo(i);
                 case StationKind.Power:
@@ -343,6 +356,7 @@ namespace ShipMayham
             if (Crew[crew].Carrying == ServiceItem.Food) State.FoodStock++;
             if (Crew[crew].Carrying == ServiceItem.Drink) State.DrinkStock++;
             if (Crew[crew].Carrying == ServiceItem.Ammo) Encounter.MagazineAmmo++;
+            if (Crew[crew].Carrying == ServiceItem.RepairKit) State.RepairKitStock++;
             Crew[crew].Carrying = ServiceItem.None;
         }
 
@@ -426,6 +440,7 @@ namespace ShipMayham
             State = new VoyageState { Health = 100, Voyage = old.Voyage + 1, Wallet = old.Wallet,
                 EngineLevel = old.EngineLevel, CapacityLevel = old.CapacityLevel, ComfortLevel = old.ComfortLevel,
                 FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield,
+                RepairKitStock = VoyageRepairKits,
                 Reputation = old.Reputation, Livery = old.Livery, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted };
             Array.Clear(Passengers, 0, Passengers.Length);
             nextLeak = 25;

@@ -39,6 +39,7 @@ namespace ShipMayham
         private Renderer[][] itemRenderers;
         private Transform[] ammoItemVisuals, serviceItemVisuals;
         private Transform[] luggageItemVisuals;
+        private Transform[] repairKitVisuals;
         private Renderer[] luggageTagRenderers;
         private Transform ammoPile;
         private TextMesh ammoLabel;
@@ -71,6 +72,7 @@ namespace ShipMayham
             ammoItemVisuals = new Transform[CrewRoots.Length];
             serviceItemVisuals = new Transform[CrewRoots.Length];
             luggageItemVisuals = new Transform[CrewRoots.Length];
+            repairKitVisuals = new Transform[CrewRoots.Length];
             luggageTagRenderers = new Renderer[CrewRoots.Length];
             carryPositions = new Vector3[CrewRoots.Length];
             carryRotations = new Quaternion[CrewRoots.Length];
@@ -97,6 +99,7 @@ namespace ShipMayham
                 ammoItemVisuals[i] = CarriedItems[i].Find("Ammo_Visual");
                 serviceItemVisuals[i] = CarriedItems[i].Find("Visuals");
                 luggageItemVisuals[i] = CarriedItems[i].Find("Model_Suitcase");
+                repairKitVisuals[i] = CarriedItems[i].Find("Model_Toolbox");
                 if (luggageItemVisuals[i] != null)
                 {
                     var tag = luggageItemVisuals[i].Find("Tag_Visual");
@@ -282,6 +285,14 @@ namespace ShipMayham
                 bestAngle = angle;
                 FocusedTarget = i;
                 FocusText = "E / A: " + station.DisplayName;
+                if (station.Kind == StationKind.RepairSupply)
+                    FocusText = crew.Carrying == ServiceItem.RepairKit ? "E / A: return quick patch kit" : $"E / A: take kit ({Session.Voyage.Value.RepairKitStock} in store) -> REPAIR";
+                else if (station.Kind == StationKind.Repair)
+                    FocusText = crew.Carrying == ServiceItem.RepairKit
+                        ? $"E / A: deliver kit ({Session.Voyage.Value.ReadyRepairKits}/{VoyageSimulation.RepairKitBufferCapacity} bench slots used)"
+                        : Session.Voyage.Value.Leak == 0 ? "Hull watertight | carry KITS here to prepare quick patches"
+                        : Session.Voyage.Value.ReadyRepairKits > 0 ? "E / A: use one quick kit -> seal leak + up to 8 hull"
+                        : $"E / A: manual patch {Session.Voyage.Value.RepairSteps}/4 | or bring a kit from KITS";
                 if (station.Kind == StationKind.Ammo)
                     FocusText = crew.Carrying == ServiceItem.Ammo ? "E / A: return cannonball to magazine" : $"E / A: take cannonball ({Session.Encounter.Value.MagazineAmmo} in magazine)";
                 else if (station.Kind == StationKind.Cannon && crew.Carrying == ServiceItem.Ammo)
@@ -488,8 +499,10 @@ namespace ShipMayham
             displayedItems[slot] = item;
             if (ammoItemVisuals[slot] != null) ammoItemVisuals[slot].gameObject.SetActive(item == ServiceItem.Ammo);
             bool luggage = VoyageSimulation.IsLuggage(item);
+            bool repairKit = item == ServiceItem.RepairKit;
+            if (repairKitVisuals[slot] != null) repairKitVisuals[slot].gameObject.SetActive(repairKit);
             if (luggageItemVisuals[slot] != null) luggageItemVisuals[slot].gameObject.SetActive(luggage);
-            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && !luggage);
+            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && !luggage && !repairKit);
             if (item == ServiceItem.None) return;
             Color color = item == ServiceItem.Ammo ? new Color(.12f, .14f, .18f) : item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
             if (luggage) color = VoyageSimulation.LuggageColor(item);
@@ -497,6 +510,7 @@ namespace ShipMayham
             {
                 // Keep the imported leather palette; only the tag identifies a baggage item.
                 if (luggageItemVisuals[slot] != null && renderer.transform.IsChildOf(luggageItemVisuals[slot]) && renderer != luggageTagRenderers[slot]) continue;
+                if (repairKitVisuals[slot] != null && renderer.transform.IsChildOf(repairKitVisuals[slot])) continue;
                 renderer.GetPropertyBlock(itemProperties);
                 itemProperties.SetColor(BaseColorId, color);
                 itemProperties.SetColor(ColorId, color);

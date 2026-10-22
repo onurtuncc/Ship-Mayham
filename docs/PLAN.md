@@ -1,5 +1,7 @@
 # Ship Mayham — Uygulama Planı
 
+**On yedinci geliştirme dilimi:** Fiziksel hızlı yama kiti deposu/taşıma/tezgâha teslim/uygulama akışı, sınırlı stok ve elle tamir alternatifi eklendi. Son sahneyle 202/202 test, Windows build ve dört süreçli tam sefer geçti; v7 Relay host kaybı da doğrulandı. Kaynak protokolü v7; canlı Pages yayını bu dilim ayrıca yayımlanana kadar v6'dır. [REPAIR_SUPPLIES.md](REPAIR_SUPPLIES.md).
+
 **On altıncı geliştirme dilimi — 22 Ekim:** Limanda A/B/C valizlerini değişen mavi/yeşil hedeflere ayırma, ortak 30 para/1 itibar ödülü, iade/iptal ve snapshot/protokol v6 eklendi. 182 EditMode testi, dört süreçli tam sefer/bagaj teslimatı ve v6 Relay host kaybı geçti. Kapsam ve kanıt: [DOCK_SORTING.md](DOCK_SORTING.md). GDD'nin tüm fazları tamamlanmış değildir.
 
 Bu plan, GDD’deki vizyonu küçük ve test edilebilir artımlara böler. Her fazın sonunda oynanabilir bir build alınmalı ve oyuncu testi yapılmalıdır.
@@ -199,4 +201,4 @@ Her prototip build’inde aşağıdaki ölçümler toplanmalıdır:
 
 ## Sonraki karar noktası
 
-On beşinci dilimden sonra başlıca uygulama boşlukları daha çeşitli kara mini oyunları, arıza mini oyunları ve yolcunun dolaşma/kişilik davranışlarıdır. Uçuşlu atış, fiziksel mühimmat taşıma, temel yolcu ipuçları ve ilk prop grubu uygulanmıştır; kalan karakter/eldeki ürün modellerinin anchor'ları koruyarak entegrasyonu da gereklidir. Son resmî parti oyunu araştırması ve uygulanmamış kara adayları [PARTY_DESIGN_RESEARCH.md](PARTY_DESIGN_RESEARCH.md) içinde ayrılır. Sekiz kartlı deste ve üç rota profili aynı fiziksel iki limanı kullanır. Dört insanla görev paylaşımı, olay yığılmaları, liman geçişleri, HUD ve tekrar oynama isteği testi otomatik testlerin yerini tutmayan ayrı kabul kapısıdır.
+On yedinci dilimden sonra başlıca uygulama boşlukları arıza mini oyunları ve yolcunun dolaşma/kişilik davranışlarıdır. Kara işlerine bagaj ayırma, arıza kaynaklarına fiziksel hızlı yama kitleri eklendi. Uçuşlu atış, fiziksel mühimmat taşıma, temel yolcu ipuçları ve ilk prop grubu uygulanmıştır; kalan karakter/eldeki ürün modellerinin anchor'ları koruyarak entegrasyonu da gereklidir. Son resmî parti oyunu araştırması ve uygulanmamış kara adayları [PARTY_DESIGN_RESEARCH.md](PARTY_DESIGN_RESEARCH.md) içinde ayrılır. Sekiz kartlı deste ve üç rota profili aynı fiziksel iki limanı kullanır. Dört insanla görev paylaşımı, olay yığılmaları, liman geçişleri, HUD ve tekrar oynama isteği testi otomatik testlerin yerini tutmayan ayrı kabul kapısıdır.

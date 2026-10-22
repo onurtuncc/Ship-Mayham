@@ -31,7 +31,7 @@ namespace ShipMayham.Tests
             Assert.IsNotNull(visual.MuzzleAnchor);
             Assert.IsNotNull(visual.PowerIndicator);
             Assert.IsNotNull(visual.PirateRoot);
-            Assert.AreEqual(11, hud.Session.Stations.Length);
+            Assert.AreEqual(12, hud.Session.Stations.Length);
             hud.Connect(true);
             float deadline = Time.realtimeSinceStartup + 5;
             while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;

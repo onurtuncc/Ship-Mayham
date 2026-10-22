@@ -1,6 +1,6 @@
 # Ship Mayham — Game Design Document
 
-22 Ekim uygulama eki: on altıncı küçük geliştirme dilimi olan liman bagaj ayırma uygulanmıştır; bu, aşağıdaki tam vizyonun tamamlandığı anlamına gelmez. Kurallar ve doğrulama: [DOCK_SORTING.md](DOCK_SORTING.md).
+22 Ekim uygulama eki: on altıncı dilimde liman bagaj ayırma, on yedinci dilimde fiziksel hızlı yama kiti akışı geliştirilmiştir; bu, aşağıdaki tam vizyonun tamamlandığı anlamına gelmez. Kurallar ve doğrulama: [DOCK_SORTING.md](DOCK_SORTING.md), [REPAIR_SUPPLIES.md](REPAIR_SUPPLIES.md).
 
 **Doküman durumu:** v0.1 — İlk konsept ve MVP kapsamı  
 **Çalışma adı:** Ship Mayham  
