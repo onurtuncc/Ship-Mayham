@@ -62,7 +62,9 @@ namespace ShipMayham
         private void Connected(ulong id) { Simulation.Join(id, PrototypeHud.PlayerIdentity(id)); Publish(); }
         private void Disconnected(ulong id)
         {
-            if (!PrototypeHud.OnlineTransportActive) Simulation.Leave(id);
+            if (!IsSpawned || !IsServer || Simulation == null || NetworkManager.ShutdownInProgress) return;
+            if (PrototypeHud.OnlineTransportActive) Simulation.SuspendConnection(id);
+            else Simulation.Leave(id);
             Publish();
         }
 
@@ -97,7 +99,7 @@ namespace ShipMayham
         {
             get
             {
-                if (!IsSpawned) return -1;
+                if (!IsSpawned || NetworkManager == null || NetworkManager.LocalClientId == ulong.MaxValue) return -1;
                 for (int i = 0; i < Crew.Count; i++) if (Crew[i].Active && Crew[i].ClientId == NetworkManager.LocalClientId) return i;
                 return -1;
             }

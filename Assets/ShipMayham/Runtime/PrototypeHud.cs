@@ -17,7 +17,7 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
-        public const ushort NetworkProtocolVersion = 3;
+        public const ushort NetworkProtocolVersion = 4;
         public NetworkManager Manager;
         public PrototypeSession Session;
         public PrototypeView View;
@@ -30,6 +30,7 @@ namespace ShipMayham
         private readonly HashSet<string> pendingDepartures = new HashSet<string>();
         private readonly Dictionary<ulong, string> playerIdentities = new Dictionary<ulong, string>();
         private ISession onlineSession;
+        private IClientSessionNetwork onlineNetwork;
         private VoyageMigrationDataHandler migrationHandler;
         private bool onlineMode;
         private static PrototypeHud instance;
@@ -38,6 +39,8 @@ namespace ShipMayham
         public string OnlineCode => onlineSession?.Code;
         public bool IsOnlineHost => onlineSession != null && onlineSession.IsHost;
         public int CompletedMigrations { get; private set; }
+        public SessionError? LastMigrationError { get; private set; }
+        public NetworkState? OnlineNetworkState => onlineNetwork?.State;
 
         public static bool OnlineTransportActive => instance != null && instance.onlineMode;
         public static string PlayerIdentity(ulong clientId) =>
@@ -46,6 +49,7 @@ namespace ShipMayham
         private void Update()
         {
             if (Keyboard.current?.f1Key.wasPressedThisFrame == true) showHelp = !showHelp;
+            FlushPendingDepartures();
         }
 
         private void Awake()
@@ -148,6 +152,7 @@ namespace ShipMayham
             pendingDepartures.Clear();
             playerIdentities.Clear();
             CompletedMigrations = 0;
+            LastMigrationError = null;
 
             try
             {
@@ -209,10 +214,14 @@ namespace ShipMayham
             onlineSession.PlayerHasLeft += OnlinePlayerLeft;
             onlineSession.RemovedFromSession += OnlineSessionEnded;
             onlineSession.Deleted += OnlineSessionEnded;
+            onlineNetwork = onlineSession.Network;
+            if (onlineNetwork != null) onlineNetwork.MigrationFailed += OnlineMigrationFailed;
         }
 
         private void UnsubscribeOnlineSession()
         {
+            if (onlineNetwork != null) onlineNetwork.MigrationFailed -= OnlineMigrationFailed;
+            onlineNetwork = null;
             if (onlineSession == null) return;
             onlineSession.SessionHostChanged -= OnlineHostChanged;
             onlineSession.SessionMigrated -= OnlineSessionMigrated;
@@ -229,25 +238,33 @@ namespace ShipMayham
         private void OnlineSessionMigrated()
         {
             CompletedMigrations++;
-            if (onlineSession != null && onlineSession.IsHost && Session != null)
-            {
-                foreach (string playerId in pendingDepartures) Session.RemoveOnlinePlayer(playerId);
-                pendingDepartures.Clear();
-            }
+            LastMigrationError = null;
+            FlushPendingDepartures();
             status = onlineSession != null && onlineSession.IsHost
                 ? "Migration complete: you are the new host."
                 : "Migration complete: reconnected to the new host.";
+        }
+
+        private void OnlineMigrationFailed(SessionError error)
+        {
+            LastMigrationError = error;
+            status = $"Host migration failed ({error}). Leave this session and create a new voyage.";
+            Debug.LogWarning(status);
         }
 
         private void OnlinePlayerLeft(string playerId)
         {
             admittedPlayers.Remove(playerId);
             pendingDepartures.Add(playerId);
-            if (Manager != null && Manager.IsServer)
-            {
-                Session?.RemoveOnlinePlayer(playerId);
-                pendingDepartures.Remove(playerId);
-            }
+            FlushPendingDepartures();
+        }
+
+        private void FlushPendingDepartures()
+        {
+            if (pendingDepartures.Count == 0 || !onlineMode || onlineSession == null || !onlineSession.IsHost ||
+                Session == null || !Session.IsSpawned || !Session.IsServer || Session.Simulation == null) return;
+            foreach (string playerId in pendingDepartures) Session.RemoveOnlinePlayer(playerId);
+            pendingDepartures.Clear();
         }
 
         private void OnlineSessionEnded()
@@ -272,7 +289,9 @@ namespace ShipMayham
             UnsubscribeOnlineSession();
             onlineSession = null;
             onlineMode = false;
-            StartCoroutine(Reload(false));
+            // A failed SDK leave may still have a live NGO manager. The guarded
+            // shutdown also makes that failure path return to the menu safely.
+            StartCoroutine(Reload());
         }
 
         private void LeaveOrReload()
@@ -335,7 +354,12 @@ namespace ShipMayham
                 else GUILayout.Label(s.Phase == VoyagePhase.Boarding ? "1. Manifest: board\n2. Helm: E, then Space to depart" : "Serve matching orders. Brake (S) and dock (Space) within 12 m.", body);
             }
             GUILayout.EndArea();
-            if (Session.IsSpawned && GUI.Button(new Rect(1115, 12, 153, 32), "Leave session")) LeaveOrReload();
+            if ((Session.IsSpawned || onlineSession != null) && GUI.Button(new Rect(1115, 12, 153, 32), "Leave session")) LeaveOrReload();
+            if (LastMigrationError.HasValue)
+            {
+                GUI.Box(new Rect(410, 82, 630, 78), GUIContent.none);
+                GUI.Label(new Rect(422, 92, 606, 58), status, body);
+            }
             if (Session.IsSpawned)
             {
                 DrawEncounter();
@@ -456,8 +480,8 @@ namespace ShipMayham
         {
             var e = Session.Encounter.Value;
             var voyageEvent = Session.ActiveEvent.Value;
-            GUI.Box(new Rect(12, 360, 370, 260), GUIContent.none);
-            GUILayout.BeginArea(new Rect(26, 370, 342, 244));
+            GUI.Box(new Rect(12, 360, 370, 298), GUIContent.none);
+            GUILayout.BeginArea(new Rect(26, 370, 342, 282));
             GUILayout.Label(e.PowerOut ? $"POWER OUT! Breakers: {e.PowerRepairSteps}/3" : "POWER ONLINE", body);
             if (e.PowerOut) GUILayout.Label("New food/drink blocked. Use POWER panel.", body);
             string threat = e.Pirate == PiratePhase.Warning ? $"PIRATES IN {e.WarningRemaining:0.0}s — find CANNON!" :
@@ -465,7 +489,8 @@ namespace ShipMayham
                 e.Pirate == PiratePhase.Defeated ? "Pirates repelled! +50 on arrival" :
                 e.Pirate == PiratePhase.Escaped ? "Pirates withdrew. No bounty." : "Watch for pirates after departure.";
             GUILayout.Label(threat, body);
-            GUILayout.Label($"Cannon ammo: {e.Ammo}/12 | " + (e.ReloadRemaining > 0 ? $"Reloading {e.ReloadRemaining:0.0}s" : e.CannonLoaded ? "LOADED" : "R / X: reload"), body);
+            string rack = e.ReloadRemaining > 0 ? $"{e.ReadyAmmo}+1 reserved" : e.ReadyAmmo.ToString();
+            GUILayout.Label($"Ammo: {e.Ammo}/12 total | magazine {e.MagazineAmmo}\nCannon rack: {rack}/{VoyageSimulation.CannonBufferCapacity} | " + (e.ReloadRemaining > 0 ? $"Reloading {e.ReloadRemaining:0.0}s" : e.CannonLoaded ? "LOADED" : "R / X: reload"), body);
             GUILayout.Label("At CANNON: mouse / right stick aims\nLMB / RT fires • R / X reloads • E / A releases", body);
             GUILayout.Space(4);
             GUILayout.Label(EventText(voyageEvent), body);

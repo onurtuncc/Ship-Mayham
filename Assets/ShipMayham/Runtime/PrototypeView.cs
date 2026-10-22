@@ -37,6 +37,10 @@ namespace ShipMayham
         private float lookYaw, lookPitch = 12;
         private Transform[] crewVisuals;
         private Renderer[][] itemRenderers;
+        private Transform[] ammoItemVisuals, serviceItemVisuals;
+        private Transform ammoPile;
+        private TextMesh ammoLabel;
+        private int displayedMagazine = -1;
         private Vector3[] carryPositions;
         private Quaternion[] carryRotations;
         private ServiceItem[] displayedItems;
@@ -62,6 +66,8 @@ namespace ShipMayham
 #endif
             crewVisuals = new Transform[CrewRoots.Length];
             itemRenderers = new Renderer[CrewRoots.Length][];
+            ammoItemVisuals = new Transform[CrewRoots.Length];
+            serviceItemVisuals = new Transform[CrewRoots.Length];
             carryPositions = new Vector3[CrewRoots.Length];
             carryRotations = new Quaternion[CrewRoots.Length];
             displayedItems = new ServiceItem[CrewRoots.Length];
@@ -84,6 +90,8 @@ namespace ShipMayham
             {
                 crewVisuals[i] = CrewRoots[i].Find("Visuals");
                 itemRenderers[i] = CarriedItems[i].GetComponentsInChildren<Renderer>(true);
+                ammoItemVisuals[i] = CarriedItems[i].Find("Ammo_Visual");
+                serviceItemVisuals[i] = CarriedItems[i].Find("Visuals");
                 carryPositions[i] = CarriedItems[i].localPosition;
                 carryRotations[i] = CarriedItems[i].localRotation;
             }
@@ -98,6 +106,13 @@ namespace ShipMayham
                 passengerLabelOffsets[i] = PassengerLabels[i].transform.localPosition;
                 passengerBuoys[i] = PassengerVisuals[i].Find("RescueFloat_Visual");
             }
+            foreach (var station in Session.Stations)
+                if (station.Kind == StationKind.Ammo)
+                {
+                    ammoPile = station.Visuals.Find("Model_CannonballPile");
+                    ammoLabel = station.Label;
+                    break;
+                }
         }
 
         private void CaptureCursor(bool capture)
@@ -229,7 +244,7 @@ namespace ShipMayham
         private void FindTarget(CrewState crew)
         {
             FocusedTarget = -1;
-            if (crew.AtCannon) { FocusText = "LMB / RT: fire | R / X: reload | E / A: release cannon"; return; }
+            if (crew.AtCannon) { FocusText = "LMB / RT: fire | R / X: reload | E / A: release cannon\nCrew: carry rounds from AMMO to CANNON."; return; }
             if (crew.AtHelm) { FocusText = "E / A: release helm   |   Space / X: depart or dock"; return; }
             if (Session.LocalCarriedPassengerIndex >= 0) { FocusText = "G / B: put down | LMB / RT: throw (-5 happiness)\nOverboard: another -20 happiness + 15 coins. Rescue: 8s."; return; }
             if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) { FocusText = "Land before interacting"; return; }
@@ -251,6 +266,14 @@ namespace ShipMayham
                 bestAngle = angle;
                 FocusedTarget = i;
                 FocusText = "E / A: " + station.DisplayName;
+                if (station.Kind == StationKind.Ammo)
+                    FocusText = crew.Carrying == ServiceItem.Ammo ? "E / A: return cannonball to magazine" : $"E / A: take cannonball ({Session.Encounter.Value.MagazineAmmo} in magazine)";
+                else if (station.Kind == StationKind.Cannon && crew.Carrying == ServiceItem.Ammo)
+                {
+                    var e = Session.Encounter.Value;
+                    int occupied = e.ReadyAmmo + (e.ReloadRemaining > 0 ? 1 : 0);
+                    FocusText = $"E / A: deliver cannonball ({occupied}/{VoyageSimulation.CannonBufferCapacity} rack slots used)";
+                }
                 if (VoyageSimulation.IsUpgrade(station.Kind))
                     FocusText += $" ({VoyageSimulation.UpgradeCost(station.Kind, Session.Voyage.Value)} coins; at port)";
             }
@@ -325,6 +348,13 @@ namespace ShipMayham
             }
             wasAtCannon = atCannon;
             var state = active ? Session.Voyage.Value : new VoyageState { Health = 100 };
+            int magazine = active ? Session.Encounter.Value.MagazineAmmo : 0;
+            if (displayedMagazine != magazine)
+            {
+                displayedMagazine = magazine;
+                if (ammoPile != null) ammoPile.gameObject.SetActive(magazine > 0);
+                if (ammoLabel != null) ammoLabel.text = $"AMMO {magazine}\nE / A: carry round";
+            }
             ApplyLivery(state.Livery);
             Transform ship = Session.ShipRoot;
             float blend = wasSpawned ? 1 - Mathf.Exp(-18 * Time.deltaTime) : 1;
@@ -333,7 +363,7 @@ namespace ShipMayham
             wasSpawned = active;
             for (int i = 0; i < CrewRoots.Length; i++)
             {
-                bool show = active && i < Session.Crew.Count && Session.Crew[i].Active;
+                bool show = active && i < Session.Crew.Count && Session.Crew[i].Active && Session.Crew[i].ClientId != ulong.MaxValue;
                 CrewRoots[i].gameObject.SetActive(show);
                 if (!show) continue;
                 var crew = Session.Crew[i];
@@ -429,8 +459,10 @@ namespace ShipMayham
         {
             if (displayedItems[slot] == item) return;
             displayedItems[slot] = item;
+            if (ammoItemVisuals[slot] != null) ammoItemVisuals[slot].gameObject.SetActive(item == ServiceItem.Ammo);
+            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo);
             if (item == ServiceItem.None) return;
-            Color color = item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
+            Color color = item == ServiceItem.Ammo ? new Color(.12f, .14f, .18f) : item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
             foreach (var renderer in itemRenderers[slot])
             {
                 renderer.GetPropertyBlock(itemProperties);

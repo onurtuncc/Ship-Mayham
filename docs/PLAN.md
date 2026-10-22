@@ -32,6 +32,8 @@ Fazlar henüz bütünüyle tamamlanmış değildir: fiziksel mermi/taşınan gü
 
 **On ikinci geliştirme dilimi:** Üretilmiş Blender prop'larının ilk grubu sahneye bağlandı: istasyon detayları, banklar, korsan gemisi ve liman kulübe/dekorları. Eski 775 serialized kimlik ve oynanış transform/anchor bağları korundu; modeller URP/Lit paletine eşlendi. Güncelleyici eklemeli/idempotenttir. Karakter modelleri, eldeki ürün modelleri, yeni fiziksel oynanış veya tam sanat dönüşümü bu dilimin kapsamında değildir. Kanıt ve kullanım [ART_PIPELINE.md](ART_PIPELINE.md) içindedir.
 
+**On üçüncü geliştirme dilimi:** Mühimmat ambardan oyuncunun eline, oradan üç yuvalı top stoğuna fiziksel olarak taşınır. Topçu teslim edilmiş gülleyi elle doldurur; teslimat topçuyu görevinden çıkarmaz. Mühimmat korunumu, doldurma iptali, bağlantı ayrılması ve snapshot/protokol v4 eklendi. Bu, fiziksel taşıma/tedarik dilimidir; atışlar henüz uçuşlu mermi değildir. Kapsam ve kanıt [AMMO_FLOW.md](AMMO_FLOW.md) içindedir.
+
 ## Faz 0 — Proje ve test altyapısı
 
 **Amaç:** Mevcut Unity projesini gemi prototipine hazır hale getirmek.
@@ -190,4 +192,4 @@ Her prototip build’inde aşağıdaki ölçümler toplanmalıdır:
 
 ## Sonraki karar noktası
 
-On ikinci dilimden sonra başlıca uygulama boşlukları korsan karşılaşmasında fiziksel mühimmat/mermi akışı, sızmacının davranış ipuçları ve daha çeşitli kara mini oyunlarıdır. İlk prop grubu sahneye bağlandı; kalan karakter/eldeki ürün modellerinin oynanış anchor'larını koruyarak entegrasyonu da görsel kalite için gereklidir. Sekiz kartlı deste, üç rota profili ve itibarla açılım uygulanmıştır; aynı fiziksel iki limanı kullanırlar. Dört insanla testte görev paylaşımı, olay yığılmaları, liman geçişleri, HUD okunurluğu ve tekrar oynama isteği değerlendirilmelidir. Bu insan testi otomatik testlerin yerini tutmayan ayrı bir kabul kapısıdır.
+On üçüncü dilimden sonra başlıca uygulama boşlukları korsan karşılaşmasında uçuşlu/çarpışmalı mermi, sızmacının davranış ipuçları ve daha çeşitli kara mini oyunlarıdır. Fiziksel mühimmat taşıma ve ilk prop grubu uygulanmıştır; kalan karakter/eldeki ürün modellerinin oynanış anchor'larını koruyarak entegrasyonu da görsel kalite için gereklidir. Sekiz kartlı deste, üç rota profili ve itibarla açılım uygulanmıştır; aynı fiziksel iki limanı kullanırlar. Dört insanla testte görev paylaşımı, olay yığılmaları, liman geçişleri, HUD okunurluğu ve tekrar oynama isteği değerlendirilmelidir. Bu insan testi otomatik testlerin yerini tutmayan ayrı bir kabul kapısıdır.

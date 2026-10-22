@@ -15,7 +15,7 @@ namespace ShipMayham
         {
             public string Participant;
             public bool NewHost;
-            public int OriginalSlot, RestoredSlot, Migrations, Wallet, EventSerial, ActiveCrew;
+            public int OriginalSlot, RestoredSlot, Migrations, Wallet, EventSerial, ActiveCrew, Ammo, MagazineAmmo, ReadyAmmo;
         }
 
         private PrototypeHud hud;
@@ -23,6 +23,9 @@ namespace ShipMayham
         private string output, participant;
         private float deadline;
         private bool finished;
+        private bool observingMigration;
+        private float nextDiagnostic;
+        private string lastDiagnostic;
 
         private void Awake() => DontDestroyOnLoad(gameObject);
 
@@ -50,7 +53,9 @@ namespace ShipMayham
 
         private IEnumerator Start()
         {
-            deadline = Time.realtimeSinceStartup + 180;
+            if (!int.TryParse(Argument("--ship-online-timeout") ?? "240", out int timeoutSeconds) || timeoutSeconds < 60 || timeoutSeconds > 300)
+            { Fail("Invalid online test timeout."); yield break; }
+            deadline = Time.realtimeSinceStartup + timeoutSeconds;
             participant = Argument("--ship-online-participant");
             output = Argument("--ship-online-output");
             string profile = Argument("--ship-auth-profile");
@@ -89,6 +94,13 @@ namespace ShipMayham
                 session.InteractRpc(-1, true);
                 yield return new WaitForSeconds(.4f);
                 session.InteractRpc(-1, false);
+                yield return new WaitForSeconds(.4f);
+                int ammoStation = Array.FindIndex(session.Stations, station => station.Kind == StationKind.Ammo);
+                if (ammoStation < 0) { Fail("Ammo station is missing."); yield break; }
+                sim.Crew[originalSlot].Position = sim.Stations[ammoStation].Position + Vector2.left;
+                session.InteractRpc(ammoStation, false);
+                yield return new WaitForSeconds(.4f);
+                if (session.Crew[originalSlot].Carrying != ServiceItem.Ammo) { Fail("Host did not pick up the probe cannonball."); yield break; }
                 sim.State.Wallet = 321;
                 sim.State.Reputation = 9;
                 sim.State.Position = new Vector2(12, 45);
@@ -110,14 +122,17 @@ namespace ShipMayham
 
             while (ActiveCrew() != 4 || session.ActiveEvent.Value.Serial != 777) yield return null;
             WriteSignal(participant + ".ready", "observed-probe");
+            observingMigration = true;
             while (hud == null || session == null || hud.CompletedMigrations == 0 || !session.IsSpawned || session.LocalCrewIndex < 0 || ActiveCrew() != 3) yield return null;
             int restoredSlot = session.LocalCrewIndex;
             if (restoredSlot != originalSlot || session.Voyage.Value.Wallet != 321 || session.ActiveEvent.Value.Serial != 777 ||
                 session.ActiveEvent.Value.Progress != 1 || session.ActiveEvent.Value.InspectedMask != 1 || session.ActiveEvent.Value.Reward != 30 ||
-                session.Voyage.Value.Phase != VoyagePhase.Sailing)
+                session.Voyage.Value.Phase != VoyagePhase.Sailing || session.Encounter.Value.Ammo != 12 ||
+                session.Encounter.Value.MagazineAmmo != 11 || session.Encounter.Value.ReadyAmmo != 0 || !session.Encounter.Value.CannonLoaded)
             {
                 Fail($"Migration mismatch: slot {originalSlot}->{restoredSlot}, wallet={session.Voyage.Value.Wallet}, " +
-                    $"event={session.ActiveEvent.Value.Serial}/{session.ActiveEvent.Value.Progress}, phase={session.Voyage.Value.Phase}.");
+                    $"event={session.ActiveEvent.Value.Serial}/{session.ActiveEvent.Value.Progress}, phase={session.Voyage.Value.Phase}, " +
+                    $"ammo={session.Encounter.Value.Ammo}/{session.Encounter.Value.MagazineAmmo}/{session.Encounter.Value.ReadyAmmo}.");
                 yield break;
             }
 
@@ -134,7 +149,8 @@ namespace ShipMayham
             {
                 Participant = participant, NewHost = hud.IsOnlineHost, OriginalSlot = originalSlot,
                 RestoredSlot = restoredSlot, Migrations = hud.CompletedMigrations,
-                Wallet = session.Voyage.Value.Wallet, EventSerial = session.ActiveEvent.Value.Serial, ActiveCrew = ActiveCrew()
+                Wallet = session.Voyage.Value.Wallet, EventSerial = session.ActiveEvent.Value.Serial, ActiveCrew = ActiveCrew(),
+                Ammo = session.Encounter.Value.Ammo, MagazineAmmo = session.Encounter.Value.MagazineAmmo, ReadyAmmo = session.Encounter.Value.ReadyAmmo
             };
             WriteSignal(participant + ".json", JsonUtility.ToJson(result, true));
             Debug.Log($"SHIP_ONLINE_SMOKE_PASS {participant} host={result.NewHost} slot={restoredSlot}");
@@ -155,6 +171,23 @@ namespace ShipMayham
         {
             if (hud == null) hud = FindAnyObjectByType<PrototypeHud>();
             if (session == null) session = FindAnyObjectByType<PrototypeSession>();
+            if (observingMigration && !finished && Time.realtimeSinceStartup >= nextDiagnostic)
+            {
+                nextDiagnostic = Time.realtimeSinceStartup + .5f;
+                bool spawned = session != null && session.IsSpawned;
+                string state = $"host={hud != null && hud.IsOnlineHost}, migrations={hud?.CompletedMigrations}, " +
+                    $"network={hud?.OnlineNetworkState}, error={hud?.LastMigrationError}, " +
+                    $"spawned={spawned}, local={(spawned ? session.LocalCrewIndex : -1)}, active={ActiveCrew()}";
+                if (spawned)
+                {
+                    state += $", ammo={session.Encounter.Value.Ammo}/{session.Encounter.Value.MagazineAmmo}/{session.Encounter.Value.ReadyAmmo}";
+                    for (int i = 0; i < session.Crew.Count; i++)
+                        state += $", slot{i}={session.Crew[i].Active}:{session.Crew[i].ClientId}:{session.Crew[i].Carrying}";
+                }
+                if (state != lastDiagnostic) { lastDiagnostic = state; Debug.Log($"SHIP_ONLINE_STATE {participant}: {state}"); }
+            }
+            if (!finished && observingMigration && hud != null && hud.LastMigrationError.HasValue)
+                Fail("SDK reported migration failure: " + hud.LastMigrationError.Value);
             if (!finished && deadline > 0 && Time.realtimeSinceStartup > deadline) Fail("Timed out waiting for online migration.");
         }
 

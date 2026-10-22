@@ -51,6 +51,7 @@ namespace ShipMayham.Tests
             restored.ImportMigrationData(original.ExportMigrationData());
 
             Assert.AreEqual(-1, restored.FindCrew(0));
+            Assert.AreEqual(-1, restored.FindCrew(ulong.MaxValue));
             Assert.AreEqual(2, restored.Join(0, "guest-b"));
             Assert.AreEqual(2, restored.FindCrew(0), "New host ID 0 must not select the departed host's slot.");
             Assert.AreEqual(3, restored.Join(1, "guest-c"));

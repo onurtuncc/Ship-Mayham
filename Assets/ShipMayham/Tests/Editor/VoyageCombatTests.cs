@@ -6,7 +6,7 @@ namespace ShipMayham.Tests
     public class VoyageCombatTests
     {
         private VoyageSimulation sim;
-        private const ulong Captain = 10, Gunner = 11;
+        private const ulong Captain = 10, Gunner = 11, Supplier = 12;
         [SetUp]
         public void Setup()
         {
@@ -20,10 +20,11 @@ namespace ShipMayham.Tests
                 new StationDefinition(StationKind.CapacityUpgrade, new Vector2(0,-7.8f)),
                 new StationDefinition(StationKind.ComfortUpgrade, new Vector2(-3.8f,-7.8f)),
                 new StationDefinition(StationKind.Cannon, new Vector2(4,6)),
-                new StationDefinition(StationKind.Power, new Vector2(4,0)) },
+                new StationDefinition(StationKind.Power, new Vector2(4,0)),
+                new StationDefinition(StationKind.Ammo, new Vector2(4,3)) },
                 new[] { new Vector2(-1.9f,-1.5f), new Vector2(1.9f,-1.5f), new Vector2(-1.9f,.6f), new Vector2(1.9f,.6f),
                     new Vector2(-1.9f,2.7f), new Vector2(1.9f,2.7f), new Vector2(-1.9f,4.8f), new Vector2(1.9f,4.8f) });
-            sim.Join(Captain); sim.Join(Gunner);
+            sim.Join(Captain); sim.Join(Gunner); sim.Join(Supplier);
         }
         private void Advance(float seconds)
         {
@@ -39,6 +40,10 @@ namespace ShipMayham.Tests
         private void Depart()
         {
             Use(0); Use(1); sim.HelmAction(Captain); Use(8, Gunner);
+        }
+        private void Supply(int rounds = 1)
+        {
+            for (int round = 0; round < rounds; round++) { Use(10, Supplier); Use(8, Supplier); }
         }
         private Vector2 TargetAim()
         {
@@ -63,6 +68,7 @@ namespace ShipMayham.Tests
             Assert.IsFalse(sim.Crew[0].AtCannon);
             Assert.IsTrue(sim.Crew[1].AtCannon);
             sim.FireCannon(Gunner, Vector2.zero);
+            Supply();
             sim.ReloadCannon(Gunner);
             Assert.Greater(sim.Encounter.ReloadRemaining, 0);
             sim.Leave(Gunner);
@@ -94,6 +100,7 @@ namespace ShipMayham.Tests
             Assert.AreEqual(11, sim.Encounter.Ammo);
             Advance(3);
             Assert.IsFalse(sim.Encounter.CannonLoaded);
+            Supply();
             sim.ReloadCannon(Gunner); sim.ReloadCannon(Gunner);
             Advance(2);
             sim.FireCannon(Gunner, Vector2.zero);
@@ -163,6 +170,7 @@ namespace ShipMayham.Tests
             Depart(); Advance(19);
             sim.FireCannon(Gunner, new Vector2(-100, 0));
             Assert.AreEqual(100, sim.Encounter.PirateHealth);
+            Supply();
             sim.ReloadCannon(Gunner); Advance(3);
             sim.Encounter.PiratePosition = new Vector2(200, 200);
             sim.FireCannon(Gunner, TargetAim());
@@ -170,7 +178,7 @@ namespace ShipMayham.Tests
         }
         [Test] public void ThreeHitsPayBountyOnlyOnceOnSuccessfulArrivalAndResetRestocks()
         {
-            Depart(); Advance(19);
+            Depart(); Supply(2); Advance(19);
             sim.State.Heading = 35; // aim is ship-relative, not world-relative
             for (int shot = 0; shot < 3; shot++)
             {
@@ -210,7 +218,7 @@ namespace ShipMayham.Tests
         {
             Use(0); Use(2); Use(3, Gunner);
             sim.Encounter.PowerOut = true;
-            Use(10); // first passenger, after ten stations
+            Use(sim.Stations.Length); // first passenger, independent of appended stations
             Assert.AreEqual(1, sim.State.Served);
             Use(2);
             Assert.AreEqual(ServiceItem.None, sim.Crew[0].Carrying);

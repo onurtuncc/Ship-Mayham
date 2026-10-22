@@ -90,6 +90,23 @@ namespace ShipMayham
                     yield return new WaitForSeconds(.5f);
                     if (!session.Crew[slot].AtCannon) { Fail("Remote gunner could not claim cannon"); yield break; }
                 }
+                if (slot == 2)
+                {
+                    for (int round = 0; round < 2; round++)
+                    {
+                        yield return WalkTo(new Vector2(3.1f, 1.8f));
+                        session.InteractRpc(FindStation(StationKind.Ammo), false);
+                        yield return new WaitForSeconds(.5f);
+                        if (session.Crew[slot].Carrying != ServiceItem.Ammo) { Fail("Remote magazine pickup failed"); yield break; }
+                        yield return WalkTo(new Vector2(3.1f, 4.7f));
+                        session.InteractRpc(FindStation(StationKind.Cannon), false);
+                        yield return new WaitForSeconds(.5f);
+                        if (session.Crew[slot].Carrying != ServiceItem.None || session.Crew[slot].AtCannon)
+                        { Fail("Remote cannon delivery failed or stole gunner ownership"); yield break; }
+                    }
+                    Debug.Log("SHIP_SMOKE_AMMO_SUPPLY CLIENT delivered=2");
+                    yield return WalkTo(new Vector2(3.1f, -1.2f));
+                }
                 if (slot == 3)
                 {
                     while (session.Voyage.Value.Boarded == 0) yield return null;

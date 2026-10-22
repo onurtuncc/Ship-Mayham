@@ -37,12 +37,14 @@ namespace ShipMayham
 
         public int FindCrew(ulong clientId)
         {
+            if (clientId == ulong.MaxValue) return -1;
             for (int i = 0; i < MaxCrew; i++) if (Crew[i].Active && Crew[i].ClientId == clientId) return i;
             return -1;
         }
 
         public int Join(ulong clientId, string playerId = null)
         {
+            if (clientId == ulong.MaxValue) return -1;
             if (!string.IsNullOrEmpty(playerId))
             {
                 for (int i = 0; i < MaxCrew; i++)
@@ -89,14 +91,36 @@ namespace ShipMayham
 
         private void LeaveSlot(int i)
         {
+            ReleaseCrewResponsibilities(i);
+            Crew[i] = default;
+            crewPlayerIds[i] = null;
+        }
+
+        public void SuspendConnection(ulong clientId)
+        {
+            int i = FindCrew(clientId);
+            if (i < 0) return;
+            ReleaseCrewResponsibilities(i);
+            Crew[i].ClientId = ulong.MaxValue;
+            Crew[i].JumpHeight = Crew[i].VerticalSpeed = 0;
+            if (Crew[i].OnShore)
+            {
+                Crew[i].OnShore = false;
+                Crew[i].Position = ShipGangway;
+            }
+        }
+
+        private void ReleaseCrewResponsibilities(int i)
+        {
             if (Crew[i].AtHelm) State.Speed = 0;
+            Crew[i].AtHelm = false;
             if (Crew[i].AtCannon) ReleaseCannon(i);
             int carriedPassenger = CarriedPassenger(i);
             if (carriedPassenger >= 0) ReturnPassengerToSeat(carriedPassenger);
             ReturnItem(i);
-            Crew[i] = default;
-            crewPlayerIds[i] = null;
             inputs[i] = Vector2.zero;
+            inputExpires[i] = 0;
+            interactionReady[i] = 0;
         }
 
         public void SetInput(ulong clientId, Vector2 input)
@@ -145,7 +169,7 @@ namespace ShipMayham
                     State.Heading = Mathf.Repeat(State.Heading + input.x * dt * 40, 360);
                 }
                 else if (Crew[i].OnShore) MoveShoreCrew(i, input * (4.2f * dt));
-                else if (!Crew[i].AtCannon) MoveCrew(i, input * (4.2f * dt * (CarriedPassenger(i) >= 0 ? .7f : 1)));
+                else if (!Crew[i].AtCannon) MoveCrew(i, input * (4.2f * dt * (CarriedPassenger(i) >= 0 ? .7f : Crew[i].Carrying == ServiceItem.Ammo ? .8f : 1)));
             }
             TickPassengers(dt);
             if (State.Phase != VoyagePhase.Sailing) return;
@@ -217,6 +241,8 @@ namespace ShipMayham
             if (Vector2.Distance(Crew[i].Position, point) > InteractionRange) return "Move closer.";
             if (target >= Stations.Length) return Serve(i, target - Stations.Length);
             var kind = Stations[target].Kind;
+            if (Crew[i].Carrying == ServiceItem.Ammo && kind != StationKind.Ammo && kind != StationKind.Cannon)
+                return "Deliver the cannonball at CANNON or return it to AMMO first.";
             switch (kind)
             {
                 case StationKind.Manifest:
@@ -253,7 +279,8 @@ namespace ShipMayham
                     State.Leak = 0;
                     nextLeak = State.Elapsed + 45;
                     return "Leak patched.";
-                case StationKind.Cannon: return TakeCannon(i);
+                case StationKind.Cannon: return Crew[i].Carrying == ServiceItem.Ammo ? DeliverAmmo(i) : TakeCannon(i);
+                case StationKind.Ammo: return TakeOrReturnAmmo(i);
                 case StationKind.Power:
                     if (!Encounter.PowerOut) return "Power is online.";
                     Encounter.PowerRepairSteps++;
@@ -306,6 +333,7 @@ namespace ShipMayham
         {
             if (Crew[crew].Carrying == ServiceItem.Food) State.FoodStock++;
             if (Crew[crew].Carrying == ServiceItem.Drink) State.DrinkStock++;
+            if (Crew[crew].Carrying == ServiceItem.Ammo) Encounter.MagazineAmmo++;
             Crew[crew].Carrying = ServiceItem.None;
         }
 
@@ -374,7 +402,7 @@ namespace ShipMayham
             State.Reputation += State.LastReputation;
             State.LastNet = State.LastTickets + State.LastServices + State.LastTips + State.LastBounty + State.LastEventBonus + State.LastRouteBonus - State.LastCosts;
             State.Wallet = Mathf.Max(0, State.Wallet + State.LastNet);
-            Encounter.ReloadRemaining = 0;
+            CancelCannonReload();
             if (Encounter.Pirate == PiratePhase.Warning || Encounter.Pirate == PiratePhase.Attacking) Encounter.Pirate = PiratePhase.Escaped;
             Encounter.PowerOut = false;
             for (int p = 0; p < MaxPassengers; p++)

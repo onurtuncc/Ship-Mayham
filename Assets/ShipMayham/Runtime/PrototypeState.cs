@@ -5,8 +5,8 @@ using UnityEngine;
 namespace ShipMayham
 {
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
-    public enum ServiceItem : byte { None, Food, Drink, Cargo }
-    public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power }
+    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo }
+    public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing }
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }

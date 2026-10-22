@@ -168,6 +168,7 @@ namespace ShipMayham.Editor
             EnsurePhaseTwo(session, view);
             EnsurePhaseThree(view);
             EnsurePhaseFour(session, view);
+            EnsureAmmoFlow(session, view);
             EditorSceneManager.SaveScene(scene, ScenePath);
             RegisterScene();
             AssetDatabase.SaveAssets();
@@ -291,6 +292,7 @@ namespace ShipMayham.Editor
                 case StationKind.EngineUpgrade: return "ENGINE";
                 case StationKind.CapacityUpgrade: return "SEATS";
                 case StationKind.ComfortUpgrade: return "COMFORT";
+                case StationKind.Ammo: return "AMMO\nCarry to CANNON";
                 default: return kind.ToString().ToUpperInvariant();
             }
         }

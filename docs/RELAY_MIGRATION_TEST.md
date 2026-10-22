@@ -16,6 +16,8 @@ Varsayılan çıktı, açık ana Editor'ü etkilemeden kullanılan `Builds/ShipP
 
 ## Kabul koşulları
 
+Mühimmat v4 genişletmesinde ilk host, gerçek istasyondan aldığı bir gülleyi de taşır. Host ayrıldığında bu gülle ambara dönmeli; üç sonuç dosyasında toplam 12, ambar 11 ve top yanı 0 olmalıdır. Snapshot/protokol 4, tanı kayıtları, ilk timeout ve yeni kanıtlar [AMMO_FLOW.md](AMMO_FLOW.md) içinde tutulur. `-TimeoutSeconds` uygulamaya da iletilir; varsayılan 240 saniyedir. Bu süre Lobby ayarını değiştirmez.
+
 1. Dört oyuncu aynı Relay/WSS oturumunda seyre başlar. Kasa 321, itibar 9 ve kısmen tamamlanmış bilet denetimi cloud snapshot'a yüklenir.
 2. Üç istemci de hazırlanan olayı gözlemledikten sonra script yalnızca ilk test host'unu zorla kapatır.
 3. Kalan üç oyuncudan tam biri host olur. Her oyuncu kendi eski slotuna döner; kasa, seyir aşaması ve denetimin seri, ilerleme, kontrol maskesi ve ödülü korunur.

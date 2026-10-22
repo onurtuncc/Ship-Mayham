@@ -6,13 +6,14 @@ namespace ShipMayham
     public sealed partial class VoyageSimulation
     {
         public const float CannonRange = 90, ReloadSeconds = 2.5f;
+        public const int VoyageAmmo = 12, CannonBufferCapacity = 3;
         public EncounterState Encounter;
         private bool scheduledPowerFault;
         private int CannonStation => System.Array.FindIndex(Stations, s => s.Kind == StationKind.Cannon);
 
         private void ResetEncounter()
         {
-            Encounter = new EncounterState { Ammo = 12, CannonLoaded = true, CannonYaw = 45, PirateHealth = 100 };
+            Encounter = new EncounterState { Ammo = VoyageAmmo, MagazineAmmo = VoyageAmmo - 1, CannonLoaded = true, CannonYaw = 45, PirateHealth = 100 };
             scheduledPowerFault = false;
         }
 
@@ -89,8 +90,43 @@ namespace ShipMayham
         private void ReleaseCannon(int slot)
         {
             Crew[slot].AtCannon = false;
-            Encounter.ReloadRemaining = 0; // An unfinished reload must be restarted by the next operator.
+            CancelCannonReload();
             inputs[slot] = Vector2.zero;
+        }
+
+        private void CancelCannonReload()
+        {
+            // The reserved round is not consumed until firing. Keep it at the cannon
+            // if the gunner leaves, disconnects, or the voyage settles mid-reload.
+            if (Encounter.ReloadRemaining > 0) Encounter.ReadyAmmo++;
+            Encounter.ReloadRemaining = 0;
+        }
+
+        private string TakeOrReturnAmmo(int slot)
+        {
+            if (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing) return "The magazine is closed.";
+            if (Crew[slot].Carrying == ServiceItem.Ammo)
+            {
+                ReturnItem(slot);
+                return "Cannonball returned to the magazine.";
+            }
+            if (Crew[slot].Carrying != ServiceItem.None) return "Return your item before taking a cannonball.";
+            if (Encounter.MagazineAmmo <= 0) return "Magazine empty. Check the cannon rack and other crew's hands.";
+            Encounter.MagazineAmmo--;
+            Crew[slot].Carrying = ServiceItem.Ammo;
+            return "Carrying a cannonball. E / A at CANNON delivers it; at AMMO returns it.";
+        }
+
+        private string DeliverAmmo(int slot)
+        {
+            if (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing) return "Cannon supplies are closed.";
+            int committed = Encounter.ReadyAmmo + (Encounter.ReloadRemaining > 0 ? 1 : 0);
+            if (committed >= CannonBufferCapacity) return Encounter.ReloadRemaining > 0
+                ? "Cannon rack full (loading round reserves a slot). Hold it or return to AMMO."
+                : "Cannon rack full. Hold the round or return it to AMMO.";
+            Encounter.ReadyAmmo++;
+            Crew[slot].Carrying = ServiceItem.None;
+            return $"Cannonball delivered: {Encounter.ReadyAmmo}/{CannonBufferCapacity} ready. Gunner: R / X to reload.";
         }
 
         private bool CanOperateCannon(ulong clientId)
@@ -113,6 +149,8 @@ namespace ShipMayham
             if (State.Phase != VoyagePhase.Sailing) return "Depart before loading the cannon.";
             if (Encounter.CannonLoaded || Encounter.ReloadRemaining > 0) return "Cannon is already loaded or reloading.";
             if (Encounter.Ammo <= 0) return "No ammunition. A new voyage restocks 12 shots.";
+            if (Encounter.ReadyAmmo <= 0) return "Cannon rack empty. Ask a crewmate to carry a round from AMMO to CANNON.";
+            Encounter.ReadyAmmo--;
             Encounter.ReloadRemaining = ReloadSeconds;
             return "Reloading cannon...";
         }

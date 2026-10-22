@@ -65,7 +65,7 @@ Build sonrasında loader, data, framework ve wasm URL'lerine dosyanın SHA-256 �
 
 Prototip artık Unity Multiplayer Services oturumlarını, Relay'i ve güvenli WebSocket (`WSS`) aktarımını kullanır. Bu nedenle hem GitHub Pages'taki WebGL sürümü hem de Windows sürümü internet üzerinden aynı oturuma bağlanabilir:
 
-Olay snapshot v3 kullanan sürümde NGO bağlantı protokolü de 3'tür. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular sayfayı yenilemelidir.
+Mühimmat akışını içeren güncel kaynakta snapshot ve NGO bağlantı protokolü **4**'tür. Eski build veya eski tarayıcı sekmesiyle yeni oturuma katılmaya çalışmak bağlantı uyumluluk kontrolünde reddedilir; tüm oyuncular aynı yeni build'i kullanıp sayfayı yenilemelidir. Mekanik ve doğrulama kapsamı [AMMO_FLOW.md](AMMO_FLOW.md) içindedir.
 
 1. İlk oyuncu **CREATE ONLINE VOYAGE** ile özel bir oturum açar.
 2. Ekrandaki kodu diğer oyuncularla paylaşır.

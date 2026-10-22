@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$ExecutablePath,
-    [ValidateRange(60, 300)][int]$TimeoutSeconds = 180
+    [ValidateRange(60, 300)][int]$TimeoutSeconds = 240
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,6 +27,7 @@ function Start-Participant([string]$Name, [bool]$HostRole) {
         "-batchmode", "-nographics", $role,
         "--ship-online-participant", $Name,
         "--ship-auth-profile", $profile,
+        "--ship-online-timeout", $TimeoutSeconds.ToString(),
         "--ship-online-output", "`"$output`"",
         "-logFile", "`"$(Join-Path $output ($Name + '.log'))`""
     )
@@ -75,7 +76,8 @@ try {
     if (@($results | Where-Object NewHost).Count -ne 1) { throw "Exactly one surviving player must become host." }
     foreach ($result in $results) {
         if ($result.OriginalSlot -ne $result.RestoredSlot -or $result.Migrations -lt 1 -or
-            $result.Wallet -ne 321 -or $result.EventSerial -ne 777 -or $result.ActiveCrew -ne 3) {
+            $result.Wallet -ne 321 -or $result.EventSerial -ne 777 -or $result.ActiveCrew -ne 3 -or
+            $result.Ammo -ne 12 -or $result.MagazineAmmo -ne 11 -or $result.ReadyAmmo -ne 0) {
             throw "Migration assertion failed for $($result.Participant)."
         }
     }

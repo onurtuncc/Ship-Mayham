@@ -12,6 +12,7 @@ namespace ShipMayham
         public TextMesh PirateLabel;
         public Renderer PowerIndicator;
         public LineRenderer CannonTrace, PirateTrace;
+        public Transform[] ReadyAmmoVisuals = System.Array.Empty<Transform>();
         private int lastShot, lastEnemyShot, voyage;
         private float shotUntil, enemyShotUntil;
         private MaterialPropertyBlock properties;
@@ -24,9 +25,12 @@ namespace ShipMayham
             {
                 PirateRoot.gameObject.SetActive(false);
                 CannonTrace.enabled = PirateTrace.enabled = false;
+                foreach (var round in ReadyAmmoVisuals) if (round != null) round.gameObject.SetActive(false);
                 return;
             }
             var e = Session.Encounter.Value;
+            for (int i = 0; i < ReadyAmmoVisuals.Length; i++)
+                if (ReadyAmmoVisuals[i] != null) ReadyAmmoVisuals[i].gameObject.SetActive(i < e.ReadyAmmo);
             CannonPivot.localRotation = Quaternion.Euler(e.CannonPitch, e.CannonYaw, 0);
             bool visible = e.Pirate == PiratePhase.Warning || e.Pirate == PiratePhase.Attacking;
             PirateRoot.gameObject.SetActive(visible);
