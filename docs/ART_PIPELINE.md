@@ -1,88 +1,98 @@
 # Üretilmiş 3B varlıklar (Blender pipeline)
 
-Bu doküman `Assets/ShipMayham/Art/Generated/Models/` altındaki FBX varlıklarının nasıl üretildiğini ve nasıl kullanılacağını anlatır. Hedef: GDD'deki parti/arkadaş oyunu tonuna uyan, stilize, düşük poligonlu ve tek paletli varlıklar.
+Bu doküman `Assets/ShipMayham/Art/Generated/Models/` altındaki FBX varlıklarının nasıl üretildiğini ve nasıl kullanılacağını anlatır. Hedef: "Dear Passengers" ve benzeri arkadaş/parti oyunlarının tonu: tombul, yuvarlatılmış, parlak ve doygun renkli, okunaklı silüetler.
+
+## Stil kuralları
+
+- **Yuvarlatılmış formlar:** Tüm kutular ve silindirler kenarlarından bevel'lıdır (`assetlib.Builder.box/cyl`); sert kenar yoktur. Bevel boyutu en küçük kenara oranlıdır.
+- **Yumuşak gölgeleme:** Yüzeyler yumuşak, yalnızca 40°'den keskin kırılmalar sert kenardır (FBX `mesh_smooth_type=EDGE`).
+- **Tombul oranlar:** İnce parçalar kalınlaştırılır; karakterler iri kafalı, kısa kalın uzuvlu "fasulye" gövdelidir (`Tools/BlenderAssets/charlib.py`).
+- **Ortak palet:** `assetlib.std()` tüm varlıklarda aynı ahşap/metal/pirinç/krem/kırmızı tonlarını kullanır. Servis rengi kuralı: yiyecek turuncu, içecek mavi.
+- **Bütçe:** Küçük proplar ~0,6–2 bin üçgen, büyük liman parçaları 1–4 bin, karakterler ~6–8 bin üçgen.
 
 ## Yapı
 
 | Yol | İçerik |
 |---|---|
 | `Assets/ShipMayham/Art/Generated/Models/*.fbx` | Unity'ye alınan modeller (her biri tek mesh, malzeme başına submesh) |
-| `Tools/BlenderAssets/assetlib.py` | Ortak Blender (bmesh) yardımcıları, paylaşılan palet (`std()`), FBX dışa aktarma ve önizleme render'ı |
-| `Tools/BlenderAssets/assets/*.py` | Her varlığın betiği; betik değişirse FBX yeniden üretilir |
+| `Assets/ShipMayham/Art/Shaders/StylizedOcean.shader` + `Art/Materials/Ocean_Stylized.mat` | Çizgi film deniz shader'ı ve materyali |
+| `Assets/ShipMayham/Runtime/OceanSurface.cs` | Deniz ızgara mesh'i (çalışma anında üretilir) ve gemiyi izleme |
+| `Assets/ShipMayham/Editor/PrototypeOceanBuilder.cs` | `Ship Mayham → Upgrade Prototype (Stylized Ocean)` |
+| `Assets/ShipMayham/Editor/OceanPreviewCapture.cs` | Boş sahnede deniz + modellerin önizleme render'ı |
+| `Tools/BlenderAssets/assetlib.py`, `charlib.py`, `assets/*.py` | Varlık betikleri; betik değişirse FBX yeniden üretilir |
 | `Tools/BlenderAssets/build_asset.sh` | Tek varlığı headless Blender ile üretir |
-| `docs/art/generated_*.png` | Üretilen varlıkların önizleme levhaları |
+| `docs/art/*.png` | Önizleme levhaları |
 
 Yeniden üretim (Blender 5.1+):
 
 ```bash
 Tools/BlenderAssets/build_asset.sh Buoy ./out/Buoy
-Tools/BlenderAssets/build_asset.sh Character_Crew3 ./out/Crew3   # Character_Crew1..4, Character_Passenger1..3 aynı betiği paylaşır
+Tools/BlenderAssets/build_asset.sh Character_Crew3 ./out/Crew3   # Character_Crew1..4 ve Character_Passenger1..3 aynı betiği paylaşır
 ```
 
-Çıktı: `<Ad>.fbx`, `<Ad>.png`, `<Ad>_back.png`. FBX'i `Assets/ShipMayham/Art/Generated/Models/` altına kopyalayınca Unity `.meta` dosyasını yoksa üretir; bu depodaki `.meta` dosyaları sabit GUID'lerle önceden yazılmıştır, bu yüzden dosya adını değiştirmeden üzerine yazmak referansları korur.
+Çıktı: `<Ad>.fbx`, `<Ad>.png`, `<Ad>_back.png`, `<Ad>.json`. FBX'i `Assets/ShipMayham/Art/Generated/Models/` altına, aynı adla kopyala; `.meta` dosyaları sabit GUID'lidir, üzerine yazmak sahne referanslarını korur.
 
 ## Sözleşmeler
 
-- Birim metredir (`1 Blender birimi = 1 m`), FBX `apply_unit_scale` ve `bake_space_transform` ile Unity eksenlerine (`+Z ileri, +Y yukarı`) çevrilir.
-- Pivot taban merkezidir (en alçak nokta y=0, x/z ortalı). Etkileşim anchor'ları sahnede ayrıca kalır; bkz. [PROTOTYPE.md](PROTOTYPE.md) "Sahne ve model değiştirme sözleşmesi".
-- Karakterler Unity'de `+Z` yönüne bakar. Gemi modelinde baş `+Z`'dir. Bank (`DeckBench`) oturma yüzü `+Z`'ye, dümen simidi (`ShipWheel`) oyuncunun durduğu `-Z` tarafına bakar.
-- Tek mesh, malzeme başına submesh: `Wood`, `Wood_Dark`, `Metal`, `Brass`, `Red`, `Cream` gibi ortak isimler tüm varlıklarda aynıdır. Servis rengi kuralı korunur: yiyecek turuncu (`FoodPlatter`), içecek mavi (`RumBottle`).
-- FBX malzemeleri yalnızca düz renk taşır; doku yoktur. URP için gerekirse proje materyalleriyle (`Assets/ShipMayham/Art/Materials`) eşlenebilir.
+- Birim metredir; FBX `apply_unit_scale` ve `bake_space_transform` ile Unity eksenlerine çevrilir (`+Z` ileri, `+Y` yukarı).
+- Pivot taban merkezidir (en alçak nokta y=0, x/z ortalı). Etkileşim anchor'ları sahnede ayrıca kalır; bkz. [PROTOTYPE.md](PROTOTYPE.md) "Sahne ve model değiştirme sözleşmesi". Dosya adlarını ve boyutlarını değiştirme: sahne oluşturucu (`PrototypeGeneratedPropsBuilder`) onlara ada göre bağlanır.
+- Karakterler Unity'de `+Z`'ye bakar; gemi başı `+Z`'dir. `DeckBench` oturma yüzü `+Z`'ye, `ShipWheel` oyuncunun durduğu `-Z` tarafına bakar.
+- Malzemeler düz renklidir (doku yok); malzeme adları paylaşılır (`Wood`, `Wood_Dark`, `Brass`, `Red`…). Blender'dan gelen renk doğrusal uzaydadır ve Unity'de doğru okunur; parlaklık (smoothness) Unity malzemesinde ayarlanır.
+
+## Deniz
+
+`StylizedOcean` shader'ı (URP, unlit, WebGL uyumlu, derinlik dokusu istemez) üç çapraz dalga, kademeli (cartoon) gölgeleme, iki katmanlı hücresel köpük çizgileri, dalga tepesi köpüğü, güneş parıltısı ve mesafeyle derinleşen mavi içerir. `OceanSurface` ızgara mesh'ini çalışma anında üretir ve verilen `Follow` hedefini (gemi) ızgara adımına yuvarlayarak izler; dalga yüksekliği yalnızca görseldir, oynanış okumaz.
+
+Sahneye uygulamak için (Editor'de, Play dışında): **Ship Mayham → Upgrade Prototype (Stylized Ocean)**. Eski `Ocean_Visual` kutusu silinmez, yalnızca çizimi kapanır; işlem tekrar çalıştırılabilir. Yedek `Logs/ShipPrototype-PreStylizedOcean.unity`. Renkler ve dalga parametreleri `Ocean_Stylized.mat` üzerindedir.
+
+Doğrulama: `OceanSurfaceTests` (15 test) ve boş sahnede render alan `OceanPreviewCapture.Capture` (`-executeMethod ShipMayham.Editor.OceanPreviewCapture.Capture --ocean-preview-out <png>`; shader'ların eşzamanlı derlenmesi için gerekli). Önizleme: `docs/art/ocean_preview.png`.
 
 ## Varlık listesi
 
-Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre. Üçgen sayıları `deliver()` çıktısından alınmıştır.
+Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre.
 
-| Varlık | Üçgen | Boyut (m) | GDD/prototip karşılığı |
+| Varlık | Üçgen | Boyut (m) | Kullanım |
 |---|---:|---|---|
 | `LifeRing` | 1408 | 0,77 × 0,77 × 0,16 | Kurtarma can simidi (`RescueFloat_Visual`) |
-| `Suitcase` | 144 | 0,63 × 0,24 × 0,49 | Yolcu bagajı |
-| `DeckBench` | 132 | 1,20 × 0,46 × 0,92 | Yolcu koltuğu (`SeatVisuals`) |
-| `ShipWheel` | 636 | 0,96 × 0,50 × 1,58 | Dümen istasyonu (Helm) |
-| `Bollard` | 636 | 0,60 × 0,60 × 0,72 | Liman bağlama babası |
-| `Lantern` | 300 | 0,22 × 0,22 × 0,44 | Gemi/liman feneri |
-| `RumBottle` | 320 | 0,15 × 0,16 × 0,35 | İçecek (mavi) |
-| `FoodPlatter` | 508 | 0,45 × 0,40 × 0,17 | Yiyecek (turuncu) |
-| `ServingTray` | 96 | 0,56 × 0,35 × 0,07 | Servis tepsisi |
-| `Toolbox` | 276 | 0,46 × 0,23 × 0,44 | Tamir istasyonu (Repair) |
-| `FuseBox` | 276 | 0,50 × 0,27 × 0,74 | Elektrik paneli (Power) |
-| `CannonballPile` | 3612 | 0,62 × 0,62 × 0,44 | Top mühimmatı |
-| `Buoy` | 356 | 0,44 × 0,44 × 0,98 | Deniz şamandırası |
-| `TicketCounter` | 244 | 1,80 × 0,80 × 1,70 | Manifest/bilet tezgâhı |
-| `MarketStall` | 516 | 2,16 × 1,50 × 2,23 | Liman erzak tezgâhı |
-| `DockPlank` | 528 | 4,00 × 2,10 × 1,46 | İskele modülü |
-| `Lighthouse` | 860 | 4,60 × 4,60 × 9,15 | Liman fenerinin kule modeli |
-| `PirateShipSmall` | 592 | 2,20 × 6,71 × 4,70 | Korsan gemisi (`Ship_Pirate_01`); kavisli (loft) gövde |
-| `Anchor` | 364 | 1,06 × 0,13 × 1,53 | Çapa (liman/gemi dekoru, demirleme) |
-| `RopeCoil` | 1232 | 0,53 × 0,53 × 0,45 | Halat yumağı (iskele dekoru) |
-| `Rowboat` | 190 | 3,03 × 2,50 × 0,97 | Filika (liman dekoru, kurtarma teması) |
-| `FlagPole` | 180 | 1,05 × 0,28 × 2,85 | Bayrak direği (kozmetik/liman) |
-| `Gangway` | 276 | 1,32 × 3,00 × 0,79 | İskele geçiş tahtası (`Gangway_Visuals`) |
-| `CrateStack` | 692 | 2,08 × 1,57 × 1,27 | Sandık + varil yığını (iskele/depo) |
-| `HarborCrane` | 232 | 1,40 × 4,45 × 4,61 | Liman vinci |
-| `HarborHut` | 268 | 3,60 × 2,70 × 3,35 | Liman terminal binası (`Port_*/Visuals`) |
-| `FishCrate` | 360 | 0,70 × 0,45 × 0,29 | Balık sandığı (liman tezgâhı dekoru) |
-| `Character_VIP` | 676 | 0,77 × 0,48 × 1,75 | VIP yolcu (silindir şapka, baston) |
-| `Character_Crew1..4` | ~524 | 0,75 × 0,35 × 1,49 | Mürettebat; gömlek renkleri `Crew_01..04` materyalleriyle aynı hizada |
-| `Character_Passenger1..3` | ~540 | 0,72 × 0,52 × 1,63 | Yolcu varyantları |
-| `Character_Pirate` | 576 | 0,88 × 0,37 × 1,64 | Korsan karakteri |
+| `Suitcase` | 1296 | 0,63 × 0,24 × 0,48 | Yolcu bagajı |
+| `DeckBench` | 1060 | 1,20 × 0,46 × 0,92 | Yolcu koltuğu (`SeatVisuals`) |
+| `ShipWheel` | 3876 | 0,96 × 0,50 × 1,58 | Dümen istasyonu (Helm) |
+| `Bollard` | 1540 | 0,60 × 0,60 × 0,72 | Liman bağlama babası |
+| `Lantern` | 996 | 0,22 × 0,22 × 0,44 | Gemi/liman feneri |
+| `RumBottle` | 1444 | 0,15 × 0,16 × 0,34 | İçecek (mavi) |
+| `FoodPlatter` | 1192 | 0,45 × 0,40 × 0,17 | Yiyecek (turuncu) |
+| `ServingTray` | 608 | 0,56 × 0,35 × 0,07 | Servis tepsisi |
+| `Toolbox` | 1172 | 0,46 × 0,23 × 0,43 | Tamir istasyonu (Repair) |
+| `FuseBox` | 2060 | 0,50 × 0,27 × 0,74 | Elektrik paneli (Power) |
+| `CannonballPile` | 4788 | 0,62 × 0,62 × 0,44 | Top mühimmatı |
+| `Buoy` | 1136 | 0,42 × 0,42 × 0,98 | Deniz şamandırası |
+| `TicketCounter` | 1912 | 1,80 × 0,80 × 1,70 | Manifest/bilet tezgâhı |
+| `MarketStall` | 3504 | 2,16 × 1,50 × 2,22 | Liman erzak tezgâhı |
+| `DockPlank` | 3984 | 4,00 × 2,10 × 1,46 | İskele modülü |
+| `Lighthouse` | 4012 | 4,56 × 4,56 × 9,15 | Liman/deniz feneri |
+| `PirateShipSmall` | 3944 | 2,20 × 6,71 × 4,70 | Korsan gemisi (`Ship_Pirate_01`) |
+| `Anchor` | 840 | 1,06 × 0,14 × 1,53 | Çapa (dekor) |
+| `RopeCoil` | 1328 | 0,53 × 0,52 × 0,45 | Halat yumağı (iskele dekoru) |
+| `Rowboat` | 1374 | 3,02 × 2,50 × 0,97 | Filika (liman dekoru) |
+| `FlagPole` | 1200 | 1,04 × 0,26 × 2,85 | Bayrak direği (kozmetik/liman) |
+| `Gangway` | 3060 | 1,32 × 3,00 × 0,79 | İskele geçiş tahtası (`Gangway_Visuals`) |
+| `CrateStack` | 4300 | 2,08 × 1,57 × 1,27 | Sandık + varil yığını |
+| `HarborCrane` | 1120 | 1,40 × 4,45 × 4,61 | Liman vinci |
+| `HarborHut` | 1408 | 3,60 × 2,70 × 3,35 | Liman terminal binası (`Port_*/Visuals`) |
+| `FishCrate` | 1464 | 0,70 × 0,45 × 0,28 | Balık sandığı (tezgâh dekoru) |
+| `Character_Crew1` | 6458 | 0,80 × 0,61 × 1,44 | Mürettebat (kırmızı), `Crew_01` |
+| `Character_Crew2` | 6458 | 0,80 × 0,61 × 1,44 | Mürettebat (mavi), `Crew_02` |
+| `Character_Crew3` | 6458 | 0,80 × 0,61 × 1,44 | Mürettebat (yeşil), `Crew_03` |
+| `Character_Crew4` | 6458 | 0,80 × 0,61 × 1,44 | Mürettebat (sarı), `Crew_04` |
+| `Character_Passenger1` | 6148 | 0,99 × 0,80 × 1,56 | Yolcu (hasır şapka) |
+| `Character_Passenger2` | 6148 | 0,99 × 0,76 × 1,51 | Yolcu (hasır şapka, sarı) |
+| `Character_Passenger3` | 6468 | 0,99 × 0,59 × 1,58 | Yolcu (bere) |
+| `Character_VIP` | 7516 | 0,90 × 0,86 × 1,75 | VIP yolcu (silindir şapka, baston) |
+| `Character_Pirate` | 7600 | 0,86 × 0,72 × 1,51 | Korsan karakteri |
 
 ## Durum ve sınırlar
 
-- İlk prop dilimi `ShipPrototype` sahnesine bağlandı: dümen, manifest/bilet tezgâhı, servis tabak/şişesi, tamir çantası, elektrik kutusu, sekiz bank, korsan gemisi, iki liman kulübesi ve iskele baba/halat detayları. Toplam 21 `Model_*` yerleşimi vardır. Diğer modeller, karakterler ve elde taşınan ürünler henüz bağlanmadı. Oynanış kökleri, `InteractionAnchor`, `CarrySocket` ve mevcut Renderer referansları korunur.
-- Karakterlerde iskelet/animasyon yoktur (statik poz). Hareket için ayrı rig gerekir; mevcut `StylizedCharacterPack` animasyonları bu modellere uymaz.
-- Bağlanan prop dilimi Unity Camera.Render ile incelendi (`Logs/GeneratedProps-Layout.png`); dümenin dik/metre ölçeği ve tüm model materyallerinin URP/Lit kullanımı otomatik sahne testindedir. Bu ilk genel kadraj; her varlığın yakın planı, hareketli korsan kadrajı ve insanlarla birinci şahıs okunurluk testi değildir.
-- `CannonballPile` 3612 üçgenle diğerlerinden ağırdır (10 ayrı küre).
-- Üretim yöntemi: modeller bu depodaki Blender betikleriyle elle yazıldı. Yerel LLM (llama.cpp + Blender MCP) denemeleri tutarlı sonuç vermedi (sandık ve kupa testlerinde eksik/yığılmış parçalar); bu nedenle çıktılar LLM'den değil betiklerden gelir.
-
-## İlk prop sahne entegrasyonu — 22 Ekim 2026
-
-**Ship Mayham → Upgrade Prototype (Generated Props)** mevcut sahneyi eklemeli günceller. `Visuals/Model_<FBX adı>` wrapper'ı yerleşim/ölçeği, içindeki FBX instance kendi eksen/birim dönüşümünü korur. Oynanış Collider'ları değişmez; eklenen model Collider'ları kapalıdır. Eski primitive nesneler silinmez, yalnız ilgili Renderer gizlenir. Önceki sahne `Logs/ShipPrototype-PreGeneratedProps.unity` altında tutulur. Geri dönüş için model wrapper'ını kaldırıp eski Renderer'ı etkinleştirmek de mümkündür.
-
-FBX düz renkleri, `Art/Materials/Generated_*` altındaki 32 paylaşılan URP/Lit materyaline eşlenir. Model dosyaları ve gömülü materyalleri değiştirilmez; hazır URP materyalleri sonraki çalıştırmalarda yeniden yazılmaz. Renk düzenlemesi bu materyallerden yapılabilir. Gemi gövdesi boyaları ve elektrik durum göstergesi kendi mevcut Renderer'larını kullanmayı sürdürür.
-
-Doğrulama: eski 775 serialized nesne/component ID'si, adları, parent/local transformları ve istasyon anchor/visual/label bağları korunmuştur. Güncelleyicinin tekrar çalışması sahne SHA-256 özetini değiştirmedi (`BAF85CB983400DF1801F939B3FD8254049AAE5B2F0F8609501C6786F66622C0E`). `Logs/GeneratedProps-Isolated.xml` içinde 119/119 test geçti; ilk test denemelerinde yeni testin meta biçimi ve sahne izolasyonu sorunları ayrıca giderildi, başarısız raporlar korunur. `CaptureGeneratedPropsPreview` mevcut sahne preview yolunu kullanır; örnek karakter etkinleştirmeleri sahneye kaydedilmez.
-
-Render/etiket hazırlığından sonra repoya alınan son sahneyle **119/119 tekrar geçti**, Unity exit 0 (`Logs/GeneratedProps-Authored.xml`). Bu sahne henüz `1f0705e` WebGL paketinde yoktur; bir sonraki yayınla dağıtılmalıdır. Unity'nin ürettiği prefab YAML'ındaki boş `value:` satırlarının trailing space biçimi korunur; kaynak kodda whitespace kontrolü temizdir.
-
-Sonraki `f53bc8d` WebGL yayını bu modelleri içerir. Yerel build exit 0 (`Logs/GeneratedProps-WebGLBuild.log`), Pages işi `39706737575` başarılıdır. Canlı sayfada yeni liman, istasyon ve bank geometrileri göründü; Relay host oluşturuldu ve o kontrolde konsol error listesi boştu. Kanıtlar `Logs/WebGL-GeneratedProps-Overview.png` ve `Logs/WebGL-GeneratedProps-Relay.png`. Bu, hareketli korsan/farklı cihazlar veya insanlarla görsel/oynanış kabulü değildir.
+- Varlıklar `PrototypeGeneratedPropsBuilder` ile kısmen sahneye bağlıdır; listedeki diğerleri yalnızca projeye eklidir. Deniz yukarıdaki menü komutuyla uygulanır, bu oturumda gerçek sahneye uygulanmadı (Editör açıktı).
+- Karakterlerde iskelet ve animasyon yoktur (statik poz). Hareket için ayrı rig gerekir; mevcut `StylizedCharacterPack` animasyonları bu modellere uymaz.
+- FBX'ler ayrı bir minimal URP 17.4 Unity projesinde (Unity 6000.4.6f1) içe aktarılıp render alınarak doğrulandı; ana prototip sahnesinde görsel doğrulama yapılmadı.
+- Üretim yöntemi: modeller bu depodaki Blender betikleriyle elle yazıldı. Yerel LLM (llama.cpp + Blender MCP) denemeleri tutarlı sonuç vermedi; çıktılar LLM'den değil betiklerden gelir.

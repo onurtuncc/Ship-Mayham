@@ -82,16 +82,81 @@ class Builder:
             f.material_index = mi
             f.smooth = False
 
-    def box(self, size, loc, m, rot=(0, 0, 0)):
-        sx, sy, sz = size
-        self._add(lambda bm: bmesh.ops.create_cube(bm, size=1.0), m, loc, rot, (sx, sy, sz))
+    @staticmethod
+    def _bevel_sharp(bm, verts, offset, seg, min_angle=28):
+        """Round every hard edge of freshly created geometry: the soft, chunky toy look."""
+        edges = {e for v in verts for e in v.link_edges}
+        sel = [e for e in edges if len(e.link_faces) == 2 and e.calc_face_angle(0.0) > math.radians(min_angle)]
+        if sel and offset > 1e-4:
+            bmesh.ops.bevel(bm, geom=sel, offset=offset, offset_type="OFFSET", segments=seg, profile=0.5, affect="EDGES")
 
-    def cyl(self, r, depth, loc, m, segs=12, r2=None, rot=(0, 0, 0)):
+    def box(self, size, loc, m, rot=(0, 0, 0), r=None, seg=2):
+        """Rounded box. r=None picks a bevel proportional to the smallest side (capped); r=0 keeps hard edges."""
+        sx, sy, sz = size
+        rr = min(0.06, min(size) * 0.22) if r is None else min(r, min(size) * 0.45)
+
+        def fn(bm):
+            vs = bmesh.ops.create_cube(bm, size=1.0)["verts"]
+            for v in vs:
+                v.co.x *= sx; v.co.y *= sy; v.co.z *= sz
+            self._bevel_sharp(bm, vs, rr, seg if rr > 0.006 else 1)
+        self._add(fn, m, loc, rot)
+
+    def cyl(self, r, depth, loc, m, segs=12, r2=None, rot=(0, 0, 0), bevel=None, seg=2):
+        """Rounded cylinder / cone frustum (bevel on cap rims; bevel=0 for sharp)."""
         r2 = r if r2 is None else r2
-        self._add(lambda bm: bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=segs, radius1=r, radius2=r2, depth=depth), m, loc, rot)
+        segs = max(segs, 16) if min(r, r2 if r2 else r) > 0.06 else max(segs, 10)
+        rr = min(0.04, min(r, r2 if r2 > 0.01 else r, depth) * 0.3) if bevel is None else bevel
+
+        def fn(bm):
+            vs = bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=segs, radius1=r, radius2=r2, depth=depth)["verts"]
+            if rr > 0.004 and r2 > 0.01:
+                self._bevel_sharp(bm, vs, rr, seg, min_angle=35)
+        self._add(fn, m, loc, rot)
 
     def sphere(self, r, loc, m, segs=12, rings=8, scale=(1, 1, 1), rot=(0, 0, 0)):
+        adaptive = int(min(24, max(10, 10 + r * 60)))          # small spheres (eyes, knobs) stay cheap, big ones stay round
+        segs, rings = max(segs, adaptive), max(rings, int(adaptive * 0.6))
         self._add(lambda bm: bmesh.ops.create_uvsphere(bm, u_segments=segs, v_segments=rings, radius=r), m, loc, rot, scale)
+
+    def lathe(self, profile, loc, m, segs=20, rot=(0, 0, 0), scale=(1, 1, 1)):
+        """Revolve [(radius, z), ...] (bottom to top) around Z. radius 0 makes a pole; open ends get flat caps."""
+        def fn(bm):
+            rings = []
+            for rad, z in profile:
+                if rad < 1e-6:
+                    rings.append(bm.verts.new((0, 0, z)))
+                else:
+                    rings.append([bm.verts.new((rad * math.cos(2 * math.pi * i / segs), rad * math.sin(2 * math.pi * i / segs), z)) for i in range(segs)])
+            for a, c in zip(rings, rings[1:]):
+                for i in range(segs):
+                    j = (i + 1) % segs
+                    if isinstance(a, list) and isinstance(c, list):
+                        bm.faces.new((a[i], a[j], c[j], c[i]))
+                    elif isinstance(a, list):
+                        bm.faces.new((a[i], a[j], c))
+                    else:
+                        bm.faces.new((a, c[j], c[i]))
+            if isinstance(rings[0], list):
+                bm.faces.new(rings[0][::-1])
+            if isinstance(rings[-1], list):
+                bm.faces.new(rings[-1])
+        self._add(fn, m, loc, rot, scale)
+
+    def capsule(self, r, length, loc, m, rot=(0, 0, 0), segs=None, taper=1.0, n=5):
+        """Smooth pill of overall height length + 2r (axis = local Z); taper scales the top radius."""
+        segs = segs or int(min(20, max(10, 10 + r * 60)))
+        rt = r * taper
+        prof = [(0.0, -length / 2 - r)]
+        for k in range(1, n):
+            ang = math.radians(-90 + 90 * k / n)
+            prof.append((r * math.cos(ang), -length / 2 + r * math.sin(ang)))
+        prof += [(r, -length / 2), (rt, length / 2)]
+        for k in range(1, n):
+            ang = math.radians(90 * k / n)
+            prof.append((rt * math.cos(ang), length / 2 + rt * math.sin(ang)))
+        prof.append((0.0, length / 2 + rt))
+        self.lathe(prof, loc, m, segs=segs, rot=rot)
 
     def torus(self, R, r, loc, m, major=24, minor=8, rot=(0, 0, 0)):
         def fn(bm):
@@ -160,6 +225,11 @@ class Builder:
     def finish(self, name):
         bm = self.bm
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        for f in bm.faces:
+            f.smooth = True
+        for e in bm.edges:                      # hard edges only where the surface really breaks (>40 deg)
+            if len(e.link_faces) == 2 and e.calc_face_angle(0.0) > math.radians(40):
+                e.smooth = False
         zs = [v.co.z for v in bm.verts]; xs = [v.co.x for v in bm.verts]; ys = [v.co.y for v in bm.verts]
         bmesh.ops.translate(bm, vec=(-(min(xs) + max(xs)) / 2, -(min(ys) + max(ys)) / 2, -min(zs)), verts=bm.verts)
         me = bpy.data.meshes.new(name)
@@ -176,25 +246,33 @@ def export_fbx(ob, path):
         o.select_set(o is ob)
     bpy.context.view_layer.objects.active = ob
     bpy.ops.export_scene.fbx(filepath=path, use_selection=True, apply_unit_scale=True, apply_scale_options="FBX_SCALE_ALL",
-                             bake_space_transform=True, axis_forward="-Z", axis_up="Y", mesh_smooth_type="FACE", add_leaf_bones=False)
+                             bake_space_transform=True, axis_forward="-Z", axis_up="Y", mesh_smooth_type="EDGE", add_leaf_bones=False)
 
 
-def render(ob, path_base, res=768):
+def render(ob, path_base, res=768, az0=35):
     sc = bpy.context.scene
     mn = mathutils.Vector(ob.bound_box[0]); mx = mathutils.Vector(ob.bound_box[6])
     ctr = (mn + mx) / 2; size = max((mx - mn).length, 0.1)
     cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam")); sc.collection.objects.link(cam); sc.camera = cam
-    for n, rot, e in (("key", (math.radians(50), 0, math.radians(35)), 3.5), ("fill", (math.radians(65), 0, math.radians(-140)), 1.2)):
-        l = bpy.data.objects.new(n, bpy.data.lights.new(n, "SUN")); l.data.energy = e; l.rotation_euler = rot; sc.collection.objects.link(l)
+    cam.data.lens = 55
+    # ground disc catches a soft contact shadow
+    gm = mat("_ground", (0.42, 0.52, 0.6), 1.0)
+    gme = bpy.data.meshes.new("_g"); gbm = bmesh.new(); bmesh.ops.create_circle(gbm, cap_ends=True, radius=size * 5, segments=48)
+    gbm.to_mesh(gme); gbm.free(); gme.materials.append(gm)
+    g = bpy.data.objects.new("_g", gme); g.location = (ctr.x, ctr.y, -0.002); sc.collection.objects.link(g)
+    for n, rot, e, ang in (("key", (math.radians(48), 0, math.radians(30)), 3.2, 0.12), ("fill", (math.radians(70), 0, math.radians(-150)), 1.1, 0.3)):
+        l = bpy.data.objects.new(n, bpy.data.lights.new(n, "SUN")); l.data.energy = e; l.data.angle = ang; l.rotation_euler = rot
+        l.data.color = (1.0, 0.96, 0.9) if n == "key" else (0.8, 0.88, 1.0); sc.collection.objects.link(l)
     w = bpy.data.worlds.new("w"); sc.world = w; w.use_nodes = True
-    w.node_tree.nodes["Background"].inputs[0].default_value = (0.75, 0.82, 0.9, 1)
-    w.node_tree.nodes["Background"].inputs[1].default_value = 1.0
+    w.node_tree.nodes["Background"].inputs[0].default_value = (0.78, 0.86, 0.95, 1)
+    w.node_tree.nodes["Background"].inputs[1].default_value = 0.75
     sc.render.engine = "BLENDER_EEVEE"
+    sc.view_settings.view_transform = "Standard"
     sc.render.resolution_x = sc.render.resolution_y = res
     out = []
-    for suffix, az in (("", 35), ("_back", 215)):
-        a = math.radians(az); d = size * 1.7
-        cam.location = ctr + mathutils.Vector((d * math.sin(a), -d * math.cos(a), d * 0.5))
+    for suffix, az in (("", az0), ("_back", az0 + 180)):
+        a = math.radians(az); d = size * 1.75
+        cam.location = ctr + mathutils.Vector((d * math.sin(a), -d * math.cos(a), d * 0.45))
         cam.rotation_euler = (ctr - cam.location).to_track_quat("-Z", "Y").to_euler()
         sc.render.filepath = path_base + suffix + ".png"
         bpy.ops.render.render(write_still=True)
@@ -213,6 +291,9 @@ def deliver(b, name, flip=False):
     ob = b.finish(name)
     d = outdir(); os.makedirs(d, exist_ok=True)
     export_fbx(ob, os.path.join(d, name + ".fbx"))
-    render(ob, os.path.join(d, name))
+    render(ob, os.path.join(d, name), az0=215 if flip else 35)
     tris = sum(len(p.vertices) - 2 for p in ob.data.polygons)
+    import json
+    with open(os.path.join(d, name + ".json"), "w") as f:
+        json.dump({"name": name, "tris": tris, "size": [round(x, 3) for x in ob.dimensions], "materials": [m.name for m in b.mats]}, f)
     print(f"DELIVERED {name} tris={tris} size={tuple(round(x, 3) for x in ob.dimensions)} mats={[m.name for m in b.mats]}")
