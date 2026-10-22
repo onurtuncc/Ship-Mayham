@@ -17,3 +17,7 @@ Valiz modeli mevcut Blender `Suitcase.fbx` varlığıdır; renkli etiketi ve HUD
 Art dalı `art/blender-generated` / `13c8912`, main'in atasıdır; uzak dallar yenilendikten sonra yeni art commit'i veya art worktree'sinde bekleyen değişiklik bulunmadı. Modeller zaten main'dedir; bütün karakter modellerinin sahnede kullanıldığı anlamına gelmez.
 
 İnsanlarla denge testi, farklı cihazlarda tarayıcı kabulü ve aktif bagaj işi sırasında internet host kaybı kabulü açıktır. Lobby host seçimi gecikmesi devam eder; kesintisiz geçiş iddiası yoktur.
+
+## Canlı yayın
+
+Kaynak `1e9d53d` → WebGL `e3e2bdd1161c8b6035ee8910ef8da794b0eb60c8`. [Pages işi 39725524917](https://github.com/onurtuncc/Ship-Mayham/actions/runs/39725524917) başarılı. Unity build çıkışı 0 ve `Build Finished, Result: Success` (`Logs/DockSorting-WebGLBuild.log`). Canlı HTML, yeni loader/data/framework/wasm sürüm adresleriyle yerel yayın çıktısına eşleşti. [Oyun](https://onurtuncc.github.io/Ship-Mayham/) tarayıcıda açıldı, Relay host ve BAG SORT arayüzü görüldü; error kaydı boştu. Kanıt: `Logs/WebGL-DockSorting-Relay.png`. Bu, tarayıcıda bütün bagaj işinin oynandığı anlamına gelmez; tam teslimat dört yerel native süreçte doğrulandı.
