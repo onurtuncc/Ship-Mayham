@@ -81,6 +81,24 @@ Yayın aralığı 25 Hz (`PrototypeSession.PublishInterval`), girdi gönderimi 3
 
 Dümendeyken **C** (gamepad **Y**) birinci şahıs ile yüksekten takip kamerası arasında geçiş yapar; seçim hatırlanır (`PlayerPrefs`) ve dümen bırakılınca birinci şahsa dönülür. Takip kamerası geminin yönünü yumuşak bir gecikmeyle izler, hıza göre öne bakar ve uzaklaşır; fare ile yörüngede dönülür ve 2,5 sn sonra gemi arkasına yumuşakça geri gelir. Dümendeki oyuncunun bedeni bu görünümde görünür. Ayarlar: `PrototypeView.ChaseDistance / ChasePitch / ChaseFieldOfView`.
 
+## Uyarlanabilir müzik ve gevezelik
+
+Müzik de procedural: ses dosyası yok, indirme boyutu değişmez. `MusicSynth` dört katmanı sinüs seslerinden üretir (hepsi aynı
+uzunlukta, 92 BPM'de 16 vuruş ≈ 10,4 sn): **Harbor** (çan ve yumuşak pad), **Pad** (nefes alan akor yastığı), **Pulse** (marimba
+benzeri sekizlik arpej) ve **Tension** (alçak drone, tremolo, sinirli tık ve tritone vuruşları). Her perde döngüde tam sayıda
+döngü yapacak şekilde yuvarlanır ve notaların kuyruğu döngü başına sarılır, böylece döngü tık sesi olmadan yeniden başlar.
+Katmanlar `MusicDirector` tarafından aynı karede başlatılır (kendini kurar, sahne düzenlemesi gerekmez; sentez kare başına bir
+katman yapıldığı için yükleme takılmaz).
+
+`MusicLogic` ruh halini seçer: menü, lobi, liman (Boarding/Arrived) → **Harbor**; Sailing → **Sailing** (Pad + Pulse); Sailing
+sırasında sızıntı, elektrik kesintisi, aktif Ship event ya da korsan uyarısı/saldırısı → **Tension**; gemi kaybı → sessizlik.
+Katman sesleri saniyede 0,5 hızla yumuşakça kayar; toplam ses `FeedbackSettings.MusicGain` (master x music, `M` ile susturma)
+ile çarpılır.
+
+`Babble` yolcular ve NPC'ler için sözsüz konuşma üretir: karakter tohumundan gelen perde ve kısa ünlü benzeri heceler,
+ruh haline göre (mutlu yükselen, huysuz alçalan, meraklı soru tonu) kontur. Yolcu teşekkür, şikâyet, kurtarılma olaylarında ve
+NPC yaklaşana el salladığında üç boyutlu, mesafeyle kısılan kısa bir ses olarak çalar.
+
 ## Ses ayarı
 
 `M` tuşu veya sağ alttaki düğme sesi kapatır/açar; tercih `PlayerPrefs`'te saklanır (depolama hatası oyunu durdurmaz).

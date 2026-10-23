@@ -235,7 +235,7 @@ namespace ShipMayham
             TickContextHints(firstPerson && locked, prompt, gamepad);
             TickNotice(session, dt);
             TickCarry(session, local);
-            TickResume(firstPerson && !locked);
+            TickResume(firstPerson && !locked && !view.MenuOpen && !view.PurserOpen);
             help.Tick(gamepad);
             purser.Tick();
             pause.Tick();

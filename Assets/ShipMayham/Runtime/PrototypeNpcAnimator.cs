@@ -42,6 +42,7 @@ namespace ShipMayham
                 {
                     greetReadyAt[i] = now + GreetCooldown;
                     Play(animator, WavingState, now, i, WaveSeconds);
+                    Babble.Say(animator.transform.position + Vector3.up * 1.4f, i, BabbleMood.Happy, .6f);
                 }
                 near[i] = closeEnough;
 

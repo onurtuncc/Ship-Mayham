@@ -166,11 +166,14 @@ namespace ShipMayham
                     if (CrewAnimator != null) CrewAnimator.PlayOneShot(e.Value, CrewPose.Throw, 1.2f);
                     break;
                 case FeedbackKind.PassengerThanked:
-                    Fx.Burst(FxKind.Hearts, passenger); Fx.Popup("Thanks!", passenger + Vector3.up * .3f, Pink); Sfx(SfxKind.Chime, .9f, 1, passenger); StartHop(e.Slot); break;
+                    Fx.Burst(FxKind.Hearts, passenger); Fx.Popup("Thanks!", passenger + Vector3.up * .3f, Pink); Sfx(SfxKind.Chime, .9f, 1, passenger); StartHop(e.Slot);
+                    Babble.Say(passenger, e.Slot, BabbleMood.Happy, .8f); break;
                 case FeedbackKind.PassengerComplained:
-                    Fx.Burst(FxKind.Anger, passenger); Fx.Popup("!!", passenger + Vector3.up * .3f, Red, 1.3f); Sfx(SfxKind.Thud, .6f, 1.3f, passenger); break;
+                    Fx.Burst(FxKind.Anger, passenger); Fx.Popup("!!", passenger + Vector3.up * .3f, Red, 1.3f); Sfx(SfxKind.Thud, .6f, 1.3f, passenger);
+                    Babble.Say(passenger, e.Slot, BabbleMood.Grumpy, .9f); break;
                 case FeedbackKind.PassengerRescued:
-                    Fx.Burst(FxKind.Splash, passenger, 24); Fx.Popup("Phew!", passenger + Vector3.up * .3f, Cyan); Sfx(SfxKind.Splash, .8f, 1, passenger); StartHop(e.Slot); break;
+                    Fx.Burst(FxKind.Splash, passenger, 24); Fx.Popup("Phew!", passenger + Vector3.up * .3f, Cyan); Sfx(SfxKind.Splash, .8f, 1, passenger); StartHop(e.Slot);
+                    Babble.Say(passenger, e.Slot, BabbleMood.Curious, .8f); break;
                 case FeedbackKind.HullDamaged:
                     AddTrauma(.35f + Mathf.Min(.45f, e.Value / 80f)); flash = Mathf.Max(flash, .55f);
                     Fx.Burst(FxKind.Smoke, ship, 10); Fx.Popup($"-{e.Value}", ship + Vector3.up, Red, 1.2f); Sfx(SfxKind.Thud, 1, .9f);
