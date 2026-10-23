@@ -38,6 +38,34 @@ _Avoid_: Oda, bekleme odası
 Host dışındaki bir Player'ın Lobby'de "başlamaya hazırım" işareti; istediği an geri alabilir. Host ayrıca Ready basmaz.
 _Avoid_: Onay, hazır olma
 
+**Ping**:
+Bir Crew member'ın dünyaya bıraktığı kısa süreli işaret; baktığı nesnenin adını taşır. Sohbetsiz iletişim aracıdır.
+_Avoid_: Marker, çağrı
+
+**Emote**:
+Ping çarkından seçilen kısa jest ("Help!", "Thanks!", "Over here!", "Watch out!"): karakter animasyonu ve başının üstünde konuşma balonu.
+_Avoid_: Sticker, tepki
+
+**Tip**:
+Bir durum ilk kez oluştuğunda çıkan tek seferlik onboarding kartı; cihazda "görüldü" olarak saklanır.
+_Avoid_: Tutorial adımı, coach mark
+
+**Award**:
+Voyage report'ta öne çıkan Crew member'a verilen esprili tanım ("Yolcu Atıcı"). Rekabet değil, anlatılabilir an üretir.
+_Avoid_: Başarım, rozet (başarım kalıcı koleksiyondur)
+
+**Shoal**:
+Rotadaki sabit sığ ya da kayalık engel; Helm'in hızına oranla Hull hasarı verir.
+_Avoid_: Kaya, engel (genel)
+
+**Rogue wave**:
+Önceden yönüyle uyarılan kaba dalga; Helm'i dalgaya çevirmek gemiyi ve Passenger'ları korur.
+_Avoid_: Fırtına (fırtına Storm Passage Route'udur)
+
+**Workload scale**:
+Crew sayısına göre Ship event sıklığı ve Pirates baskısını ölçekleyen katsayı; Passenger sayısı ve ekonomi sabit kalır.
+_Avoid_: Zorluk seviyesi
+
 **Nickname**:
 Player'ın Lobby'de ve gemide görünen, cihazda saklanan adı. Kimlik değildir; kimlik Relay oyuncu kimliğidir.
 _Avoid_: Kullanıcı adı, hesap adı
