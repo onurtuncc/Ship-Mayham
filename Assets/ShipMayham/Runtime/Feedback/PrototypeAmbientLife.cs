@@ -20,7 +20,7 @@ namespace ShipMayham
 
         private Transform shipVisuals;
         private Vector3 visualsRestPosition; private Quaternion visualsRestRotation;
-        private float foamTimer, callTimer;
+        private float foamTimer, callTimer, bank, lift;
         private Transform[] gulls, leftWings, rightWings;
         private float[] radius, height, angle, rate, phase;
 
@@ -50,18 +50,22 @@ namespace ShipMayham
             var voyage = session.Voyage.Value;
             float time = Time.time;
             float speed = Mathf.Clamp01(voyage.Speed / 10f);
-            Rock(time, speed);
+            Rock(time, speed, Time.deltaTime);
             Wake(session.ShipRoot, voyage.Speed);
             Fly(session.ShipRoot.position, time);
         }
 
         // Tiny amplitude on the hull model only: bodies and stations are separate children, so a large rock would visibly
         // slide the deck under them.
-        private void Rock(float time, float speed)
+        private void Rock(float time, float speed, float dt)
         {
             if (shipVisuals == null) return;
-            float roll = Mathf.Sin(time * .85f) * (.35f + .35f * speed) + Mathf.Sin(time * 1.7f + 1) * .08f;
-            float pitch = Mathf.Sin(time * .62f + 1.3f) * (.22f + .25f * speed);
+            // Lean into turns (clockwise yaw = lean right = negative roll) and lift the bow a little with speed, eased so it
+            // never snaps; the rocking on top is the idle swell.
+            bank = Mathf.Lerp(bank, Mathf.Clamp(-View.ShipTurnRate * .12f, -6f, 6f), 1 - Mathf.Exp(-4f * dt));
+            lift = Mathf.Lerp(lift, -speed * 1.4f, 1 - Mathf.Exp(-2.5f * dt));
+            float roll = Mathf.Sin(time * .85f) * (.35f + .35f * speed) + Mathf.Sin(time * 1.7f + 1) * .08f + bank;
+            float pitch = Mathf.Sin(time * .62f + 1.3f) * (.22f + .25f * speed) + lift;
             shipVisuals.localRotation = visualsRestRotation * Quaternion.Euler(pitch, 0, roll);
             shipVisuals.localPosition = visualsRestPosition + Vector3.up * (Mathf.Sin(time * 1.1f) * .02f);
         }

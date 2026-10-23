@@ -18,6 +18,8 @@ namespace ShipMayham
         public readonly Vector2[] Seats;
         private readonly float[] interactionReady = new float[MaxCrew];
         private readonly float[] inputExpires = new float[MaxCrew];
+        private readonly Vector2[] crewVelocity = new Vector2[MaxCrew], lastWalkPosition = new Vector2[MaxCrew];
+        private ShipSteering steering;
         private readonly Vector2[] inputs = new Vector2[MaxCrew];
         private readonly string[] crewPlayerIds = new string[MaxCrew];
         private float clock;
@@ -165,21 +167,34 @@ namespace ShipMayham
             if (!Finite(dt) || dt <= 0) return;
             dt = Mathf.Min(dt, .1f);
             clock += dt;
+            Vector2 helmInput = Vector2.zero;
+            bool helmManned = false;
             for (int i = 0; i < MaxCrew; i++)
             {
-                if (!Crew[i].Active) continue;
+                if (!Crew[i].Active) { crewVelocity[i] = Vector2.zero; continue; }
                 TickJump(i, dt);
                 Vector2 input = clock <= inputExpires[i] ? inputs[i] : Vector2.zero;
                 if (Crew[i].AtHelm)
                 {
+                    crewVelocity[i] = Vector2.zero;
                     if (State.Phase != VoyagePhase.Sailing) continue;
-                    State.Speed = Mathf.Clamp(State.Speed + input.y * dt * 3, 0, 4 + State.EngineLevel * 1.5f);
-                    State.Heading = Mathf.Repeat(State.Heading + input.x * dt * 40, 360);
+                    helmInput = input; helmManned = true;
                 }
-                else if (Crew[i].AtCrane) MoveHarborCrane(i, input, dt);
-                else if (Crew[i].OnShore) MoveShoreCrew(i, input * (4.2f * dt));
-                else if (!Crew[i].AtCannon) MoveCrew(i, input * (4.2f * dt * (CarriedPassenger(i) >= 0 ? .7f : Crew[i].Carrying == ServiceItem.Ammo ? .8f : 1)));
+                else if (Crew[i].AtCrane) { crewVelocity[i] = Vector2.zero; MoveHarborCrane(i, input, dt); }
+                else if (Crew[i].OnShore) WalkCrew(i, input, CrewKinematics.WalkSpeed, dt, MoveShoreCrew);
+                else if (!Crew[i].AtCannon) WalkCrew(i, input, CrewKinematics.WalkSpeed * (CarriedPassenger(i) >= 0 ? .7f : Crew[i].Carrying == ServiceItem.Ammo ? .8f : 1), dt, MoveCrew);
+                else crewVelocity[i] = Vector2.zero;
             }
+            if (State.Phase == VoyagePhase.Sailing)
+            {
+                float maxSpeed = 4 + State.EngineLevel * 1.5f;
+                float speedDelta, headingDelta;
+                if (helmManned) steering.Step(helmInput, State.Speed, dt, out speedDelta, out headingDelta);
+                else { steering.Release(dt); speedDelta = steering.Throttle * ShipSteering.SpeedPerThrottle * dt; headingDelta = steering.TurnVelocity * dt; }
+                State.Speed = Mathf.Clamp(State.Speed + speedDelta, 0, maxSpeed);
+                State.Heading = Mathf.Repeat(State.Heading + headingDelta, 360);
+            }
+            else steering.Reset();
             TickPassengers(dt);
             if (State.DockJobActive && State.DockJobType == DockJobKind.CraneLoading && HarborOpen) State.CraneSwayTime += dt;
             if (State.Phase != VoyagePhase.Sailing) return;
@@ -213,6 +228,22 @@ namespace ShipMayham
                 if (Passengers[i].Request != ServiceItem.None && Passengers[i].RequestTimer > 18)
                     Passengers[i].Satisfaction = Mathf.Max(0, Passengers[i].Satisfaction - dt * (State.ComfortLevel > 0 ? .22f : .45f));
             }
+        }
+
+        private delegate void CrewMover(int slot, Vector2 movement);
+
+        // Ramps the crew member's velocity toward the input and moves by it; walking into geometry cancels the blocked axis.
+        private void WalkCrew(int i, Vector2 input, float maxSpeed, float dt, CrewMover mover)
+        {
+            Vector2 velocity = crewVelocity[i];
+            // Teleports (boarding, going ashore, respawn) must not carry the old momentum into the new place.
+            if ((Crew[i].Position - lastWalkPosition[i]).sqrMagnitude > .0004f) velocity = Vector2.zero;
+            CrewKinematics.Step(ref velocity, input, maxSpeed, dt);
+            Vector2 attempted = velocity * dt, before = Crew[i].Position;
+            mover(i, attempted);
+            CrewKinematics.ResolveBlocked(ref velocity, attempted, Crew[i].Position - before);
+            crewVelocity[i] = velocity;
+            lastWalkPosition[i] = Crew[i].Position;
         }
 
         private void MoveCrew(int i, Vector2 movement)

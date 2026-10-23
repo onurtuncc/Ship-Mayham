@@ -12,20 +12,21 @@ namespace ShipMayham
     {
         private const float FadeSeconds = .2f;
         private const CrewPose None = (CrewPose)255;
+        private const float TurnDegreesPerSecond = 560f;
 
         public PrototypeView View;
         public Animator[] Animators = System.Array.Empty<Animator>();
         private CrewPose[] current;
-        private Vector3[] lastPosition;
-        private float[] speed, oneShotUntil, nextFlavor;
+        private float[] speed, oneShotUntil, nextFlavor, facing;
+        private Transform[] bodies;
         private bool[] phased;
 
         private void Awake()
         {
             if (View == null) View = GetComponent<PrototypeView>();
             int n = Animators.Length;
-            current = new CrewPose[n]; lastPosition = new Vector3[n]; speed = new float[n];
-            oneShotUntil = new float[n]; nextFlavor = new float[n]; phased = new bool[n];
+            current = new CrewPose[n]; speed = new float[n];
+            oneShotUntil = new float[n]; nextFlavor = new float[n]; phased = new bool[n]; facing = new float[n]; bodies = new Transform[n];
             // Identical clips in lockstep look robotic: every body gets its own tempo, and its own phase once it first becomes active.
             for (int i = 0; i < n; i++)
             {
@@ -48,6 +49,16 @@ namespace ShipMayham
             for (int i = 0; i < Animators.Length; i++) PlayOneShot(i, gesture, seconds);
         }
 
+        // The body turns toward where it is going (quickly, but not instantly) instead of sliding sideways in a fixed pose.
+        private void FaceTravelDirection(int i, Animator animator, Vector3 velocity, bool atHelm)
+        {
+            if (bodies[i] == null) bodies[i] = animator.transform.parent;
+            if (bodies[i] == null) return;
+            float target = atHelm ? 0 : velocity.sqrMagnitude > .09f ? Mathf.Atan2(velocity.x, velocity.z) * Mathf.Rad2Deg : facing[i];
+            facing[i] = Mathf.MoveTowardsAngle(facing[i], target, TurnDegreesPerSecond * Time.deltaTime);
+            bodies[i].localRotation = Quaternion.Euler(0, facing[i], 0);
+        }
+
         private void LateUpdate()
         {
             var session = View != null ? View.Session : null;
@@ -55,14 +66,12 @@ namespace ShipMayham
             var phase = session.Voyage.Value.Phase;
             for (int i = 0; i < Animators.Length && i < View.CrewRoots.Length; i++)
             {
-                Vector3 position = View.CrewRoots[i].position;
-                // Ignore vertical motion (jumps) and teleports such as boarding or going ashore.
-                Vector3 delta = position - lastPosition[i];
-                delta.y = 0;
-                float instant = delta.magnitude > 5 ? 0 : delta.magnitude / Time.deltaTime;
-                speed[i] = Mathf.Lerp(speed[i], instant, 1 - Mathf.Exp(-12 * Time.deltaTime));
-                lastPosition[i] = position;
+                // Velocity in the frame the crew member walks in, so a moving ship never makes a standing sailor jog on the spot.
+                Vector3 velocity = View.CrewVelocity(i);
+                velocity.y = 0;
+                speed[i] = Mathf.Lerp(speed[i], velocity.magnitude, 1 - Mathf.Exp(-14 * Time.deltaTime));
                 var animator = Animators[i];
+                if (animator != null) FaceTravelDirection(i, animator, velocity, session.Crew.Count > i && session.Crew[i].AtHelm);
                 if (animator == null || !animator.isActiveAndEnabled || i >= session.Crew.Count) continue;
                 if (!phased[i]) { phased[i] = true; animator.Play(0, 0, Random.value); }
                 if (Time.time < oneShotUntil[i]) continue;

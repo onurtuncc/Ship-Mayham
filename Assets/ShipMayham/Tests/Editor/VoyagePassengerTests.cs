@@ -131,8 +131,12 @@ namespace ShipMayham.Tests
             Near(0); Command(0, PassengerAction.CarryOrDrop);
             sim.Crew[0].Position = new Vector2(0, -5);
             sim.AimPassenger(Host, 90); sim.Jump(Host);
-            sim.SetInput(Host, Vector2.right); sim.Tick(.1f);
-            Assert.That(sim.Crew[0].Position.x, Is.EqualTo(4.2f * .7f * .1f).Within(.001f));
+            sim.SetInput(Host, Vector2.right);
+            for (int warmUp = 0; warmUp < 3; warmUp++) { sim.SetInput(Host, Vector2.right); sim.Tick(.1f); }   // acceleration ramps; measure at the settled speed
+            float before = sim.Crew[0].Position.x;
+            sim.SetInput(Host, Vector2.right);
+            sim.Tick(.1f);
+            Assert.That(sim.Crew[0].Position.x - before, Is.EqualTo(CrewKinematics.WalkSpeed * .7f * .1f).Within(.001f));
             Assert.Greater(sim.Passengers[0].Position.y, 1.1f);
             Assert.Greater(sim.Passengers[0].Position.x, sim.Crew[0].Position.x + .9f);
         }

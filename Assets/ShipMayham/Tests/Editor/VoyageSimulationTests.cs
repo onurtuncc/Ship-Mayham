@@ -25,6 +25,57 @@ namespace ShipMayham.Tests
             sim.Join(Host);
         }
 
+        [Test] public void CrewAcceleratesAndStopsInsteadOfTeleportingBetweenSpeeds()
+        {
+            int slot = sim.FindCrew(Host);
+            sim.Crew[slot].Position = new Vector2(0, -5);
+            sim.SetInput(Host, Vector2.right);
+            sim.Tick(.02f);
+            float first = sim.Crew[slot].Position.x;
+            Assert.Greater(first, 0);
+            Assert.Less(first, CrewKinematics.WalkSpeed * .02f * .5f, "The first tick must be a fraction of full speed.");
+            for (int i = 0; i < 10; i++) { sim.SetInput(Host, Vector2.right); sim.Tick(.02f); }
+            float cruising = sim.Crew[slot].Position.x;
+            sim.SetInput(Host, Vector2.zero);
+            sim.Tick(.02f);
+            Assert.Greater(sim.Crew[slot].Position.x, cruising, "Releasing the stick still slides a little.");
+            for (int i = 0; i < 12; i++) sim.Tick(.02f);
+            float settled = sim.Crew[slot].Position.x;
+            sim.Tick(.02f);
+            Assert.AreEqual(settled, sim.Crew[slot].Position.x, 1e-4f, "...and then stops.");
+        }
+
+        [Test] public void WalkingIntoAStationStopsWithoutBuildingUpSpeedAgainstIt()
+        {
+            int slot = sim.FindCrew(Host);
+            sim.Crew[slot].Position = new Vector2(-2.6f, 0);        // Food counter at (-4, 0)
+            for (int i = 0; i < 60; i++) { sim.SetInput(Host, Vector2.left); sim.Tick(.02f); }
+            float blocked = sim.Crew[slot].Position.x;
+            sim.SetInput(Host, Vector2.right);
+            sim.Tick(.02f);
+            Assert.Greater(sim.Crew[slot].Position.x, blocked, "Reversing must respond at once; no stored-up speed against the wall.");
+            Assert.Less(sim.Crew[slot].Position.x - blocked, CrewKinematics.WalkSpeed * .02f * .6f);
+        }
+
+        [Test] public void ShipSpeedAndHeadingEaseInAtTheHelm()
+        {
+            sim.Crew[0].Position = sim.Stations[1].Position + Vector2.right;
+            sim.Interact(Host, 1);
+            Assert.IsTrue(sim.Crew[0].AtHelm);
+            sim.State.Phase = VoyagePhase.Sailing;
+            sim.SetInput(Host, new Vector2(1, 1));
+            sim.Tick(.02f);
+            Assert.Less(sim.State.Speed, .2f, "Speed builds gradually.");
+            Assert.Less(sim.State.Heading, .5f, "The rudder builds up instead of snapping to the full turn rate.");
+            for (int i = 0; i < 75; i++) { sim.SetInput(Host, new Vector2(1, 1)); sim.Tick(.02f); }
+            Assert.Greater(sim.State.Speed, 3f);
+            Assert.Greater(sim.State.Heading, 20f);
+            float heading = sim.State.Heading;
+            sim.SetInput(Host, new Vector2(0, 1));
+            sim.Tick(.02f);
+            Assert.Greater(sim.State.Heading, heading, "The ship keeps swinging briefly after the wheel is released.");
+        }
+
         private void Advance(float seconds)
         {
             for (int n = 0; n < Mathf.CeilToInt(seconds / .05f); n++) sim.Tick(.05f);

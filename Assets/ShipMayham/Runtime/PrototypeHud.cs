@@ -397,7 +397,7 @@ namespace ShipMayham
                 if (showHelp)
                 {
                     GUI.Box(new Rect(400, 66, 650, 116), GUIContent.none);
-                    GUI.Label(new Rect(412, 74, 626, 104), "Space / X: jump (helm: depart/dock)\nPassengers: F / Y check or collect • G / B lift or put down • LMB / RT throw\nCannon: LMB / RT fire • R / X reload • E / A release\nBlue = drink • Orange = food • Green = repair / gangway\nAll crew must return aboard before departure or starting a new voyage.", body);
+                    GUI.Label(new Rect(412, 74, 626, 104), "Space / X: jump (helm: depart/dock, C / Y: helm camera)\nPassengers: F / Y check or collect • G / B lift or put down • LMB / RT throw\nCannon: LMB / RT fire • R / X reload • E / A release\nBlue = drink • Orange = food • Green = repair / gangway\nAll crew must return aboard before departure or starting a new voyage.", body);
                 }
                 if (View.IsFirstPerson)
                 {

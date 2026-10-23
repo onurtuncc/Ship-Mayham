@@ -22,6 +22,10 @@ namespace ShipMayham
         public float FirstPersonFieldOfView = 75f;
         public Vector3 HeldItemOffset = new Vector3(.32f, -.28f, .65f);
         public Vector3 HeldPassengerOffset = new Vector3(.9f, -1.25f, 1.4f);
+        [Header("Helm chase camera")]
+        public float ChaseDistance = 26f;
+        public float ChasePitch = 40f;
+        public float ChaseFieldOfView = 58f;
         [Header("Service colors")]
         public Color FoodColor = new Color(1f, .48f, .12f);
         public Color DrinkColor = new Color(.15f, .6f, 1f);
@@ -30,7 +34,25 @@ namespace ShipMayham
         public int FocusedTarget { get; private set; } = -1;
         public string FocusText { get; private set; } = "";
         public bool IsFirstPerson { get; private set; }
+        /// <summary>True while the local helmsman uses the elevated follow camera instead of first person.</summary>
+        public bool ChaseCameraActive { get; private set; }
+        /// <summary>Estimated ship turn rate in degrees per second (clockwise positive), for banking effects.</summary>
+        public float ShipTurnRate => shipHeading.Rate;
+        /// <summary>Estimated ship velocity in the world plane, for wake and lean effects.</summary>
+        public Vector3 ShipVelocity => shipPosition.Velocity;
+
+        /// <summary>Smoothed velocity of a crew member in the frame they walk in (deck or quay), metres per second.</summary>
+        public Vector3 CrewVelocity(int index) =>
+            crewMotion != null && index >= 0 && index < crewMotion.Length ? crewMotion[index].Velocity : Vector3.zero;
+        /// <summary>Seconds between movement input messages; the server holds each one for 0.35 s so this only bounds latency.</summary>
+        public const float InputSendInterval = .033f;
+        private const string ChaseKey = "ship-mayham.camera.helm-chase.v1";
         private float sendTimer;
+        private readonly MotionSmoother shipPosition = new MotionSmoother { CorrectionRate = 12f, SnapDistance = 30f, MaxSpeed = 25f };
+        private readonly AngleSmoother shipHeading = new AngleSmoother { CorrectionRate = 10f };
+        private MotionSmoother[] crewMotion;
+        private bool chasePreferred;
+        private float chaseHeading, chaseHeadingVelocity, lastLookInput;
         private bool wasSpawned;
         private bool wasAtCannon;
         private bool captureRequested;
@@ -55,7 +77,7 @@ namespace ShipMayham
         private Vector3[] passengerVisualOffsets, passengerLabelOffsets;
         private Quaternion[] passengerVisualRotations;
         private Transform[] passengerBuoys;
-        private bool[] displayedShore;
+        private bool[] displayedShore, crewActiveLastFrame;
         private MaterialPropertyBlock[] originalLiveryBlocks;
         private int displayedLivery = -1;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -68,6 +90,7 @@ namespace ShipMayham
 
         private void Awake()
         {
+            chasePreferred = LoadChasePreference();
 #if UNITY_WEBGL && !UNITY_EDITOR
             ShipCursor_Install();
 #endif
@@ -84,6 +107,9 @@ namespace ShipMayham
             carryRotations = new Quaternion[CrewRoots.Length];
             displayedItems = new ServiceItem[CrewRoots.Length];
             displayedShore = new bool[CrewRoots.Length];
+            crewActiveLastFrame = new bool[CrewRoots.Length];
+            crewMotion = new MotionSmoother[CrewRoots.Length];
+            for (int i = 0; i < crewMotion.Length; i++) crewMotion[i] = new MotionSmoother { CorrectionRate = 16f, SnapDistance = 3f, MaxSpeed = 12f };
             itemProperties = new MaterialPropertyBlock();
             if (LiveryRenderers == null || LiveryRenderers.Length == 0)
             {
@@ -211,6 +237,7 @@ namespace ShipMayham
             {
                 Vector2 look = Mouse.current != null ? Mouse.current.delta.ReadValue() * MouseSensitivity : Vector2.zero;
                 if (pad != null) look += pad.rightStick.ReadValue() * (StickLookSpeed * Time.unscaledDeltaTime);
+                if (look.sqrMagnitude > .0001f) lastLookInput = Time.unscaledTime;
                 lookYaw = Mathf.Repeat(lookYaw + look.x, 360);
                 lookPitch = Mathf.Clamp(lookPitch - look.y, -80, 80);
                 if (Session.Crew[local].AtCannon) lookPitch = Mathf.Clamp(lookPitch, -25, 45);
@@ -253,6 +280,7 @@ namespace ShipMayham
                     }
                     else Session.InteractRpc(FocusedTarget, false);
                 }
+                if (Session.Crew[local].AtHelm && (keyboard?.cKey.wasPressedThisFrame == true || pad?.buttonNorth.wasPressedThisFrame == true)) ToggleChaseCamera();
                 if (!Session.Crew[local].AtCannon && (keyboard?.spaceKey.wasPressedThisFrame == true || pad?.buttonWest.wasPressedThisFrame == true))
                 {
                     if (Session.Crew[local].AtCrane) Session.HarborCraneActionRpc(true);
@@ -263,7 +291,7 @@ namespace ShipMayham
             sendTimer -= Time.deltaTime;
             if (sendTimer <= 0)
             {
-                sendTimer = .05f;
+                sendTimer = InputSendInterval;
                 Session.MoveRpc(input);
                 if (Session.Crew[local].AtCannon && Cursor.lockState == CursorLockMode.Locked)
                     Session.AimCannonRpc(new Vector2(lookYaw, lookPitch));
@@ -276,7 +304,7 @@ namespace ShipMayham
         {
             FocusedTarget = -1;
             if (crew.AtCannon) { FocusText = "LMB / RT: fire | R / X: reload | E / A: release cannon\nCrew: carry rounds from AMMO to CANNON."; return; }
-            if (crew.AtHelm) { FocusText = "E / A: release helm   |   Space / X: depart or dock"; return; }
+            if (crew.AtHelm) { FocusText = "E / A: release helm   |   Space / X: depart or dock   |   C / Y: change camera"; return; }
             if (crew.AtCrane) { FocusText = "CRANE: WASD / stick moves hook (north up) | Space / X: lift / land | E / A: release"; return; }
             if (Session.LocalCarriedPassengerIndex >= 0) { FocusText = "G / B: put down | LMB / RT: throw (-5 happiness)\nOverboard: another -20 happiness + 15 coins. Rescue: 8s."; return; }
             if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) { FocusText = "Land before interacting"; return; }
@@ -413,6 +441,15 @@ namespace ShipMayham
                 CaptureCursor(firstPerson && Application.isFocused && !Application.isBatchMode);
 #endif
             }
+            bool chase = firstPerson && Session.Crew[local].AtHelm && chasePreferred;
+            if (chase != ChaseCameraActive)
+            {
+                ChaseCameraActive = chase;
+                lookYaw = 0;
+                lookPitch = chase ? ChasePitch : 12;
+                chaseHeadingVelocity = 0;
+                chaseHeading = shipHeading.Angle;
+            }
             bool atCannon = firstPerson && Session.Crew[local].AtCannon;
             if (atCannon && !wasAtCannon)
             {
@@ -431,23 +468,32 @@ namespace ShipMayham
             ApplyLivery(state.Livery);
             Transform ship = Session.ShipRoot;
             float blend = wasSpawned ? 1 - Mathf.Exp(-18 * Time.deltaTime) : 1;
-            ship.position = Vector3.Lerp(ship.position, new Vector3(state.Position.x, 0, state.Position.y), blend);
-            ship.rotation = Quaternion.Slerp(ship.rotation, Quaternion.Euler(0, state.Heading, 0), blend);
+            float now = Time.unscaledTime, dt = Time.deltaTime;
+            Vector3 shipTarget = new Vector3(state.Position.x, 0, state.Position.y);
+            if (!wasSpawned) { shipPosition.Snap(shipTarget, now); shipHeading.Snap(state.Heading, now); }
+            ship.position = shipPosition.Step(shipTarget, now, dt);
+            ship.rotation = Quaternion.Euler(0, shipHeading.Step(state.Heading, now, dt), 0);
             wasSpawned = active;
             for (int i = 0; i < CrewRoots.Length; i++)
             {
                 bool show = active && i < Session.Crew.Count && Session.Crew[i].Active && Session.Crew[i].ClientId != ulong.MaxValue;
                 CrewRoots[i].gameObject.SetActive(show);
+                crewActiveLastFrame[i] = show;
                 if (!show) continue;
                 var crew = Session.Crew[i];
                 var target = new Vector3(crew.Position.x, (crew.OnShore ? VoyageSimulation.ShoreHeight : .5f) + crew.JumpHeight, crew.Position.y);
-                Vector3 worldTarget = crew.OnShore ? VoyageSimulation.HarborOrigin(state) + target : ship.TransformPoint(target);
-                CrewRoots[i].position = Vector3.Lerp(CrewRoots[i].position, worldTarget, displayedShore[i] != crew.OnShore ? 1 : blend);
+                // Smooth in the frame the crew member walks in (deck or quay), then place that frame; smoothing in world space made
+                // crew slide across the deck whenever the ship moved.
+                var motion = crewMotion[i];
+                if (displayedShore[i] != crew.OnShore || !crewActiveLastFrame[i]) motion.Snap(target, now);
+                Vector3 local3 = motion.Step(target, now, dt);
+                CrewRoots[i].position = crew.OnShore ? VoyageSimulation.HarborOrigin(state) + local3 : ship.TransformPoint(local3);
                 CrewRoots[i].rotation = crew.OnShore ? Quaternion.identity : ship.rotation;
                 displayedShore[i] = crew.OnShore;
                 bool me = local == i;
                 // Hide only the local body, never the root or another client's representation.
-                if (crewVisuals[i] != null) crewVisuals[i].gameObject.SetActive(!me);
+                // The local body is hidden in first person, but visible when the helm uses the chase camera.
+                if (crewVisuals[i] != null) crewVisuals[i].gameObject.SetActive(!me || ChaseCameraActive);
                 CrewLabels[i].gameObject.SetActive(!me);
                 CrewLabels[i].text = $"P{i + 1}{(me ? " (YOU)" : "")}{(crew.AtHelm ? " / HELM" : "")}";
                 if (crew.AtCannon) CrewLabels[i].text += " / GUNNER";
@@ -464,7 +510,8 @@ namespace ShipMayham
             }
             Camera.fieldOfView = firstPerson ? FirstPersonFieldOfView : 55;
             Camera.nearClipPlane = .05f;
-            if (firstPerson)
+            if (ChaseCameraActive) PlaceChaseCamera(ship, state, dt);
+            else if (firstPerson)
             {
                 bool atCrane = Session.Crew[local].AtCrane;
                 if (atCrane && !wasAtCrane) { lookYaw = 236; lookPitch = 60; }
@@ -515,6 +562,38 @@ namespace ShipMayham
                 station.Label.gameObject.SetActive((local < 0 || !Session.Crew[local].OnShore) && Vector3.Distance(station.Label.transform.position, Camera.transform.position) < 10);
                 station.Label.color = FocusedTarget >= 0 && FocusedTarget < Session.Stations.Length && Session.Stations[FocusedTarget] == station ? Color.yellow : Color.white;
             }
+        }
+
+        /// <summary>Switches the helmsman between first person and the chase camera; the choice is remembered.</summary>
+        public void ToggleChaseCamera()
+        {
+            chasePreferred = !chasePreferred;
+            try { PlayerPrefs.SetInt(ChaseKey, chasePreferred ? 1 : 0); PlayerPrefs.Save(); }
+            catch (System.Exception exception) { Debug.LogWarning("Could not persist the camera choice: " + exception.Message); }
+        }
+
+        private static bool LoadChasePreference()
+        {
+            try { return PlayerPrefs.GetInt(ChaseKey, 0) == 1; }
+            catch (System.Exception exception) { Debug.LogWarning("Could not read the camera choice: " + exception.Message); return false; }
+        }
+
+        /// <summary>
+        /// Elevated follow camera for the helmsman: trails the heading of the ship with a soft lag, leads the ship by its speed,
+        /// pulls back as it accelerates, and lets the mouse orbit before easing back behind the ship.
+        /// </summary>
+        private void PlaceChaseCamera(Transform ship, VoyageState state, float dt)
+        {
+            float speed01 = Mathf.Clamp01(state.Speed / 8f);
+            chaseHeading = Mathf.SmoothDampAngle(chaseHeading, ship.eulerAngles.y, ref chaseHeadingVelocity, .55f, 220f, dt);
+            if (Time.unscaledTime - lastLookInput > 2.5f) lookYaw = Mathf.Repeat(Mathf.MoveTowardsAngle(lookYaw, 0, 140f * dt), 360);
+            lookPitch = Mathf.Clamp(lookPitch, 14f, 76f);
+            Quaternion rotation = Quaternion.Euler(lookPitch, chaseHeading + lookYaw, 0);
+            Vector3 pivot = ship.position + Vector3.up * 1.5f + ship.forward * (2f + speed01 * 6f);
+            Camera.transform.SetPositionAndRotation(pivot - rotation * Vector3.forward * (ChaseDistance * (1f + .22f * speed01)), rotation);
+            Camera.fieldOfView = ChaseFieldOfView + speed01 * 6f;
+            Camera.nearClipPlane = .3f;
+            FocusedTarget = -1;
         }
 
         private void ApplyLivery(ShipLivery livery)

@@ -94,12 +94,15 @@ namespace ShipMayham
             Publish();
         }
 
+        /// <summary>Seconds between state publishes; two fixed steps (25 Hz) keeps motion smooth without flooding the transport.</summary>
+        public const float PublishInterval = .039f;
+
         private void FixedUpdate()
         {
             if (!IsSpawned || !IsServer || Simulation == null) return;
             Simulation.Tick(Time.fixedDeltaTime);
             publishTimer += Time.fixedDeltaTime;
-            if (publishTimer >= .05f) { publishTimer = 0; Publish(); }
+            if (publishTimer >= PublishInterval) { publishTimer = 0; Publish(); }
         }
 
         private void Publish()

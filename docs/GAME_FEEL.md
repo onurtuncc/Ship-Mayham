@@ -65,6 +65,22 @@ Tek seferlik jestler `PlayOneShot` ile belirli süre oynar, sonra sürekli durum
 
 Modeller `Tools/BlenderAssets/assets/Ship*.py` ile üretilir; `Ship Mayham → Upgrade Prototype (Ship Upgrades)` bunları `Ship_Player/Visuals/Upgrades` altına yerleştirir (statik FBX'lerde Blender +Y Unity -Z'dir; itici lüleleri geriye bakar).
 
+## Hareket, gemi sürüşü ve kamera
+
+Eskiden yürüme ve dümen anlık hız değiştiriyordu, ağdan gelen konumlar 20 Hz basamaklarla üstel interpolasyona sokuluyordu ve mürettebat dünya uzayında yumuşatıldığı için gemi hareket ederken güvertede kayıyordu. Üç katmanda düzeltildi:
+
+| Katman | Dosya | Ne yapar |
+|---|---|---|
+| Otorite (sunucu) | `Runtime/Motion/CrewKinematics.cs` | Yürüyüş hızı 28 m/s² ile yükselir, 40 m/s² ile söner (tam hıza ~0,15 sn); engele çarpan eksenin hızı sıfırlanır, böylece duvara yaslanınca "birikmiş hız" kalmaz. Işınlanmalar (gemiye biniş, kıyıya çıkış) hızı sıfırlar. |
+| Otorite (sunucu) | `Runtime/Motion/ShipSteering.cs` | Gaz kolu girdiye doğru yumuşar, hız ondan oluşur; dümen dönüş hızını biriktirir (90°/s²) ve bırakılınca 140°/s² ile söner; duran gemi daha yavaş döner (%40) ama asla ölü değildir. Dümen bırakılınca gaz ve dümen nötre iner. |
+| Sunum (istemci) | `Runtime/Motion/MotionSmoother.cs` | Ağ anlık görüntüleri arasında hız ve aralığı tahmin eder, "son görüntü + o görüntüden beri alınan yol" noktasını hedefler (varışlar arasında süreklidir) ve süzer; değişimler durunca tahmin sönümlenir, aşım olmaz. Gemi konumu/yönü ve mürettebat için kullanılır; mürettebat **güverte/iskele uzayında** yumuşatılıp sonra yerleştirilir. |
+
+Yayın aralığı 25 Hz (`PrototypeSession.PublishInterval`), girdi gönderimi 30 Hz (`PrototypeView.InputSendInterval`). Görsel tarafı: bedenler gittikleri yöne döner (`PrototypeCrewAnimator`), hız animasyon seçimi artık güverte uzayındaki hızdan gelir (hareketli gemide duran denizci koşmaz), gemi dönüşlerde içe yatar ve hızla pruvası hafifçe kalkar (`PrototypeAmbientLife`).
+
+### Dümen kamerası
+
+Dümendeyken **C** (gamepad **Y**) birinci şahıs ile yüksekten takip kamerası arasında geçiş yapar; seçim hatırlanır (`PlayerPrefs`) ve dümen bırakılınca birinci şahsa dönülür. Takip kamerası geminin yönünü yumuşak bir gecikmeyle izler, hıza göre öne bakar ve uzaklaşır; fare ile yörüngede dönülür ve 2,5 sn sonra gemi arkasına yumuşakça geri gelir. Dümendeki oyuncunun bedeni bu görünümde görünür. Ayarlar: `PrototypeView.ChaseDistance / ChasePitch / ChaseFieldOfView`.
+
 ## Ses ayarı
 
 `M` tuşu veya sağ alttaki düğme sesi kapatır/açar; tercih `PlayerPrefs`'te saklanır (depolama hatası oyunu durdurmaz).
@@ -79,4 +95,4 @@ Modeller `Tools/BlenderAssets/assets/Ship*.py` ile üretilir; `Ship Mayham → U
 
 ## Doğrulama
 
-`GameFeelTests`, `ShipUpgradeTests`, `HumanCrewTests`, `HumanPassengerTests`: algılayıcı kuralları (kasa, hasar, sızıntı, yolcu slotları, taşıma, top, olay çıktıları), ses üretimi (NaN/sessizlik/kırpma yok), deniz döngüsü dikişi ve gerçek sahnede olayların parçacık/yazı üretmesi. `SHIPMAYHAM_CAPTURE=1` ortam değişkeniyle son test `Logs/GameFeel.png` yazar (efektli görüntü).
+`MotionTests`, `HelmCameraTests`, `GameFeelTests`, `ShipUpgradeTests`, `HumanCrewTests`, `HumanPassengerTests`: algılayıcı kuralları (kasa, hasar, sızıntı, yolcu slotları, taşıma, top, olay çıktıları), ses üretimi (NaN/sessizlik/kırpma yok), deniz döngüsü dikişi ve gerçek sahnede olayların parçacık/yazı üretmesi. `SHIPMAYHAM_CAPTURE=1` ortam değişkeniyle son test `Logs/GameFeel.png` yazar (efektli görüntü).

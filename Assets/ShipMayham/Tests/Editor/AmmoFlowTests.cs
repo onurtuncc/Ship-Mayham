@@ -182,8 +182,11 @@ namespace ShipMayham.Tests
             Assert.IsFalse(sim.Crew[2].OnShore);
             sim.Crew[2].Position = new Vector2(0, -6);
             sim.SetInput(Supplier, Vector2.up);
+            for (int warmUp = 0; warmUp < 3; warmUp++) { sim.SetInput(Supplier, Vector2.up); sim.Tick(.1f); }   // acceleration ramps; measure at the settled speed
+            float before = sim.Crew[2].Position.y;
+            sim.SetInput(Supplier, Vector2.up);
             sim.Tick(.1f);
-            Assert.AreEqual(-6 + 4.2f * .8f * .1f, sim.Crew[2].Position.y, .001f);
+            Assert.AreEqual(CrewKinematics.WalkSpeed * .8f * .1f, sim.Crew[2].Position.y - before, .001f);
             Conserved();
         }
 
