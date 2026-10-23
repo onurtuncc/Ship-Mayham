@@ -26,6 +26,22 @@ _Avoid_: Lobi, oda, session (genel anlamda)
 Kayıt defteri: hangi Player'ın hangi Crew member slotuna girebileceği ve ayrılan bir Player'ın slotunun ne zaman boşaltılacağı.
 _Avoid_: Oyuncu listesi, lobi listesi
 
+**Session phase**:
+Online voyage'ın iki aşaması: Lobby ve Voyage. Voyage phase'ten (Boarding, Sailing...) farklıdır; o, tek bir Voyage'ın içindeki durumdur.
+_Avoid_: Oyun durumu, faz (Roadmap phase ile karışır)
+
+**Lobby**:
+Online voyage'ın, ilk Voyage başlamadan önceki bekleme aşaması. Player'lar toplanır, Ready basar, Host başlatır. Yalnızca oturumun başında bir kez vardır; Unity'nin Lobby servisi değildir.
+_Avoid_: Oda, bekleme odası
+
+**Ready**:
+Host dışındaki bir Player'ın Lobby'de "başlamaya hazırım" işareti; istediği an geri alabilir. Host ayrıca Ready basmaz.
+_Avoid_: Onay, hazır olma
+
+**Nickname**:
+Player'ın Lobby'de ve gemide görünen, cihazda saklanan adı. Kimlik değildir; kimlik Relay oyuncu kimliğidir.
+_Avoid_: Kullanıcı adı, hesap adı
+
 **Join code**:
 Bir Online voyage'a katılmak için paylaşılan kısa kod.
 _Avoid_: Oda kodu, davet kodu
