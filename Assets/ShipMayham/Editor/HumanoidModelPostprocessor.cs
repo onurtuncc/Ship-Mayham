@@ -10,10 +10,11 @@ namespace ShipMayham.Editor
         private const string RiggedPassengerPrefix = "Assets/ShipMayham/Art/Generated/Models/Character_Human";
         private static readonly string[] LoopingClips = {
             "Idle", "Walking", "SittingIdle", "CheeringWhileSitting", "Talking", "Terrified", "Carrying", "ButtonPushing", "VictoryIdle",
-            "HipHopDancing", "SambaDancing", "StandingClap", "RifleAimingIdle", "LookingAround", "SittingClap", "SittingLaughing"
+            "HipHopDancing", "SambaDancing", "StandingClap", "RifleAimingIdle", "LookingAround", "SittingClap", "SittingLaughing",
+            "Running", "Drinking", "Angry", "SleepingIdle", "DizzyIdle", "CrouchIdle", "ClimbingLadder", "PullingARope", "Pushing"
         };
 
-        public override uint GetVersion() => 3;
+        public override uint GetVersion() => 4;
 
         private void OnPreprocessModel()
         {
