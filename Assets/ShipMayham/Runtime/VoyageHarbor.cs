@@ -108,16 +108,6 @@ namespace ShipMayham
             return "Cargo relay started: carry 3 crates from FOOD pickup to HULL delivery. Multiple crew can relay together.";
         }
 
-        private void MoveShoreCrew(int slot, Vector2 movement)
-        {
-            Vector2 p = Crew[slot].Position;
-            Vector2 candidate = new Vector2(Mathf.Clamp(p.x + movement.x, HarborTownLayout.Bounds.xMin, HarborTownLayout.Bounds.xMax), p.y);
-            if (ShoreWalkable(candidate)) p = candidate;
-            candidate = new Vector2(p.x, Mathf.Clamp(p.y + movement.y, HarborTownLayout.Bounds.yMin, HarborTownLayout.Bounds.yMax));
-            if (ShoreWalkable(candidate)) p = candidate;
-            Crew[slot].Position = p;
-        }
-
         private static bool ShoreWalkable(Vector2 p)
         {
             if (!HarborTownLayout.Walkable(p)) return false;

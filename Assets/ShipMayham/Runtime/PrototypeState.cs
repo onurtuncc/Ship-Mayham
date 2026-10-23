@@ -36,6 +36,8 @@ namespace ShipMayham
         public int CraneStock, CraneReady;
         public float CraneSwayTime;
         public int EngineLevel, CapacityLevel, ComfortLevel;
+        /// <summary>Server clock in milliseconds when this state was produced; ignored by equality so it never forces a send.</summary>
+        public uint TimeMs;
         public int Reputation, LastReputation;
         public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty, LastEventBonus, LastRouteBonus;
         public int CheckedTickets, CollectedFares, RescueCount, LastUnpaid, LastMissing, LastRescueCosts;
@@ -55,6 +57,7 @@ namespace ShipMayham
             s.SerializeValue(ref CraneHook); s.SerializeValue(ref CraneHolding);
             s.SerializeValue(ref CraneStock); s.SerializeValue(ref CraneReady); s.SerializeValue(ref CraneSwayTime);
             s.SerializeValue(ref EngineLevel); s.SerializeValue(ref CapacityLevel); s.SerializeValue(ref ComfortLevel);
+            s.SerializeValue(ref TimeMs);
             s.SerializeValue(ref Reputation); s.SerializeValue(ref LastReputation);
             s.SerializeValue(ref LastTickets); s.SerializeValue(ref LastServices); s.SerializeValue(ref LastTips);
             s.SerializeValue(ref LastCosts); s.SerializeValue(ref LastNet);
@@ -64,7 +67,7 @@ namespace ShipMayham
             s.SerializeValue(ref CheckedTickets); s.SerializeValue(ref CollectedFares); s.SerializeValue(ref RescueCount);
             s.SerializeValue(ref LastUnpaid); s.SerializeValue(ref LastMissing); s.SerializeValue(ref LastRescueCosts);
         }
-        public bool Equals(VoyageState other) => ValueType.Equals(this, other);
+        public bool Equals(VoyageState other) { other.TimeMs = TimeMs; return ValueType.Equals(this, other); }
     }
 
     [Serializable]
@@ -75,6 +78,12 @@ namespace ShipMayham
         public Vector2 Position;
         public ServiceItem Carrying;
         public float JumpHeight, VerticalSpeed;
+        /// <summary>Walking velocity, so a predicting client can reconcile to the exact server state.</summary>
+        public Vector2 Velocity;
+        /// <summary>Sequence number of the last move command the server executed for this crew member.</summary>
+        public uint InputAck;
+        /// <summary>Server clock in milliseconds; ignored by equality so it never forces a send.</summary>
+        public uint TimeMs;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref Active); s.SerializeValue(ref AtHelm); s.SerializeValue(ref ClientId);
@@ -83,10 +92,12 @@ namespace ShipMayham
             s.SerializeValue(ref OnShore);
             s.SerializeValue(ref AtCrane);
             s.SerializeValue(ref JumpHeight); s.SerializeValue(ref VerticalSpeed);
+            s.SerializeValue(ref Velocity); s.SerializeValue(ref InputAck); s.SerializeValue(ref TimeMs);
         }
         public bool Equals(CrewState other) => Active == other.Active && AtHelm == other.AtHelm &&
             ClientId == other.ClientId && Position.Equals(other.Position) && Carrying == other.Carrying && AtCannon == other.AtCannon &&
-            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane;
+            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane &&
+            Velocity.Equals(other.Velocity) && InputAck == other.InputAck;
     }
 
     [Serializable]

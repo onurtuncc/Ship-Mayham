@@ -21,6 +21,12 @@ namespace ShipMayham
         public string Notice { get; private set; } = "Board passengers at the manifest, then take the helm.";
         public float NoticeUntil { get; private set; }
         private float publishTimer;
+        private ushort motionSeq;
+
+        /// <summary>Raised on every motion snapshot: received from the server on clients, produced locally on the host.</summary>
+        public event System.Action<MotionSnapshot> MotionSnapshotReceived;
+        /// <summary>Raised on a client when the server answers a ping; the value is the echoed local millisecond stamp.</summary>
+        public event System.Action<uint> PongReceived;
 
         private void Awake()
         {
@@ -102,11 +108,24 @@ namespace ShipMayham
             if (!IsSpawned || !IsServer || Simulation == null) return;
             Simulation.Tick(Time.fixedDeltaTime);
             publishTimer += Time.fixedDeltaTime;
-            if (publishTimer >= PublishInterval) { publishTimer = 0; Publish(); }
+            if (publishTimer >= PublishInterval)
+            {
+                publishTimer = 0;
+                Publish();
+                SendMotionSnapshot();
+            }
+        }
+
+        private void SendMotionSnapshot()
+        {
+            var snapshot = MotionSnapshot.From(Simulation, unchecked(motionSeq++));
+            MotionSnapshotReceived?.Invoke(snapshot);       // the host interpolates remote crew from the very same data
+            if (NetworkManager != null && NetworkManager.ConnectedClientsIds.Count > 1) MotionSnapshotRpc(snapshot);
         }
 
         private void Publish()
         {
+            Simulation.StampTime();
             CareerProgressStore.SaveIfChanged(Simulation.State);
             Voyage.Value = Simulation.State;
             Encounter.Value = Simulation.Encounter;
@@ -233,6 +252,34 @@ namespace ShipMayham
             string result = Simulation.PassengerCommand(sender, passenger, action, yaw);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
             Publish();
+        }
+
+        /// <summary>
+        /// Fixed-step movement commands, repeated across packets so an unreliable datagram can be lost without consequence.
+        /// No Publish here: state goes out on the regular cadence, which keeps bandwidth bounded however fast a client sends.
+        /// </summary>
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone, Delivery = RpcDelivery.Unreliable)]
+        public void MoveCommandsRpc(MoveCommandPacket packet, RpcParams rpc = default)
+        {
+            Simulation?.ApplyMoveCommands(rpc.Receive.SenderClientId, packet);
+        }
+
+        [Rpc(SendTo.NotServer, Delivery = RpcDelivery.Unreliable)]
+        private void MotionSnapshotRpc(MotionSnapshot snapshot) { MotionSnapshotReceived?.Invoke(snapshot); }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone, Delivery = RpcDelivery.Unreliable)]
+        public void PingRpc(uint clientMs, RpcParams rpc = default)
+        {
+            PongRpc(clientMs, RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, Delivery = RpcDelivery.Unreliable)]
+        private void PongRpc(uint clientMs, RpcParams rpc = default) { PongReceived?.Invoke(clientMs); }
+
+        /// <summary>Applies a locally produced command packet on the host without a network hop.</summary>
+        public void ApplyLocalMoveCommands(MoveCommandPacket packet)
+        {
+            if (IsServer && Simulation != null && NetworkManager != null) Simulation.ApplyMoveCommands(NetworkManager.LocalClientId, packet);
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]

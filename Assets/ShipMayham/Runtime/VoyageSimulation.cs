@@ -8,7 +8,7 @@ namespace ShipMayham
     {
         public const int MaxCrew = 4, MaxPassengers = 8;
         public const float InteractionRange = 2.1f, DockRadius = 12f;
-        public const float JumpSpeed = 6f, JumpGravity = 18f;
+        public const float JumpSpeed = CrewLocomotion.JumpSpeed, JumpGravity = CrewLocomotion.JumpGravity;
         public static readonly Vector2 Destination = new Vector2(0, 220);
         public static readonly Vector2 DeckBounds = new Vector2(5.2f, 8.2f);
         public VoyageState State;
@@ -18,7 +18,6 @@ namespace ShipMayham
         public readonly Vector2[] Seats;
         private readonly float[] interactionReady = new float[MaxCrew];
         private readonly float[] inputExpires = new float[MaxCrew];
-        private readonly Vector2[] crewVelocity = new Vector2[MaxCrew], lastWalkPosition = new Vector2[MaxCrew];
         private ShipSteering steering;
         private readonly Vector2[] inputs = new Vector2[MaxCrew];
         private readonly string[] crewPlayerIds = new string[MaxCrew];
@@ -63,6 +62,7 @@ namespace ShipMayham
                     Crew[i].ClientId = clientId;
                     inputs[i] = Vector2.zero;
                     inputExpires[i] = 0;
+                    ResetCommandStream(i);
                     return i;
                 }
             }
@@ -75,6 +75,7 @@ namespace ShipMayham
                 crewPlayerIds[i] = playerId;
                 inputs[i] = Vector2.zero;
                 interactionReady[i] = 0;
+                ResetCommandStream(i);
                 return i;
             }
             return -1;
@@ -103,6 +104,7 @@ namespace ShipMayham
             ReleaseCrewResponsibilities(i);
             Crew[i] = default;
             crewPlayerIds[i] = null;
+            ResetCommandStream(i);
         }
 
         public void SuspendConnection(ulong clientId)
@@ -171,19 +173,10 @@ namespace ShipMayham
             bool helmManned = false;
             for (int i = 0; i < MaxCrew; i++)
             {
-                if (!Crew[i].Active) { crewVelocity[i] = Vector2.zero; continue; }
-                TickJump(i, dt);
+                if (!Crew[i].Active) { Crew[i].Velocity = Vector2.zero; continue; }
+                moveBudget[i] = Mathf.Min(MoveBudgetCap, moveBudget[i] + dt * MoveBudgetRate);
                 Vector2 input = clock <= inputExpires[i] ? inputs[i] : Vector2.zero;
-                if (Crew[i].AtHelm)
-                {
-                    crewVelocity[i] = Vector2.zero;
-                    if (State.Phase != VoyagePhase.Sailing) continue;
-                    helmInput = input; helmManned = true;
-                }
-                else if (Crew[i].AtCrane) { crewVelocity[i] = Vector2.zero; MoveHarborCrane(i, input, dt); }
-                else if (Crew[i].OnShore) WalkCrew(i, input, CrewKinematics.WalkSpeed, dt, MoveShoreCrew);
-                else if (!Crew[i].AtCannon) WalkCrew(i, input, CrewKinematics.WalkSpeed * (CarriedPassenger(i) >= 0 ? .7f : Crew[i].Carrying == ServiceItem.Ammo ? .8f : 1), dt, MoveCrew);
-                else crewVelocity[i] = Vector2.zero;
+                AdvanceCrew(i, input, dt, ref helmInput, ref helmManned);
             }
             if (State.Phase == VoyagePhase.Sailing)
             {
@@ -230,40 +223,13 @@ namespace ShipMayham
             }
         }
 
-        private delegate void CrewMover(int slot, Vector2 movement);
-
-        // Ramps the crew member's velocity toward the input and moves by it; walking into geometry cancels the blocked axis.
-        private void WalkCrew(int i, Vector2 input, float maxSpeed, float dt, CrewMover mover)
-        {
-            Vector2 velocity = crewVelocity[i];
-            // Teleports (boarding, going ashore, respawn) must not carry the old momentum into the new place.
-            if ((Crew[i].Position - lastWalkPosition[i]).sqrMagnitude > .0004f) velocity = Vector2.zero;
-            CrewKinematics.Step(ref velocity, input, maxSpeed, dt);
-            Vector2 attempted = velocity * dt, before = Crew[i].Position;
-            mover(i, attempted);
-            CrewKinematics.ResolveBlocked(ref velocity, attempted, Crew[i].Position - before);
-            crewVelocity[i] = velocity;
-            lastWalkPosition[i] = Crew[i].Position;
-        }
-
-        private void MoveCrew(int i, Vector2 movement)
-        {
-            Vector2 position = Crew[i].Position;
-            // Separate axes allow sliding along counters. Gameplay footprint is independent of Visuals.
-            Vector2 candidate = new Vector2(Mathf.Clamp(position.x + movement.x, -DeckBounds.x, DeckBounds.x), position.y);
-            if (Walkable(candidate)) position = candidate;
-            candidate = new Vector2(position.x, Mathf.Clamp(position.y + movement.y, -DeckBounds.y, DeckBounds.y));
-            if (Walkable(candidate)) position = candidate;
-            Crew[i].Position = position;
-        }
-
         private bool Walkable(Vector2 p, int ignorePassenger = -1)
         {
-            foreach (var station in Stations) if ((p - station.Position).sqrMagnitude < .75f * .75f) return false;
-            for (int i = 0; i < Seats.Length; i++) if ((p - Seats[i]).sqrMagnitude < .7f * .7f) return false;
+            foreach (var station in Stations) if ((p - station.Position).sqrMagnitude < StationClearance * StationClearance) return false;
+            for (int i = 0; i < Seats.Length; i++) if ((p - Seats[i]).sqrMagnitude < SeatClearance * SeatClearance) return false;
             for (int i = 0; i < MaxPassengers; i++)
                 if (i != ignorePassenger && Passengers[i].Active && Passengers[i].Motion == PassengerMotion.OnDeck &&
-                    (p - new Vector2(Passengers[i].Position.x, Passengers[i].Position.z)).sqrMagnitude < .6f * .6f) return false;
+                    (p - new Vector2(Passengers[i].Position.x, Passengers[i].Position.z)).sqrMagnitude < PassengerClearance * PassengerClearance) return false;
             return true;
         }
 
