@@ -33,6 +33,8 @@ namespace ShipMayham
         public Renderer[] LiveryRenderers;
         public int FocusedTarget { get; private set; } = -1;
         public string FocusText { get; private set; } = "";
+        /// <summary>Structured version of <see cref="FocusText"/> for the HUD.</summary>
+        public InteractionPrompt Prompt { get; private set; }
         public bool IsFirstPerson { get; private set; }
         /// <summary>True while the local helmsman uses the elevated follow camera instead of first person.</summary>
         public bool ChaseCameraActive { get; private set; }
@@ -317,11 +319,12 @@ namespace ShipMayham
         private void FindTarget(CrewState crew)
         {
             FocusedTarget = -1;
-            if (crew.AtCannon) { FocusText = "LMB / RT: fire | R / X: reload | E / A: release cannon\nCrew: carry rounds from AMMO to CANNON."; return; }
-            if (crew.AtHelm) { FocusText = "E / A: release helm   |   Space / X: depart or dock   |   C / Y: change camera"; return; }
-            if (crew.AtCrane) { FocusText = "CRANE: WASD / stick moves hook (north up) | Space / X: lift / land | E / A: release"; return; }
-            if (Session.LocalCarriedPassengerIndex >= 0) { FocusText = "G / B: put down | LMB / RT: throw (-5 happiness)\nOverboard: another -20 happiness + 15 coins. Rescue: 8s."; return; }
-            if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) { FocusText = "Land before interacting"; return; }
+            Prompt = default;
+            if (crew.AtCannon) { FocusText = "LMB / RT: fire | R / X: reload | E / A: release cannon\nCrew: carry rounds from AMMO to CANNON."; Prompt = PromptCatalog.ForCannon(); return; }
+            if (crew.AtHelm) { FocusText = "E / A: release helm   |   Space / X: depart or dock   |   C / Y: change camera"; Prompt = PromptCatalog.ForHelm(); return; }
+            if (crew.AtCrane) { FocusText = "CRANE: WASD / stick moves hook (north up) | Space / X: lift / land | E / A: release"; Prompt = PromptCatalog.ForCrane(); return; }
+            if (Session.LocalCarriedPassengerIndex >= 0) { FocusText = "G / B: put down | LMB / RT: throw (-5 happiness)\nOverboard: another -20 happiness + 15 coins. Rescue: 8s."; Prompt = PromptCatalog.ForCarriedPassenger(); return; }
+            if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) { FocusText = "Land before interacting"; Prompt = PromptCatalog.ForAirborne(); return; }
             float bestAngle = 24f;
             FocusText = "Look at a nearby station or passenger";
             if (crew.OnShore)
@@ -339,6 +342,7 @@ namespace ShipMayham
                 if (angle >= bestAngle) continue;
                 bestAngle = angle;
                 FocusedTarget = i;
+                Prompt = PromptCatalog.ForStation(station.Kind, Session.Voyage.Value, Session.Encounter.Value, crew);
                 FocusText = "E / A: " + station.DisplayName;
                 if (station.Kind == StationKind.RepairSupply)
                     FocusText = crew.Carrying == ServiceItem.RepairKit ? "E / A: return quick patch kit" : $"E / A: take kit ({Session.Voyage.Value.RepairKitStock} in store) -> REPAIR";
@@ -371,6 +375,7 @@ namespace ShipMayham
                 bestAngle = angle;
                 FocusedTarget = Session.Stations.Length + i;
                 var passenger = Session.Passengers[i];
+                Prompt = PromptCatalog.ForPassenger(i, passenger);
                 string ticket = !passenger.TicketChecked ? "F / Y: check ticket" : !passenger.FarePaid ? "F / Y: collect 40 coins" : "Ticket valid";
                 string service = passenger.Request == ServiceItem.None ? "No order" : "E / A: serve " + passenger.Request;
                 FocusText = $"Passenger {i + 1} -> North Port | {PassengerPresentation.TicketText(passenger)}\n{service} | {ticket} | G / B: lift";
@@ -393,6 +398,7 @@ namespace ShipMayham
                 bestAngle = angle;
                 FocusedTarget = PrototypeHarbor.Target(action);
                 FocusText = PrototypeHarbor.Prompt(action);
+                Prompt = PromptCatalog.ForHarbor(action, Session.Voyage.Value, crew);
                 if (Session.Voyage.Value.DockJobActive)
                 {
                     if (Session.Voyage.Value.DockJobType == DockJobKind.CraneLoading)
@@ -433,6 +439,7 @@ namespace ShipMayham
                 if (angle >= bestAngle) continue;
                 bestAngle = angle; FocusedTarget = -200 - index;
                 FocusText = $"E / A: take salvage bundle {index + 1}/3 -> PORT OFFICE";
+                Prompt = PromptCatalog.ForSalvage(index);
             }
         }
 
