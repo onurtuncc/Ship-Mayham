@@ -385,6 +385,27 @@ namespace ShipMayham
         public static int UpgradeCost(StationKind kind, VoyageState state) => kind == StationKind.EngineUpgrade
             ? 100 * (state.EngineLevel + 1) : kind == StationKind.CapacityUpgrade ? 150 * (state.CapacityLevel + 1) : 120;
 
+        public const float UnstuckCooldown = 30f;
+        private readonly float[] unstuckReady = new float[MaxCrew];
+
+        /// <summary>
+        /// "I'm stuck": puts the crew member back on a safe spot (the deck spawn, or the quay boarding spot when ashore),
+        /// drops whatever they hold or man, and starts a cooldown.
+        /// </summary>
+        public string Unstuck(ulong clientId)
+        {
+            int i = FindCrew(clientId);
+            if (i < 0) return "Crew not registered.";
+            if (clock < unstuckReady[i]) return $"You can use this again in {Mathf.CeilToInt(unstuckReady[i] - clock)}s.";
+            unstuckReady[i] = clock + UnstuckCooldown;
+            ReleaseCrewResponsibilities(i);
+            Crew[i].Position = Crew[i].OnShore ? HarborPoint(HarborAction.BoardShip) : new Vector2(-1.5f + i, -6);
+            Crew[i].Velocity = Vector2.zero;
+            Crew[i].JumpHeight = Crew[i].VerticalSpeed = 0;
+            ResetCommandStream(i);
+            return "Back on your feet.";
+        }
+
         /// <summary>Position of the purser's desk (the Manifest station), or null when the ship has none.</summary>
         public Vector2? PurserPoint
         {

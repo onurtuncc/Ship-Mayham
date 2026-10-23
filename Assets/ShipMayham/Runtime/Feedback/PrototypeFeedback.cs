@@ -81,7 +81,7 @@ namespace ShipMayham
                 sea.Play();
             }
             if (Keyboard.current?.mKey.wasPressedThisFrame == true) FeedbackSettings.Muted = !FeedbackSettings.Muted;
-            sea.volume = Mathf.MoveTowards(sea.volume, live ? SeaVolume * FeedbackSettings.Gain : 0, Time.unscaledDeltaTime * .6f);
+            sea.volume = Mathf.MoveTowards(sea.volume, live ? SeaVolume * FeedbackSettings.SfxGain : 0, Time.unscaledDeltaTime * .6f);
             Capture(live ? session : null, ref current);
             events.Clear();
             FeedbackDetector.Detect(previous, current, events);
@@ -156,7 +156,8 @@ namespace ShipMayham
                     Fx.Burst(FxKind.Splash, passenger, 24); Fx.Popup("Phew!", passenger + Vector3.up * .3f, Cyan); Sfx(SfxKind.Splash, .8f, 1, passenger); StartHop(e.Slot); break;
                 case FeedbackKind.HullDamaged:
                     AddTrauma(.35f + Mathf.Min(.45f, e.Value / 80f)); flash = Mathf.Max(flash, .55f);
-                    Fx.Burst(FxKind.Smoke, ship, 10); Fx.Popup($"-{e.Value}", ship + Vector3.up, Red, 1.2f); Sfx(SfxKind.Thud, 1, .9f); break;
+                    Fx.Burst(FxKind.Smoke, ship, 10); Fx.Popup($"-{e.Value}", ship + Vector3.up, Red, 1.2f); Sfx(SfxKind.Thud, 1, .9f);
+                    Haptics.Pulse(.5f + Mathf.Min(.4f, e.Value / 60f), .3f, .25f); break;
                 case FeedbackKind.LeakStarted:
                     flash = Mathf.Max(flash, .35f); Fx.Popup("LEAK!", ship + Vector3.up, Red, 1.3f); Sfx(SfxKind.Alarm, .8f); break;
                 case FeedbackKind.LeakFixed:
@@ -168,7 +169,7 @@ namespace ShipMayham
                     Fx.Burst(FxKind.Confetti, ship + Vector3.up * 2, 90); Fx.Burst(FxKind.Stars, ship + Vector3.up * 3, 14);
                     Sfx(SfxKind.Fanfare); Sfx(SfxKind.Sparkle, .7f); break;
                 case FeedbackKind.VoyageFailed:
-                    ShowBanner("SHIP LOST", "The sea wins this time", Red); AddTrauma(.7f); Sfx(SfxKind.Sad); break;
+                    ShowBanner("SHIP LOST", "The sea wins this time", Red); AddTrauma(.7f); Sfx(SfxKind.Sad); Haptics.Pulse(.8f, .4f, .5f); break;
                 case FeedbackKind.ReputationGained:
                     Fx.Burst(FxKind.Stars, ship + Vector3.up * 2, 12); Fx.Popup($"+{e.Value} REP", ship + Vector3.up * 2.2f, new Color(1, .6f, 1f), 1.1f); Sfx(SfxKind.Sparkle, .8f); break;
                 case FeedbackKind.UpgradePurchased:
@@ -187,7 +188,8 @@ namespace ShipMayham
                 case FeedbackKind.CannonFired:
                     {
                         Vector3 muzzle = combat != null && combat.MuzzleAnchor != null ? combat.MuzzleAnchor.position : ship;
-                        Fx.Burst(FxKind.Smoke, muzzle, 14); Fx.Burst(FxKind.Sparkle, muzzle, 10); AddTrauma(.3f); Sfx(SfxKind.Boom); break;
+                        Fx.Burst(FxKind.Smoke, muzzle, 14); Fx.Burst(FxKind.Sparkle, muzzle, 10); AddTrauma(.3f); Sfx(SfxKind.Boom);
+                        Haptics.Pulse(.35f, .8f, .15f); break;
                     }
                 case FeedbackKind.CannonballLanded:
                     Fx.Burst(FxKind.Splash, lastCrewBall, 26); Sfx(SfxKind.Splash, .8f, 1, lastCrewBall); break;
@@ -224,7 +226,7 @@ namespace ShipMayham
         {
             if (Time.unscaledTime - lastPlayed[(int)kind] < .05f) return;
             lastPlayed[(int)kind] = Time.unscaledTime;
-            float gain = volume * FeedbackSettings.Gain;
+            float gain = volume * FeedbackSettings.SfxGain;
             if (at.HasValue && View != null && View.Camera != null)
                 gain *= Mathf.Clamp01(1.25f - Vector3.Distance(at.Value, View.Camera.transform.position) / 45f);
             if (gain <= .01f) return;
@@ -235,7 +237,7 @@ namespace ShipMayham
 
         // ---------------------------------------------------------------- camera shake and flash
 
-        private void AddTrauma(float amount) => trauma = Mathf.Min(1, trauma + amount);
+        private void AddTrauma(float amount) => trauma = Mathf.Min(1, trauma + amount * GameSettings.ShakeScale);
 
         private void BeginCamera(ScriptableRenderContext context, Camera camera)
         {
@@ -300,7 +302,6 @@ namespace ShipMayham
 
         private void OnGUI()
         {
-            DrawSoundToggle();
             if (flash > 0)
             {
                 GUI.depth = -90;
@@ -325,14 +326,6 @@ namespace ShipMayham
             DrawShadowed(area, banner.Title, titleStyle, banner.Color, alpha);
             if (!string.IsNullOrEmpty(banner.Subtitle))
                 DrawShadowed(new Rect(0, area.yMax - Screen.height * .01f, Screen.width, Screen.height * .06f), banner.Subtitle, subtitleStyle, Color.white, alpha);
-        }
-
-        private void DrawSoundToggle()
-        {
-            if (View == null || View.Session == null || !View.Session.IsSpawned) return;
-            GUI.depth = -50;
-            var rect = new Rect(Screen.width - 150, Screen.height - 34, 138, 24);
-            if (GUI.Button(rect, FeedbackSettings.Muted ? "Sound: OFF  (M)" : "Sound: ON  (M)")) FeedbackSettings.Muted = !FeedbackSettings.Muted;
         }
 
         private static void DrawShadowed(Rect rect, string text, GUIStyle style, Color color, float alpha)

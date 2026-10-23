@@ -16,7 +16,8 @@ namespace ShipMayham
         private readonly GameObject[] pages = new GameObject[3];
         private readonly Button[] actionButtons;
         private readonly InputField codeField, nicknameField;
-        private readonly Button joinButton, cancelButton, soundButton;
+        private readonly Button joinButton, cancelButton;
+        private readonly SettingsPanel settingsPanel;
         private readonly Text statusText;
         private bool suppressCodeEvent;
         private Page current;
@@ -60,8 +61,7 @@ namespace ShipMayham
 
             // ---- Settings
             var settings = NewPage(screen, Page.Settings, "SETTINGS", null);
-            soundButton = AddButton(settings, "Sound", string.Empty, new Color(1, 1, 1, .14f), 26, 62, ToggleSound);
-            buttons.Add(soundButton);
+            settingsPanel = new SettingsPanel(settings);
             buttons.Add(AddButton(settings, "BackFromSettings", "BACK", new Color(1, 1, 1, .14f), 22, 50, () => Show(Page.Main)));
             actionButtons = buttons.ToArray();
 
@@ -80,7 +80,6 @@ namespace ShipMayham
             version.text = $"v{Application.version} • protocol {PrototypeHud.NetworkProtocolVersion}";
 
             Show(Page.Main);
-            RefreshSoundLabel();
         }
 
         private const int NicknameLimit = LobbyRules.MaxNameLength;
@@ -145,14 +144,6 @@ namespace ShipMayham
             hud.JoinCode = upper;
         }
 
-        private void ToggleSound()
-        {
-            FeedbackSettings.Muted = !FeedbackSettings.Muted;
-            RefreshSoundLabel();
-        }
-
-        private void RefreshSoundLabel() => HudKit.SetLabel(soundButton, FeedbackSettings.Muted ? "SOUND: OFF" : "SOUND: ON");
-
         private static void Quit()
         {
 #if UNITY_EDITOR
@@ -164,6 +155,8 @@ namespace ShipMayham
 
         public void Show(Page page)
         {
+            if (current == Page.Settings && page != Page.Settings) settingsPanel.Unsubscribe();
+            if (page == Page.Settings && current != Page.Settings) settingsPanel.Subscribe();
             current = page;
             for (int i = 0; i < pages.Length; i++) HudKit.SetActive(pages[i], i == (int)page);
         }

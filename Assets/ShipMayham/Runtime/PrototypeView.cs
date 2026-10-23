@@ -35,6 +35,29 @@ namespace ShipMayham
         /// <summary>What the local crosshair is on; refreshed every frame the local crew member is active.</summary>
         public InteractionTarget Target { get; private set; }
         public InteractionPrompt Prompt => Target.Prompt;
+        /// <summary>True while the in-game menu is open: the cursor is free and, in a solo voyage, the game is paused.</summary>
+        public bool MenuOpen { get; private set; }
+        private float menuOpenedAt;
+        private bool lockedLastFrame;
+
+        public void OpenMenu()
+        {
+            if (MenuOpen) return;
+            MenuOpen = true;
+            menuOpenedAt = Time.unscaledTime;
+            CaptureCursor(false);
+            if (Session != null && Session.IsSoloVoyage) Time.timeScale = 0;
+        }
+
+        /// <summary>Closes the menu. When asked, the cursor is captured again (browsers only allow that from a click).</summary>
+        public void CloseMenu(bool recapture)
+        {
+            if (!MenuOpen) return;
+            MenuOpen = false;
+            Time.timeScale = 1;
+            if (recapture && !Application.isBatchMode) CaptureCursor(Application.isFocused);
+        }
+
         /// <summary>True while the purser's desk is open; the cursor is free and the crew member stands still.</summary>
         public bool PurserOpen { get; private set; }
 
@@ -211,6 +234,8 @@ namespace ShipMayham
 
         private void OnDisable()
         {
+            MenuOpen = false;
+            Time.timeScale = 1;
             CaptureCursor(false);
             IsFirstPerson = false;
             if (crewVisuals == null) return;
@@ -246,6 +271,21 @@ namespace ShipMayham
             Vector2 input = Vector2.zero;
             var keyboard = Keyboard.current;
             var pad = Gamepad.current;
+            bool escape = Application.isFocused && (keyboard?.escapeKey.wasPressedThisFrame == true || pad?.startButton.wasPressedThisFrame == true);
+            if (MenuOpen)
+            {
+                // A browser reports the lock loss and Escape in separate frames; ignore the late key so it cannot close the menu it opened.
+                if (escape && Time.unscaledTime - menuOpenedAt > .3f)
+                {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                    CloseMenu(false);
+#else
+                    CloseMenu(true);
+#endif
+                }
+                if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
+                return;
+            }
             if (PurserOpen)
             {
                 bool leave = Session.Voyage.Value.Phase == VoyagePhase.Sailing || Session.Crew[local].OnShore;
@@ -255,19 +295,14 @@ namespace ShipMayham
                 return;
             }
             bool capturedThisFrame = false;
-            if (Application.isFocused && (keyboard?.escapeKey.wasPressedThisFrame == true || pad?.startButton.wasPressedThisFrame == true))
+            // Losing the pointer lock (Escape in a browser or the editor) is how the menu is reached without the key reaching the game.
+            bool lockLost = lockedLastFrame && Cursor.lockState != CursorLockMode.Locked && Application.isFocused;
+            lockedLastFrame = Cursor.lockState == CursorLockMode.Locked;
+            if (escape || lockLost)
             {
-#if UNITY_WEBGL && !UNITY_EDITOR
-                // Browsers reserve Escape for releasing pointer lock. Recapture
-                // requires a fresh canvas click, not an asynchronous/toggled request.
-                capturedThisFrame = true;
-                CaptureCursor(false);
-#else
-                // The Editor can unlock on Escape before Update; track our own intent so
-                // that the same Escape press does not immediately relock the cursor.
-                capturedThisFrame = !captureRequested;
-                CaptureCursor(capturedThisFrame);
-#endif
+                OpenMenu();
+                if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
+                return;
             }
             // Click only the unobstructed center of the game view to resume; HUD clicks stay UI clicks.
             if (Application.isFocused && Cursor.lockState != CursorLockMode.Locked && Mouse.current?.leftButton.wasPressedThisFrame == true)
@@ -278,8 +313,8 @@ namespace ShipMayham
             }
             if (Application.isFocused && Cursor.lockState == CursorLockMode.Locked && !capturedThisFrame)
             {
-                Vector2 look = Mouse.current != null ? Mouse.current.delta.ReadValue() * MouseSensitivity : Vector2.zero;
-                if (pad != null) look += pad.rightStick.ReadValue() * (StickLookSpeed * Time.unscaledDeltaTime);
+                Vector2 look = Mouse.current != null ? Mouse.current.delta.ReadValue() * (MouseSensitivity * GameSettings.LookSpeed) : Vector2.zero;
+                if (pad != null) look += pad.rightStick.ReadValue() * (StickLookSpeed * GameSettings.LookSpeed * Time.unscaledDeltaTime);
                 if (look.sqrMagnitude > .0001f) lastLookInput = Time.unscaledTime;
                 lookYaw = Mathf.Repeat(lookYaw + look.x, 360);
                 lookPitch = Mathf.Clamp(lookPitch - look.y, -80, 80);

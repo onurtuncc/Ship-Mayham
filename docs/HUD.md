@@ -41,6 +41,21 @@ informational (nothing to press) and a `PromptTone.Blocked` prompt is drawn in r
 To add a new interactable: extend `PromptCatalog` (or build an `InteractionPrompt` where the target is found) and
 add the case to `InteractionTargeting` and the input dispatch in `PrototypeView.Update`. Control glyphs live in `HudControls.Label`.
 
+## Settings and the in-game menu
+
+`GameSettings` (`Runtime/Settings`) holds the player's preferences on the device: master, music and effects volume,
+interface size (small, normal, large), camera shake (off, low, full), look speed, controller rumble and tips. Setters clamp,
+save and raise `Changed`; storage failures only log a warning. `SettingsPanel` edits them and is shown on the main menu's
+Settings page and inside the in-game menu. `M` still mutes everything; the old on-screen sound button is gone.
+
+`Esc` (gamepad Start) opens `PauseMenu`: Resume, Settings, "I'm stuck" and Leave. In a solo voyage the menu pauses the game
+(`Time.timeScale = 0`); online it only frees the cursor. Losing the pointer lock also opens it, which is how the menu is
+reached in a browser where `Esc` is consumed by the browser. "I'm stuck" calls `UnstuckRpc`: the host puts the crew member
+back on the deck spawn (or the quay boarding spot ashore), drops what they hold or man, and starts a 30 s cooldown.
+
+`HudController` applies the interface size by changing the canvas reference resolution; `Haptics` pulses the gamepad on
+hull damage, cannon fire and a lost ship unless rumble is off.
+
 ## Purser panel
 
 Talking to the purser (Manifest station) opens `PurserPanel`: the Passengers button boards passengers or, after a trip,

@@ -21,8 +21,14 @@ namespace ShipMayham
             }
         }
 
-        /// <summary>Multiplier applied to every feedback sound: 0 while muted.</summary>
-        public static float Gain => Muted ? 0f : 1f;
+        /// <summary>Multiplier applied to every sound: 0 while muted, otherwise the master volume.</summary>
+        public static float Gain => Muted ? 0f : GameSettings.MasterVolume;
+
+        /// <summary>Gain for sound effects (master x effects volume).</summary>
+        public static float SfxGain => Gain * GameSettings.SfxVolume;
+
+        /// <summary>Gain for music (master x music volume).</summary>
+        public static float MusicGain => Gain * GameSettings.MusicVolume;
 
         private static void Load()
         {

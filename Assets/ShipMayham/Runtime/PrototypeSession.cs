@@ -26,6 +26,8 @@ namespace ShipMayham
         public bool LobbyBeforeVoyage { get; set; }
         public bool InLobby => IsSpawned && Voyage.Value.SessionPhase == SessionPhase.Lobby;
         private bool GameplayOpen => Simulation != null && !Simulation.InLobby;
+        /// <summary>True when this host runs the voyage alone (no online session, no other client), so pausing stops nobody else.</summary>
+        public bool IsSoloVoyage => IsSpawned && IsServer && (Roster == null || !Roster.OnlineMode) && NetworkManager.ConnectedClientsIds.Count <= 1;
         private bool nicknameSent;
         public VoyageSimulation Simulation { get; private set; }
         public string Notice { get; private set; } = "Board passengers at the manifest, then take the helm.";
@@ -187,6 +189,16 @@ namespace ShipMayham
             if (Simulation == null) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.DockItemCommand(sender, action, expectedKind);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void UnstuckRpc(RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.Unstuck(sender);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
             Publish();
         }

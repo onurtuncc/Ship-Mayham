@@ -16,6 +16,7 @@ namespace ShipMayham
         private GameHud game;
         private LobbyScreen lobby;
         private bool gamepad;
+        private CanvasScaler scaler;
 
         public bool UsingGamepad => gamepad;
         public Canvas Canvas => canvas;
@@ -38,7 +39,7 @@ namespace ShipMayham
             canvas = gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 100;
-            var scaler = gameObject.AddComponent<CanvasScaler>();
+            scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(HudKit.ReferenceWidth, HudKit.ReferenceHeight);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
@@ -54,6 +55,7 @@ namespace ShipMayham
         {
             if (hud == null) return;
             canvas.enabled = !hud.IsReloading;
+            ApplyUiScale();
             if (!canvas.enabled) return;
             DetectInputDevice();
             bool inSession = hud.Session != null && hud.Session.IsSpawned;
@@ -65,6 +67,17 @@ namespace ShipMayham
             if (inLobby) { lobby.Tick(); return; }
             if (Keyboard.current?.f1Key.wasPressedThisFrame == true) game.ToggleHelp();
             game.Tick(Time.unscaledDeltaTime, gamepad);
+        }
+
+        private float appliedScale;
+
+        // A larger interface is a smaller reference resolution: the canvas then magnifies everything.
+        private void ApplyUiScale()
+        {
+            float scale = GameSettings.UiScale;
+            if (Mathf.Approximately(scale, appliedScale)) return;
+            appliedScale = scale;
+            scaler.referenceResolution = new Vector2(HudKit.ReferenceWidth, HudKit.ReferenceHeight) / scale;
         }
 
         private void DetectInputDevice()

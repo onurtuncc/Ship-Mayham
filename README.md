@@ -27,7 +27,7 @@ Windows build: **Ship Mayham → Build Prototype (Windows)**. WebGL yayını: [d
 | Yolcuyu kaldır / bırak | G | B |
 | Fırlat / ateş (top) | Sol tık | RT |
 | Top doldur | R | X |
-| İmleci bırak | Esc | Start |
+| Menü (devam, ayarlar, sıkıştım, çık) | Esc | Start |
 | Kontrol rehberi | F1 | — |
 
 Oyundaki ipuçları kullandığın cihaza göre tuşları gösterir.

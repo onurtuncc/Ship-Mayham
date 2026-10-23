@@ -402,8 +402,8 @@ namespace ShipMayham
                 $"{K(HudControl.Look)}  Aim      {K(HudControl.Fire)}  Fire\n" +
                 $"{K(HudControl.Reload)}  Reload\n" +
                 $"{K(HudControl.Release)}  Leave station\n\n" +
-                "<b>CURSOR</b>\n" +
-                (gamepad ? "<b><color=#FFC847>START</color></b>  Release or capture cursor" : "<b><color=#FFC847>ESC</color></b>  Release cursor for menus");
+                "<b>MENU</b>\n" +
+                (gamepad ? "<b><color=#FFC847>START</color></b>  Menu: settings, I'm stuck" : "<b><color=#FFC847>ESC</color></b>  Menu: settings, I'm stuck");
         }
     }
 }

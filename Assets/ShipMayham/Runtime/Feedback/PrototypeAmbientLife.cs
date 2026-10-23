@@ -108,7 +108,7 @@ namespace ShipMayham
                 var cam = View.Camera != null ? View.Camera.transform.position : center;
                 float distance = Vector3.Distance(cam, gulls[0].position);
                 voice.pitch = Random.Range(.9f, 1.2f);
-                voice.PlayOneShot(ProceduralSfx.Get(SfxKind.Gull), Mathf.Clamp01(1f - distance / 70f) * .35f * FeedbackSettings.Gain);
+                voice.PlayOneShot(ProceduralSfx.Get(SfxKind.Gull), Mathf.Clamp01(1f - distance / 70f) * .35f * FeedbackSettings.SfxGain);
             }
         }
 

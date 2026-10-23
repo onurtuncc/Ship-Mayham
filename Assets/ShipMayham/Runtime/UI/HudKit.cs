@@ -170,6 +170,36 @@ namespace ShipMayham
             return button;
         }
 
+        /// <summary>Horizontal slider built from the standard uGUI parts (track, fill, handle).</summary>
+        public static Slider MakeSlider(Transform parent, string name, float min, float max, float value, UnityEngine.Events.UnityAction<float> onChange)
+        {
+            var root = Node(parent, name);
+            var slider = root.gameObject.AddComponent<Slider>();
+            var track = Box(root, "Background", new Color(1, 1, 1, .18f), true, true);
+            track.rectTransform.anchorMin = new Vector2(0, .5f); track.rectTransform.anchorMax = new Vector2(1, .5f);
+            track.rectTransform.sizeDelta = new Vector2(0, 10);
+            var fillArea = Node(root, "Fill Area");
+            fillArea.anchorMin = new Vector2(0, .5f); fillArea.anchorMax = new Vector2(1, .5f);
+            fillArea.sizeDelta = new Vector2(-20, 10); fillArea.anchoredPosition = new Vector2(-10, 0);
+            var fill = Box(fillArea, "Fill", Accent, true, false);
+            fill.rectTransform.sizeDelta = new Vector2(10, 0);
+            var handleArea = Node(root, "Handle Slide Area");
+            // The slider stretches the handle over the full height of its slide area, so the area is as tall as the round handle.
+            handleArea.anchorMin = new Vector2(0, .5f); handleArea.anchorMax = new Vector2(1, .5f);
+            handleArea.sizeDelta = new Vector2(-20, 28); handleArea.anchoredPosition = Vector2.zero;
+            var handle = Dot(handleArea, "Handle", Ink, 28);
+            handle.raycastTarget = true;
+            handle.rectTransform.sizeDelta = new Vector2(28, 0);
+            slider.fillRect = fill.rectTransform;
+            slider.handleRect = handle.rectTransform;
+            slider.targetGraphic = handle;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.minValue = min; slider.maxValue = max;
+            slider.SetValueWithoutNotify(value);
+            slider.onValueChanged.AddListener(onChange);
+            return slider;
+        }
+
         public static void SetLabel(Button button, string label)
         {
             var text = button.GetComponentInChildren<Text>(true);

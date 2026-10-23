@@ -101,6 +101,45 @@ namespace ShipMayham.Tests
             yield return new ExitPlayMode();
         }
 
+        [UnityTest] public IEnumerator TheMenuPausesASoloVoyageAndUnsticksTheCrew()
+        {
+            yield return new EnterPlayMode();
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            var controller = hud.GetComponentInChildren<HudController>(true);
+            hud.ConnectSolo();
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return new WaitForSeconds(.6f);
+            Assert.IsTrue(hud.Session.IsSoloVoyage);
+
+            hud.View.OpenMenu();
+            yield return new WaitForSecondsRealtime(.4f);
+            var menu = System.Array.Find(controller.GetComponentsInChildren<Transform>(true), t => t.name == "PauseMenu");
+            Assert.IsNotNull(menu);
+            Assert.IsTrue(menu.gameObject.activeSelf);
+            Assert.AreEqual(0f, Time.timeScale, "A solo voyage pauses.");
+            Assert.AreEqual("PAUSED", menu.Find("Card/Title").GetComponent<UnityEngine.UI.Text>().text);
+
+            var settingsButton = System.Array.Find(menu.GetComponentsInChildren<UnityEngine.UI.Button>(true), b => b.name == "SettingsButton");
+            settingsButton.onClick.Invoke();
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.IsTrue(menu.Find("Card/SettingsView").gameObject.activeSelf);
+            Assert.IsFalse(menu.Find("Card/Main").gameObject.activeSelf);
+
+            hud.View.CloseMenu(true);
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.IsFalse(menu.gameObject.activeSelf);
+
+            var sim = hud.Session.Simulation;
+            sim.Crew[0].Position = new Vector2(4.5f, 7.5f);
+            hud.Session.UnstuckRpc();
+            yield return new WaitForSeconds(.6f);
+            Assert.AreEqual(new Vector2(-1.5f, -6), sim.Crew[0].Position);
+            yield return new ExitPlayMode();
+        }
+
         // Optional visual check (set SHIPMAYHAM_CAPTURE=1): renders lobby and HUD states to Logs/Hud*.png.
         [UnityTest] public IEnumerator CaptureHudScreens()
         {
@@ -140,6 +179,17 @@ namespace ShipMayham.Tests
             yield return null; yield return null;
             yield return Capture(hud, controller, "Logs/HudHelp.png");
             controller.Game.ToggleHelp();
+
+            // The in-game menu and its settings.
+            hud.View.OpenMenu();
+            yield return new WaitForSecondsRealtime(.4f);
+            yield return Capture(hud, controller, "Logs/HudPause.png");
+            var menuRoot = System.Array.Find(controller.GetComponentsInChildren<Transform>(true), t => t.name == "PauseMenu");
+            System.Array.Find(menuRoot.GetComponentsInChildren<UnityEngine.UI.Button>(true), b => b.name == "SettingsButton").onClick.Invoke();
+            yield return new WaitForSecondsRealtime(.3f);
+            yield return Capture(hud, controller, "Logs/HudPauseSettings.png");
+            hud.View.CloseMenu(true);
+            yield return new WaitForSeconds(.2f);
 
             // The purser's desk, then the world around it.
             var sim = hud.Session.Simulation;
