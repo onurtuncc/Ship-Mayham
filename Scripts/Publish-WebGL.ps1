@@ -6,7 +6,9 @@ param(
     [string]$PagesBranch = "gh-pages",
     [switch]$SkipBuild,
     [switch]$InPlace,
-    [switch]$BuildOnly
+    [switch]$BuildOnly,
+    # Folder holding Assets/Packages/ProjectSettings to build (for example a clean git export while the checkout has unfinished edits).
+    [string]$SourceRoot
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,7 +64,7 @@ if (-not $SkipBuild) {
         Write-Host "Syncing the cached WebGL build workspace..."
 
         foreach ($directoryName in @("Assets", "Packages", "ProjectSettings")) {
-            $sourceDirectory = Join-Path $projectRoot $directoryName
+            $sourceDirectory = Join-Path $(if ([string]::IsNullOrWhiteSpace($SourceRoot)) { $projectRoot } else { [IO.Path]::GetFullPath($SourceRoot) }) $directoryName
             $targetDirectory = Join-Path $buildProjectRoot $directoryName
             & robocopy $sourceDirectory $targetDirectory /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
             if ($LASTEXITCODE -ge 8) {
