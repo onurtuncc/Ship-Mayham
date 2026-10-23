@@ -34,6 +34,7 @@ namespace ShipMayham
         private readonly GameObject contextRoot, carryRoot, resumeRoot;
         private readonly HarborPanel harbor;
         private readonly HelpOverlay help;
+        private readonly PurserPanel purser;
 
         private int voyageSignature = int.MinValue, objectiveSignature = int.MinValue, alertSignature = int.MinValue, carrySignature = int.MinValue;
         private readonly ResourcePill[] pills;
@@ -182,6 +183,7 @@ namespace ShipMayham
             resume.gameObject.SetActive(false);
 
             help = new HelpOverlay(screen);
+            purser = new PurserPanel(hud, screen);
             screen.gameObject.SetActive(false);
         }
 
@@ -222,6 +224,7 @@ namespace ShipMayham
             TickCarry(session, local);
             TickResume(firstPerson && !locked);
             help.Tick(gamepad);
+            purser.Tick();
             for (int i = 0; i < pills.Length; i++) pills[i].Tick(dt);
         }
 

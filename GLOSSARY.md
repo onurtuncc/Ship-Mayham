@@ -83,8 +83,12 @@ Gemide bir işin yapıldığı sabit nokta: Manifest, Helm, Food, Drink, Repair,
 _Avoid_: Panel, terminal, makine
 
 **Manifest**:
-Yolcuların gemiye alındığı ve yeni Voyage'ın hazırlandığı Station.
+Purser'ın masası: yolcuların gemiye alındığı, yeni Voyage'ın hazırlandığı ve gemi Upgrade'lerinin satın alındığı Station.
 _Avoid_: Check-in, kabul masası
+
+**Purser**:
+Manifest masasının arkasında duran NPC. Onunla konuşmak masa panelini açar: yolcu alma, yeni Voyage ve Upgrade satın alma. Yalnızca limandayken (Sailing dışında) çalışır.
+_Avoid_: Gişe görevlisi, memur
 
 **Helm**:
 Gemiyi süren Station; aynı anda tek Crew member kullanır. Bırakılınca gemi hız ve yönünü korur.
@@ -107,7 +111,7 @@ Elektriğin kesilmesi; Power Station'ında sigortalar sıfırlanana kadar yeni y
 _Avoid_: Blackout
 
 **Upgrade**:
-Gemiyi kalıcı güçlendiren üç yükseltmeden biri: Engine, Capacity (seats), Comfort. Yalnızca Harbor açıkken satın alınır.
+Gemiyi kalıcı güçlendiren üç yükseltmeden biri: Engine, Capacity (seats), Comfort. Purser'dan, yalnızca limandayken satın alınır.
 _Avoid_: Modül, geliştirme
 
 **Livery**:

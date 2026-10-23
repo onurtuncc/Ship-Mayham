@@ -41,6 +41,13 @@ informational (nothing to press) and a `PromptTone.Blocked` prompt is drawn in r
 To add a new interactable: extend `PromptCatalog` (or build an `InteractionPrompt` where the target is found) and
 add the case to `InteractionTargeting` and the input dispatch in `PrototypeView.Update`. Control glyphs live in `HudControls.Label`.
 
+## Purser panel
+
+Talking to the purser (Manifest station) opens `PurserPanel`: the Passengers button boards passengers or, after a trip,
+starts the next voyage; each upgrade row shows its level and price. The panel frees the cursor (`View.PurserOpen`) and
+closes with `Esc`, `E`, the gamepad `B` button, the Close button, or when the voyage starts sailing. Gamepad users
+reach the buttons through UI navigation.
+
 ## Port panel
 
 Only the sections usable at the player's position are shown: route and job buttons at the port office, job progress

@@ -1,6 +1,6 @@
 # Movement netcode
 
-Network protocol version **11** (11 adds the session phase and the per-slot nickname/ready list for the lobby) (`PrototypeHud.NetworkProtocolVersion`). The host runs the authoritative `VoyageSimulation`; clients only present state.
+Network protocol version **12** (11 added the session phase and the per-slot nickname/ready list for the lobby; 12 adds `BuyUpgradeRpc` for the purser) (`PrototypeHud.NetworkProtocolVersion`). The host runs the authoritative `VoyageSimulation`; clients only present state.
 
 ## Data flow
 

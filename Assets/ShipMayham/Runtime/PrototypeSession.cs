@@ -192,6 +192,16 @@ namespace ShipMayham
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void BuyUpgradeRpc(StationKind kind, RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.BuyUpgrade(sender, kind);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void SetNicknameRpc(FixedString64Bytes nickname, RpcParams rpc = default)
         {
             if (Simulation == null) return;

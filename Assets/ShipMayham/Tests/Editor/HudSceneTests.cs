@@ -68,6 +68,39 @@ namespace ShipMayham.Tests
             yield return new ExitPlayMode();
         }
 
+        [UnityTest] public IEnumerator ThePurserSellsUpgradesAndReleasesTheCursor()
+        {
+            yield return new EnterPlayMode();
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            var controller = hud.GetComponentInChildren<HudController>(true);
+            hud.ConnectSolo();
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return new WaitForSeconds(.6f);
+            var sim = hud.Session.Simulation;
+            Vector2 desk = sim.PurserPoint.Value;
+            sim.Crew[0].Position = desk + new Vector2(.9f, 0);
+            sim.State.Wallet = 500;
+            yield return new WaitForSeconds(.4f);
+
+            hud.View.OpenPurser();
+            yield return new WaitForSeconds(.4f);
+            var panel = System.Array.Find(controller.GetComponentsInChildren<Transform>(true), t => t.name == "PurserPanel");
+            Assert.IsNotNull(panel);
+            Assert.IsTrue(panel.gameObject.activeSelf, "The desk opens as a panel.");
+
+            hud.Session.BuyUpgradeRpc(StationKind.EngineUpgrade);
+            yield return new WaitForSeconds(.6f);
+            Assert.AreEqual(1, sim.State.EngineLevel);
+            Assert.AreEqual(400, sim.State.Wallet);
+
+            hud.View.ClosePurser();
+            yield return new WaitForSeconds(.3f);
+            Assert.IsFalse(panel.gameObject.activeSelf);
+            yield return new ExitPlayMode();
+        }
+
         // Optional visual check (set SHIPMAYHAM_CAPTURE=1): renders lobby and HUD states to Logs/Hud*.png.
         [UnityTest] public IEnumerator CaptureHudScreens()
         {
@@ -107,8 +140,43 @@ namespace ShipMayham.Tests
             yield return null; yield return null;
             yield return Capture(hud, controller, "Logs/HudHelp.png");
             controller.Game.ToggleHelp();
+
+            // The purser's desk, then the world around it.
+            var sim = hud.Session.Simulation;
+            sim.State.Wallet = 320;
+            sim.Crew[0].Position = sim.PurserPoint.Value + new Vector2(.9f, 0);
+            yield return new WaitForSeconds(.4f);
+            hud.View.OpenPurser();
+            yield return new WaitForSeconds(.4f);
+            yield return Capture(hud, controller, "Logs/HudPurser.png");
+            hud.View.ClosePurser();
+            yield return null;
+            Transform ship = hud.Session.ShipRoot;
+            yield return CaptureWorld(hud, controller, "Logs/WorldPurser.png", ship.TransformPoint(new Vector3(-1.8f, 1.9f, -3.2f)), ship.TransformPoint(new Vector3(-4.9f, 1.3f, -4f)), 50);
+            yield return CaptureWorld(hud, controller, "Logs/WorldGangway.png", new Vector3(-12f, 2.2f, -10f), new Vector3(-9f, .3f, -6f), 60);
+            yield return CaptureWorld(hud, controller, "Logs/WorldGangwayLow.png", new Vector3(-10.5f, .9f, -4.5f), new Vector3(-8.7f, .3f, -6f), 60);
+            yield return CaptureWorld(hud, controller, "Logs/WorldResident.png", new Vector3(-21f, 1.7f, -9f), new Vector3(-24f, 1.3f, -12f), 50);
             GameHud.CursorLockedOverride = null;
             yield return new ExitPlayMode();
+        }
+
+        private static IEnumerator CaptureWorld(PrototypeHud hud, HudController controller, string path, Vector3 from, Vector3 to, float fieldOfView)
+        {
+            yield return null;
+            var camera = hud.View.Camera;
+            var target = new RenderTexture(1920, 1080, 24);
+            var texture = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
+            controller.Canvas.enabled = false;
+            camera.transform.SetPositionAndRotation(from, Quaternion.LookRotation(to - from));
+            camera.fieldOfView = fieldOfView;
+            camera.targetTexture = target;
+            camera.Render();
+            RenderTexture.active = target;
+            texture.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0); texture.Apply();
+            camera.targetTexture = null; RenderTexture.active = null;
+            controller.Canvas.enabled = true;
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+            Object.Destroy(target); Object.Destroy(texture);
         }
 
         private static IEnumerator Capture(PrototypeHud hud, HudController controller, string path)

@@ -385,6 +385,30 @@ namespace ShipMayham
         public static int UpgradeCost(StationKind kind, VoyageState state) => kind == StationKind.EngineUpgrade
             ? 100 * (state.EngineLevel + 1) : kind == StationKind.CapacityUpgrade ? 150 * (state.CapacityLevel + 1) : 120;
 
+        /// <summary>Position of the purser's desk (the Manifest station), or null when the ship has none.</summary>
+        public Vector2? PurserPoint
+        {
+            get
+            {
+                foreach (var station in Stations) if (station.Kind == StationKind.Manifest) return station.Position;
+                return null;
+            }
+        }
+
+        /// <summary>Buys a ship upgrade from the purser: aboard, next to the Manifest desk, and only at port.</summary>
+        public string BuyUpgrade(ulong clientId, StationKind kind)
+        {
+            int i = FindCrew(clientId);
+            if (i < 0) return "Crew not registered.";
+            if (!IsUpgrade(kind)) return "Unknown upgrade.";
+            if (Crew[i].OnShore) return "Return aboard to talk to the purser.";
+            Vector2? purser = PurserPoint;
+            if (purser == null || Vector2.Distance(Crew[i].Position, purser.Value) > InteractionRange) return "Move closer to the purser.";
+            if (clock < interactionReady[i]) return string.Empty;
+            interactionReady[i] = clock + .35f;
+            return Buy(kind);
+        }
+
         private string Buy(StationKind kind)
         {
             if (State.Phase == VoyagePhase.Sailing) return "Upgrades are available at port.";

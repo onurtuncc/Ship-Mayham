@@ -35,6 +35,8 @@ namespace ShipMayham
             for (int i = 0; i < session.Stations.Length; i++)
             {
                 var station = session.Stations[i];
+                // Ship upgrades are bought from the purser, not at the upgrade fittings.
+                if (VoyageSimulation.IsUpgrade(station.Kind)) continue;
                 if (Vector2.Distance(crew.Position, station.DeckPosition(session.ShipRoot)) > VoyageSimulation.InteractionRange) continue;
                 float angle = Vector3.Angle(forward, station.InteractionAnchor.position + Vector3.up * .65f - eye);
                 if (angle >= best) continue;

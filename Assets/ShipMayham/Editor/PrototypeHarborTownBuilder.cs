@@ -84,7 +84,8 @@ namespace ShipMayham.Editor
                 foreach (string obsolete in new[] { "Model_HarborHut", "Terminal_Primitive", "WalkwayStripe_Primitive" })
                 { var old = oldVisuals.Find(obsolete); if (old != null) old.gameObject.SetActive(false); }
                 Transform town = Root("Town_Visuals", root);
-                Box("QuayFoundation", town, new Vector3(-14, -.08f, 0), new Vector3(40, .76f, 48), stone);
+                // 20 mm under the pier top and 50 mm short of its quay edge: the pier planks and the stone never share a face.
+                Box("QuayFoundation", town, QuayFoundationPosition, QuayFoundationScale, stone);
                 Box("MarketSquare", town, new Vector3(-14, .31f, 0), new Vector3(37, .04f, 44), paving);
                 // Long boardwalk and east-west promenades leave wide, direct travel lanes.
                 Box("MainPromenade", town, new Vector3(-3, .345f, 0), new Vector3(4, .03f, 44), wood);

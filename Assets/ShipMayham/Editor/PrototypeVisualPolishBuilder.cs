@@ -36,12 +36,22 @@ namespace ShipMayham.Editor
 
         // Crosswalks, welcome mats and the promenade are all thin slabs; sharing a top face makes them z-fight.
         // Each layer sits a clear 16 mm above the one under it (well above depth precision at the camera ranges used).
+        // The pier (top .30, east edge at the quay) and the stone foundation under the town used to share both the top and the
+        // quay-edge face, so the boarding spot at the gangway flickered between planks and stone.
+        private static readonly Vector3 QuayFoundationPosition = new Vector3(-14.025f, -.1f, 0), QuayFoundationScale = new Vector3(39.95f, .76f, 48);
+
         private static void SeparateTownSurfaces()
         {
             const float promenadeTop = .36f, crosswalkTop = promenadeTop + .016f, matTop = crosswalkTop + .016f;
             foreach (var transform in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (transform.name.StartsWith("Crosswalk_"))
+                if (transform.name == "QuayFoundation")
+                {
+                    transform.localPosition = QuayFoundationPosition;
+                    transform.localScale = QuayFoundationScale;
+                    EditorUtility.SetDirty(transform);
+                }
+                else if (transform.name.StartsWith("Crosswalk_"))
                 {
                     var p = transform.localPosition;
                     transform.localPosition = new Vector3(p.x, crosswalkTop - transform.localScale.y / 2, p.z);

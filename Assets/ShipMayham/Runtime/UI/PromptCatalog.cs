@@ -24,9 +24,9 @@ namespace ShipMayham
             switch (kind)
             {
                 case StationKind.Manifest:
-                    return voyage.Phase == VoyagePhase.Boarding
-                        ? InteractionPrompt.Target("Manifest desk", "Board passengers", "Every crew member must be aboard to depart")
-                        : InteractionPrompt.Target("Manifest desk", "Start new voyage", "Collect your pay and prepare the next trip");
+                    return voyage.Phase == VoyagePhase.Sailing
+                        ? InteractionPrompt.Target("Purser", "Back at port", "Passengers and upgrades are handled at port", key: HudControl.None, tone: PromptTone.Info)
+                        : InteractionPrompt.Target("Purser", "Talk to the purser", voyage.Phase == VoyagePhase.Boarding ? "Board passengers, upgrade the ship" : "Settle up, prepare the next voyage");
                 case StationKind.Helm:
                     return InteractionPrompt.Target("Helm", "Take the helm", "Steer, depart and dock");
                 case StationKind.Food:

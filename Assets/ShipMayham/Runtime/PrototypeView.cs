@@ -35,6 +35,25 @@ namespace ShipMayham
         /// <summary>What the local crosshair is on; refreshed every frame the local crew member is active.</summary>
         public InteractionTarget Target { get; private set; }
         public InteractionPrompt Prompt => Target.Prompt;
+        /// <summary>True while the purser's desk is open; the cursor is free and the crew member stands still.</summary>
+        public bool PurserOpen { get; private set; }
+
+        public void OpenPurser()
+        {
+            if (PurserOpen) return;
+            PurserOpen = true;
+            CaptureCursor(false);
+        }
+
+        public void ClosePurser()
+        {
+            if (!PurserOpen) return;
+            PurserOpen = false;
+#if !(UNITY_WEBGL && !UNITY_EDITOR)
+            // Browsers need a fresh click to lock the pointer again; elsewhere resume looking at once.
+            CaptureCursor(Application.isFocused && !Application.isBatchMode);
+#endif
+        }
         public bool IsFirstPerson { get; private set; }
         /// <summary>True while the local helmsman uses the elevated follow camera instead of first person.</summary>
         public bool ChaseCameraActive { get; private set; }
@@ -166,6 +185,9 @@ namespace ShipMayham
                 passengerLabelOffsets[i] = PassengerLabels[i].transform.localPosition;
                 passengerBuoys[i] = PassengerVisuals[i].Find("RescueFloat_Visual");
             }
+            // Ship upgrades are sold by the purser, so the upgrade fittings stay out of the world.
+            foreach (var station in Session.Stations)
+                if (VoyageSimulation.IsUpgrade(station.Kind) && station.Visuals != null) station.Visuals.gameObject.SetActive(false);
             foreach (var station in Session.Stations)
                 if (station.Kind == StationKind.Ammo)
                 {
@@ -224,6 +246,14 @@ namespace ShipMayham
             Vector2 input = Vector2.zero;
             var keyboard = Keyboard.current;
             var pad = Gamepad.current;
+            if (PurserOpen)
+            {
+                bool leave = Session.Voyage.Value.Phase == VoyagePhase.Sailing || Session.Crew[local].OnShore;
+                if (leave || keyboard?.escapeKey.wasPressedThisFrame == true || keyboard?.eKey.wasPressedThisFrame == true || pad?.buttonEast.wasPressedThisFrame == true)
+                    ClosePurser();
+                if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
+                return;
+            }
             bool capturedThisFrame = false;
             if (Application.isFocused && (keyboard?.escapeKey.wasPressedThisFrame == true || pad?.startButton.wasPressedThisFrame == true))
             {
@@ -284,6 +314,10 @@ namespace ShipMayham
                     if (Session.Crew[local].AtCrane) Session.HarborCraneActionRpc(false);
                     else if (Target.Kind == InteractionKind.Salvage)
                         Session.PickUpSalvageRpc(Target.Index);
+                    else if (Target.Kind == InteractionKind.Station && Session.Stations[Target.Index].Kind == StationKind.Manifest)
+                    {
+                        if (Session.Voyage.Value.Phase != VoyagePhase.Sailing) OpenPurser();
+                    }
                     else if (Target.Kind == InteractionKind.Harbor)
                     {
                         var action = Target.HarborAction;
@@ -479,7 +513,7 @@ namespace ShipMayham
             foreach (var station in Session.Stations)
             {
                 WorldLabelPresentation.UpdateLabel(station.Label, Camera);
-                station.Label.gameObject.SetActive((local < 0 || !Session.Crew[local].OnShore) && Vector3.Distance(station.Label.transform.position, Camera.transform.position) < 10);
+                station.Label.gameObject.SetActive((local < 0 || !Session.Crew[local].OnShore) && !VoyageSimulation.IsUpgrade(station.Kind) && Vector3.Distance(station.Label.transform.position, Camera.transform.position) < 10);
                 station.Label.color = Target.Kind == InteractionKind.Station && Session.Stations[Target.Index] == station ? Color.yellow : Color.white;
             }
         }
