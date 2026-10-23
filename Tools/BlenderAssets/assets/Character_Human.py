@@ -1,4 +1,5 @@
-import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import os
+import sys; sys.path.insert(0, r"D:\blender")
 from assetlib import *
 reset(); globals().update(std()); b = Builder()
 
@@ -32,8 +33,9 @@ b.capsule(0.055, 0.05, (0, 0, 1.4), skin)                                       
 b.sphere(0.215, (0, 0, 1.52), skin, segs=28, rings=18, scale=(1.0, 0.96, 1.02))           # head
 for sx in (-1, 1):
     b.sphere(0.092, (sx * 0.085, -0.15, 1.56), eyeW, scale=(1, 0.7, 1.15))                # big eyes
-    b.sphere(0.04, (sx * 0.085, -0.225, 1.56), eyeB, scale=(1, 0.5, 1.2))
-    b.sphere(0.013, (sx * 0.085 + 0.015, -0.248, 1.59), eyeW, segs=8, rings=6)
+    if os.environ.get("RIG") != "1":                                                      # the rigged body gets separate, movable pupils
+        b.sphere(0.04, (sx * 0.085, -0.225, 1.56), eyeB, scale=(1, 0.5, 1.2))
+        b.sphere(0.013, (sx * 0.085 + 0.015, -0.248, 1.59), eyeW, segs=8, rings=6)
     b.capsule(0.013, 0.06, (sx * 0.085, -0.2, 1.67), hair, rot=(0, 90 + sx * -10, 0), segs=10)  # brow
     b.sphere(0.03, (sx * 0.215, 0, 1.51), skin, scale=(0.5, 0.9, 1.0))                    # ear
     b.sphere(0.038, (sx * 0.14, -0.17, 1.44), blush, scale=(1, 0.4, 0.7))
@@ -65,6 +67,9 @@ if os.environ.get("WELD") == "1":
 elif os.environ.get("RIG") == "1":
     # Humanoid skeleton (Mixamo bone names, T-pose) for Unity's Humanoid avatar; Mixamo animations retarget onto it.
     # Unlike the static props this stays facing -Y: the armature export (no baked space transform) lands facing Unity +Z.
+    # finish() recentres the mesh by this vector; the pupils below are placed in the same frame.
+    _xs = [v.co.x for v in b.bm.verts]; _ys = [v.co.y for v in b.bm.verts]; _zs = [v.co.z for v in b.bm.verts]
+    shift = mathutils.Vector((-(min(_xs) + max(_xs)) / 2, -(min(_ys) + max(_ys)) / 2, -min(_zs)))
     body = b.finish("Character_Human" + V)
     # finish() recentres the mesh; the skeleton below is authored on that same bounding frame (x/y centred, feet at z=0)
     arm_data = bpy.data.armatures.new("Armature"); rig = bpy.data.objects.new("Armature", arm_data)
@@ -125,9 +130,31 @@ elif os.environ.get("RIG") == "1":
             group.add([v.index], weight, "REPLACE")
     body.parent = rig
     modifier = body.modifiers.new("Armature", "ARMATURE"); modifier.object = rig
+    # Pupils: one object per eye whose origin is the eyeball centre, so Unity can aim a pupil by rotating it (it then slides over
+    # the eyeball surface). They hang off the Head bone and follow every head animation.
+    pupils = []
+    for name, sx in (("Pupil_L", 1), ("Pupil_R", -1)):                  # facing -Y, the character's left is +X
+        pb = Builder()
+        pb.sphere(0.04, (0, -0.075, 0), eyeB, scale=(1, 0.5, 1.2))
+        pb.sphere(0.013, (0.015, -0.098, 0.03), eyeW, segs=8, rings=6)
+        bmesh.ops.recalc_face_normals(pb.bm, faces=pb.bm.faces)
+        for f in pb.bm.faces: f.smooth = True
+        me = bpy.data.meshes.new(name); pb.bm.to_mesh(me); pb.bm.free()
+        for m in pb.mats: me.materials.append(m)
+        ob = bpy.data.objects.new(name, me)
+        bpy.context.scene.collection.objects.link(ob)
+        # The FBX exporter writes a bone child relative to the bone's tail while Unity reads it relative to the head, so it lands one
+        # bone length too high; the head bone points straight up here, so start one bone length lower.
+        head_length = rig.data.bones[P + "Head"].length
+        ob.location = mathutils.Vector((sx * 0.085, -0.15, 1.56 - head_length)) + shift
+        bpy.context.view_layer.update()
+        world = ob.matrix_world.copy()
+        ob.parent = rig; ob.parent_type = "BONE"; ob.parent_bone = P + "Head"
+        ob.matrix_parent_inverse = (rig.matrix_world @ rig.data.bones[P + "Head"].matrix_local).inverted()
+        pupils.append(ob)
     groups = len(body.vertex_groups)
     d = outdir(); os.makedirs(d, exist_ok=True)
-    for o in bpy.context.scene.objects: o.select_set(o in (body, rig))
+    for o in bpy.context.scene.objects: o.select_set(o in [body, rig] + pupils)
     bpy.ops.export_scene.fbx(filepath=os.path.join(d, "Character_Human" + V + "_Rigged.fbx"), use_selection=True, apply_unit_scale=True,
                              apply_scale_options="FBX_SCALE_ALL", bake_space_transform=False, axis_forward="-Z", axis_up="Y",
                              mesh_smooth_type="EDGE", add_leaf_bones=False, object_types={"ARMATURE", "MESH"})
