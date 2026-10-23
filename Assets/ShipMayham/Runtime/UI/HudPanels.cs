@@ -402,6 +402,8 @@ namespace ShipMayham
                 $"{K(HudControl.Look)}  Aim      {K(HudControl.Fire)}  Fire\n" +
                 $"{K(HudControl.Reload)}  Reload\n" +
                 $"{K(HudControl.Release)}  Leave station\n\n" +
+                "<b>SIGNALS</b>\n" +
+                $"{K(HudControl.Signal)}  Tap: ping. Hold: emote wheel\n\n" +
                 "<b>MENU</b>\n" +
                 (gamepad ? "<b><color=#FFC847>START</color></b>  Menu: settings, I'm stuck" : "<b><color=#FFC847>ESC</color></b>  Menu: settings, I'm stuck");
         }

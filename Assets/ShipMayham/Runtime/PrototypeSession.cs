@@ -29,6 +29,10 @@ namespace ShipMayham
         /// <summary>True when this host runs the voyage alone (no online session, no other client), so pausing stops nobody else.</summary>
         public bool IsSoloVoyage => IsSpawned && IsServer && (Roster == null || !Roster.OnlineMode) && NetworkManager.ConnectedClientsIds.Count <= 1;
         private bool nicknameSent;
+        private readonly SignalLimiter signalLimiter = new SignalLimiter();
+
+        /// <summary>Raised on every client (and the host) when a crew member pings or emotes.</summary>
+        public event System.Action<SignalMessage> SignalReceived;
         public VoyageSimulation Simulation { get; private set; }
         public string Notice { get; private set; } = "Board passengers at the manifest, then take the helm.";
         public float NoticeUntil { get; private set; }
@@ -192,6 +196,22 @@ namespace ShipMayham
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
             Publish();
         }
+
+        /// <summary>A crew member pings or emotes. The host checks and rate-limits it, then relays it to everyone.</summary>
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void SignalRpc(SignalKind kind, Vector3 point, bool attached, FixedString32Bytes label, RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            int slot = Simulation.FindCrew(rpc.Receive.SenderClientId);
+            if (slot < 0 || kind > SignalKind.WatchOut || !Signals.IsValidPoint(point)) return;
+            if (!signalLimiter.TryAcquire(slot, Time.unscaledTime)) return;
+            string clean = LobbyRules.SanitizeName(label.ToString()) ?? string.Empty;
+            SignalBroadcastRpc(slot, kind, point, attached, new FixedString32Bytes(clean));
+        }
+
+        [Rpc(SendTo.Everyone)]
+        private void SignalBroadcastRpc(int slot, SignalKind kind, Vector3 point, bool attached, FixedString32Bytes label) =>
+            SignalReceived?.Invoke(new SignalMessage(slot, kind, point, attached, label.ToString()));
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void UnstuckRpc(RpcParams rpc = default)

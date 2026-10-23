@@ -1,7 +1,7 @@
 namespace ShipMayham
 {
     /// <summary>Logical player controls shown in the HUD; the glyph depends on the device in use.</summary>
-    public enum HudControl : byte { None, Interact, Check, Carry, Throw, Jump, Fire, Reload, Camera, Release, Look }
+    public enum HudControl : byte { None, Interact, Check, Carry, Throw, Jump, Fire, Reload, Camera, Release, Look, Signal }
 
     public static class HudControls
     {
@@ -19,6 +19,7 @@ namespace ShipMayham
                 case HudControl.Reload: return gamepad ? "X" : "R";
                 case HudControl.Camera: return gamepad ? "Y" : "C";
                 case HudControl.Look: return gamepad ? "RS" : "MOUSE";
+                case HudControl.Signal: return gamepad ? "D-PAD" : "Q";
                 default: return string.Empty;
             }
         }

@@ -51,6 +51,8 @@ namespace ShipMayham
             game = new GameHud(owner, transform);
         }
 
+        private void OnDestroy() => game?.Dispose();
+
         private void Update()
         {
             if (hud == null) return;

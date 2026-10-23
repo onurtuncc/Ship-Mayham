@@ -63,12 +63,29 @@ namespace ShipMayham
         {
             RenderPipelineManager.beginCameraRendering += BeginCamera;
             RenderPipelineManager.endCameraRendering += EndCamera;
+            if (View != null && View.Session != null) View.Session.SignalReceived += OnSignal;
         }
 
         private void OnDisable()
         {
             RenderPipelineManager.beginCameraRendering -= BeginCamera;
             RenderPipelineManager.endCameraRendering -= EndCamera;
+            if (View != null && View.Session != null) View.Session.SignalReceived -= OnSignal;
+        }
+
+        // A crew member pinged or emoted: they gesture, and everyone hears a short cue (louder the closer they are).
+        private void OnSignal(SignalMessage message)
+        {
+            Vector3 at = CrewPoint(message.Slot);
+            if (CrewAnimator != null) CrewAnimator.PlayOneShot(message.Slot, Signals.PoseFor(message.Kind), Signals.GestureSeconds);
+            switch (message.Kind)
+            {
+                case SignalKind.Ping: Sfx(SfxKind.Pop, .8f, 1.5f); break;
+                case SignalKind.Help: Sfx(SfxKind.Alarm, .35f, 1.2f, at); break;
+                case SignalKind.Thanks: Sfx(SfxKind.Chime, .7f, 1.1f, at); break;
+                case SignalKind.OverHere: Sfx(SfxKind.Pop, .8f, 1.25f, at); break;
+                case SignalKind.WatchOut: Sfx(SfxKind.Alarm, .5f, 1.4f, at); break;
+            }
         }
 
         private void Update()

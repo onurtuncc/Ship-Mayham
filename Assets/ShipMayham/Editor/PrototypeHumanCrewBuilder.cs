@@ -26,14 +26,28 @@ namespace ShipMayham.Editor
             Debug.Log("SHIP_HUMAN_CREW_SCENE_READY");
         }
 
+        // State names are the CrewPose names; the clip names are the Mixamo files under Animations.
+        private static UnityEditor.Animations.AnimatorController EnsureCrewController() => EnsureAnimatorController(CrewControllerPath,
+            ("Idle", "Idle"), ("Walking", "Walking"), ("Carrying", "Carrying"), ("Jump", "Jump"), ("PickUp", "PickingUp"),
+            ("Throw", "Throwing"), ("Interact", "ButtonPushing"), ("Dance", "HipHopDancing"), ("Dance2", "SambaDancing"),
+            ("Victory", "VictoryIdle"), ("Defeated", "Defeated"), ("Salute", "Salute"), ("Clap", "StandingClap"), ("LookAround", "LookingAround"),
+            ("Wave", "Waving"), ("Bow", "QuickFormalBow"), ("Point", "Pointing"), ("Angry", "Angry"));
+
+        /// <summary>Adds the signal gestures (wave, bow, point, angry) to the crew controller asset; the scene is not touched.</summary>
+        [MenuItem("Ship Mayham/Upgrade Prototype (Crew Gestures)")]
+        public static void UpgradeCrewGestures()
+        {
+            EnsureCrewController();
+            AssetDatabase.SaveAssets();
+            Debug.Log("SHIP_CREW_GESTURES_READY");
+        }
+
         // Visual-only and idempotent: the capsule body stays as a disabled renderer so authored references keep resolving.
         private static void EnsureHumanCrew(PrototypeView view)
         {
             if (view == null || view.CrewRoots == null || view.CrewRoots.Length == 0)
                 throw new InvalidOperationException("Authored crew slots are required.");
-            var controller = EnsureAnimatorController(CrewControllerPath, ("Idle", "Idle"), ("Walking", "Walking"), ("Carrying", "Carrying"), ("Jump", "Jump"), ("PickUp", "PickingUp"),
-                ("Throw", "Throwing"), ("Interact", "ButtonPushing"), ("Dance", "HipHopDancing"), ("Dance2", "SambaDancing"),
-                ("Victory", "VictoryIdle"), ("Defeated", "Defeated"), ("Salute", "Salute"), ("Clap", "StandingClap"), ("LookAround", "LookingAround"));
+            var controller = EnsureCrewController();
             var animator = view.GetComponent<PrototypeCrewAnimator>();
             if (animator == null) animator = view.gameObject.AddComponent<PrototypeCrewAnimator>();
             animator.View = view;

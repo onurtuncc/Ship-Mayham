@@ -3,7 +3,8 @@ namespace ShipMayham
     /// <summary>Animator state a crew body plays; names match the states of the generated crew controller.</summary>
     public enum CrewPose : byte
     {
-        Idle, Walking, Carrying, Jump, PickUp, Throw, Interact, Dance, Dance2, Victory, Defeated, Salute, Clap, LookAround
+        Idle, Walking, Carrying, Jump, PickUp, Throw, Interact, Dance, Dance2, Victory, Defeated, Salute, Clap, LookAround,
+        Wave, Bow, Point, Angry
     }
 
     public static class CrewPresentation

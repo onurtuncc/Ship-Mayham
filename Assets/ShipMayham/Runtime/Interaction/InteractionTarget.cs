@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace ShipMayham
 {
@@ -15,18 +16,20 @@ namespace ShipMayham
         public readonly InteractionKind Kind;
         public readonly int Index;
         public readonly InteractionPrompt Prompt;
+        /// <summary>World position of the thing the crosshair is on (what a ping marks); zero for contextual targets.</summary>
+        public readonly Vector3 WorldPoint;
 
-        private InteractionTarget(InteractionKind kind, int index, InteractionPrompt prompt)
+        private InteractionTarget(InteractionKind kind, int index, InteractionPrompt prompt, Vector3 point = default)
         {
-            Kind = kind; Index = index; Prompt = prompt;
+            Kind = kind; Index = index; Prompt = prompt; WorldPoint = point;
         }
 
         public static InteractionTarget None => default;
         public static InteractionTarget Context(InteractionPrompt prompt) => new InteractionTarget(InteractionKind.None, 0, prompt);
-        public static InteractionTarget Station(int index, InteractionPrompt prompt = default) => new InteractionTarget(InteractionKind.Station, index, prompt);
-        public static InteractionTarget Passenger(int index, InteractionPrompt prompt = default) => new InteractionTarget(InteractionKind.Passenger, index, prompt);
-        public static InteractionTarget Harbor(HarborAction action, InteractionPrompt prompt = default) => new InteractionTarget(InteractionKind.Harbor, (int)action, prompt);
-        public static InteractionTarget Salvage(int index, InteractionPrompt prompt = default) => new InteractionTarget(InteractionKind.Salvage, index, prompt);
+        public static InteractionTarget Station(int index, InteractionPrompt prompt = default, Vector3 point = default) => new InteractionTarget(InteractionKind.Station, index, prompt, point);
+        public static InteractionTarget Passenger(int index, InteractionPrompt prompt = default, Vector3 point = default) => new InteractionTarget(InteractionKind.Passenger, index, prompt, point);
+        public static InteractionTarget Harbor(HarborAction action, InteractionPrompt prompt = default, Vector3 point = default) => new InteractionTarget(InteractionKind.Harbor, (int)action, prompt, point);
+        public static InteractionTarget Salvage(int index, InteractionPrompt prompt = default, Vector3 point = default) => new InteractionTarget(InteractionKind.Salvage, index, prompt, point);
 
         public bool IsNone => Kind == InteractionKind.None;
         public HarborAction HarborAction => (HarborAction)Index;

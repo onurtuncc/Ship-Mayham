@@ -36,6 +36,8 @@ namespace ShipMayham
         private readonly HelpOverlay help;
         private readonly PurserPanel purser;
         private readonly PauseMenu pause;
+        private readonly SignalLayer signals;
+        private readonly SignalWheel wheel;
 
         private int voyageSignature = int.MinValue, objectiveSignature = int.MinValue, alertSignature = int.MinValue, carrySignature = int.MinValue;
         private readonly ResourcePill[] pills;
@@ -184,12 +186,21 @@ namespace ShipMayham
             resume.gameObject.SetActive(false);
 
             help = new HelpOverlay(screen);
+            signals = new SignalLayer(screen);
+            wheel = new SignalWheel(screen);
+            if (hud.Session != null) hud.Session.SignalReceived += signals.Add;
             purser = new PurserPanel(hud, screen);
             pause = new PauseMenu(hud, screen);
             screen.gameObject.SetActive(false);
         }
 
         public void SetVisible(bool visible) => HudKit.SetActive(root, visible);
+
+        /// <summary>Stops listening to the session (the HUD is going away).</summary>
+        public void Dispose()
+        {
+            if (hud.Session != null) hud.Session.SignalReceived -= signals.Add;
+        }
 
         public void ToggleHelp() => help.Toggle();
 
@@ -228,6 +239,8 @@ namespace ShipMayham
             help.Tick(gamepad);
             purser.Tick();
             pause.Tick();
+            signals.Tick(hud);
+            wheel.Tick(view);
             for (int i = 0; i < pills.Length; i++) pills[i].Tick(dt);
         }
 

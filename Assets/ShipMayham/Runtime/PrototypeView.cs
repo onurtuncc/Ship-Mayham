@@ -35,6 +35,73 @@ namespace ShipMayham
         /// <summary>What the local crosshair is on; refreshed every frame the local crew member is active.</summary>
         public InteractionTarget Target { get; private set; }
         public InteractionPrompt Prompt => Target.Prompt;
+        /// <summary>True while the emote wheel is open (the signal key is held); looking is frozen so the pointer can choose.</summary>
+        public bool WheelOpen { get; private set; }
+        /// <summary>The emote currently chosen on the wheel, if any.</summary>
+        public SignalKind? WheelSelection { get; private set; }
+        private float signalPressedAt = -1, nextSignalAt;
+        private Vector2 wheelVector;
+
+        private void CancelSignal()
+        {
+            WheelOpen = false;
+            WheelSelection = null;
+            signalPressedAt = -1;
+        }
+
+        // Tap: ping what the crosshair is on. Hold: open the emote wheel, choose with the pointer or right stick, release to send.
+        private void UpdateSignals(Keyboard keyboard, Gamepad pad, int local)
+        {
+            bool pressed = keyboard?.qKey.wasPressedThisFrame == true || pad?.dpad.up.wasPressedThisFrame == true;
+            bool released = keyboard?.qKey.wasReleasedThisFrame == true || pad?.dpad.up.wasReleasedThisFrame == true;
+            bool held = keyboard?.qKey.isPressed == true || pad?.dpad.up.isPressed == true;
+            if (pressed) { signalPressedAt = Time.unscaledTime; wheelVector = Vector2.zero; }
+            if (signalPressedAt < 0) return;
+            if (!WheelOpen && held && Time.unscaledTime - signalPressedAt >= Signals.HoldSeconds) WheelOpen = true;
+            if (WheelOpen)
+            {
+                if (Mouse.current != null) wheelVector = Vector2.ClampMagnitude(wheelVector + Mouse.current.delta.ReadValue() * .6f, 80f);
+                if (pad != null && pad.rightStick.ReadValue().sqrMagnitude > .25f) wheelVector = pad.rightStick.ReadValue() * 60f;
+                WheelSelection = Signals.WheelChoice(wheelVector);
+            }
+            if (!released) return;
+            var chosen = WheelOpen ? WheelSelection : null;
+            bool wasWheel = WheelOpen;
+            CancelSignal();
+            if (Time.unscaledTime < nextSignalAt) return;
+            if (wasWheel) { if (chosen.HasValue) SendEmote(chosen.Value); }
+            else SendPing(local);
+        }
+
+        private void SendEmote(SignalKind kind)
+        {
+            nextSignalAt = Time.unscaledTime + Signals.CooldownSeconds;
+            Session.SignalRpc(kind, Vector3.zero, false, default);
+        }
+
+        private void SendPing(int local)
+        {
+            nextSignalAt = Time.unscaledTime + Signals.CooldownSeconds;
+            bool aboard = !Session.Crew[local].OnShore;
+            Vector3 world;
+            string label = string.Empty;
+            if (!Target.IsNone && Target.WorldPoint != Vector3.zero)
+            {
+                world = Target.WorldPoint;
+                label = Target.Prompt.Title ?? string.Empty;
+            }
+            else
+            {
+                // Nothing targeted: mark where the look direction meets the floor, or a point ahead when it never does.
+                float floor = aboard ? Session.ShipRoot.TransformPoint(new Vector3(0, .5f, 0)).y : VoyageSimulation.ShoreHeight;
+                var ray = new Ray(Camera.transform.position, Camera.transform.forward);
+                world = new Plane(Vector3.up, new Vector3(0, floor, 0)).Raycast(ray, out float distance) && distance < 40f
+                    ? ray.GetPoint(distance) : ray.GetPoint(14f);
+            }
+            Vector3 sent = aboard ? Session.ShipRoot.InverseTransformPoint(world) : world;
+            Session.SignalRpc(SignalKind.Ping, sent, aboard, new Unity.Collections.FixedString32Bytes(LobbyRules.SanitizeName(label) ?? string.Empty));
+        }
+
         /// <summary>True while the in-game menu is open: the cursor is free and, in a solo voyage, the game is paused.</summary>
         public bool MenuOpen { get; private set; }
         private float menuOpenedAt;
@@ -44,6 +111,7 @@ namespace ShipMayham
         {
             if (MenuOpen) return;
             MenuOpen = true;
+            CancelSignal();
             menuOpenedAt = Time.unscaledTime;
             CaptureCursor(false);
             if (Session != null && Session.IsSoloVoyage) Time.timeScale = 0;
@@ -65,6 +133,7 @@ namespace ShipMayham
         {
             if (PurserOpen) return;
             PurserOpen = true;
+            CancelSignal();
             CaptureCursor(false);
         }
 
@@ -313,8 +382,10 @@ namespace ShipMayham
             }
             if (Application.isFocused && Cursor.lockState == CursorLockMode.Locked && !capturedThisFrame)
             {
+                UpdateSignals(keyboard, pad, local);
                 Vector2 look = Mouse.current != null ? Mouse.current.delta.ReadValue() * (MouseSensitivity * GameSettings.LookSpeed) : Vector2.zero;
                 if (pad != null) look += pad.rightStick.ReadValue() * (StickLookSpeed * GameSettings.LookSpeed * Time.unscaledDeltaTime);
+                if (WheelOpen) look = Vector2.zero;
                 if (look.sqrMagnitude > .0001f) lastLookInput = Time.unscaledTime;
                 lookYaw = Mathf.Repeat(lookYaw + look.x, 360);
                 lookPitch = Mathf.Clamp(lookPitch - look.y, -80, 80);

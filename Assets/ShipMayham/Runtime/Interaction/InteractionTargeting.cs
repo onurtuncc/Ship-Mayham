@@ -38,10 +38,11 @@ namespace ShipMayham
                 // Ship upgrades are bought from the purser, not at the upgrade fittings.
                 if (VoyageSimulation.IsUpgrade(station.Kind)) continue;
                 if (Vector2.Distance(crew.Position, station.DeckPosition(session.ShipRoot)) > VoyageSimulation.InteractionRange) continue;
-                float angle = Vector3.Angle(forward, station.InteractionAnchor.position + Vector3.up * .65f - eye);
+                Vector3 anchor = station.InteractionAnchor.position + Vector3.up * .65f;
+                float angle = Vector3.Angle(forward, anchor - eye);
                 if (angle >= best) continue;
                 best = angle;
-                target = InteractionTarget.Station(i, PromptCatalog.ForStation(station.Kind, session.Voyage.Value, session.Encounter.Value, crew));
+                target = InteractionTarget.Station(i, PromptCatalog.ForStation(station.Kind, session.Voyage.Value, session.Encounter.Value, crew), anchor);
             }
         }
 
@@ -53,10 +54,11 @@ namespace ShipMayham
                 if (!passenger.Active || passenger.Motion != PassengerMotion.OnDeck) continue;
                 Vector3 p = passenger.Position;
                 if (Vector2.Distance(crew.Position, new Vector2(p.x, p.z)) > VoyageSimulation.InteractionRange) continue;
-                float angle = Vector3.Angle(forward, session.ShipRoot.TransformPoint(p + Vector3.up) - eye);
+                Vector3 body = session.ShipRoot.TransformPoint(p + Vector3.up);
+                float angle = Vector3.Angle(forward, body - eye);
                 if (angle >= best) continue;
                 best = angle;
-                target = InteractionTarget.Passenger(i, PromptCatalog.ForPassenger(i, passenger));
+                target = InteractionTarget.Passenger(i, PromptCatalog.ForPassenger(i, passenger), body);
             }
         }
 
@@ -71,10 +73,11 @@ namespace ShipMayham
             {
                 var action = (HarborAction)i;
                 if (Vector2.Distance(crew.Position, VoyageSimulation.HarborPoint(action)) > VoyageSimulation.InteractionRange) continue;
-                float angle = Vector3.Angle(forward, harbor.Point(action) + Vector3.up * .7f - eye);
+                Vector3 spot = harbor.Point(action) + Vector3.up * .7f;
+                float angle = Vector3.Angle(forward, spot - eye);
                 if (angle >= best) continue;
                 best = angle;
-                target = InteractionTarget.Harbor(action, PromptCatalog.ForHarbor(action, voyage, crew));
+                target = InteractionTarget.Harbor(action, PromptCatalog.ForHarbor(action, voyage, crew), spot);
             }
             if (!crew.OnShore || !voyage.DockJobActive || voyage.DockJobType != DockJobKind.SalvageRun) return;
             for (int index = 0; index < HarborTownLayout.SalvageCount; index++)
@@ -89,7 +92,7 @@ namespace ShipMayham
                 float angle = Vector3.Angle(forward, point - eye);
                 if (angle >= best) continue;
                 best = angle;
-                target = InteractionTarget.Salvage(index, PromptCatalog.ForSalvage(index));
+                target = InteractionTarget.Salvage(index, PromptCatalog.ForSalvage(index), point);
             }
         }
     }

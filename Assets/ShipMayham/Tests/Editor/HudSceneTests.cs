@@ -140,6 +140,53 @@ namespace ShipMayham.Tests
             yield return new ExitPlayMode();
         }
 
+        private sealed class SignalRecorder
+        {
+            public readonly System.Collections.Generic.List<SignalMessage> Messages = new System.Collections.Generic.List<SignalMessage>();
+            public readonly System.Collections.Generic.List<float> Times = new System.Collections.Generic.List<float>();
+            public void Record(SignalMessage message) { Messages.Add(message); Times.Add(Time.unscaledTime); }
+        }
+
+        [UnityTest] public IEnumerator SignalsReachTheCrewAndAreRateLimited()
+        {
+            yield return new EnterPlayMode();
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            var controller = hud.GetComponentInChildren<HudController>(true);
+            hud.ConnectSolo();
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return new WaitForSeconds(.6f);
+
+            var recorder = new SignalRecorder();
+            var received = recorder.Messages;
+            hud.Session.SignalReceived += recorder.Record;
+            float start = Time.unscaledTime;
+            hud.Session.SignalRpc(SignalKind.Ping, new Vector3(0, .5f, 3), true, new Unity.Collections.FixedString32Bytes("Cannon <b>"));
+            hud.Session.SignalRpc(SignalKind.Help, Vector3.zero, false, default);   // inside the cooldown: dropped
+            yield return new WaitForSeconds(.5f);
+            Assert.AreEqual(1, received.Count, "The second signal came too soon.");
+            Assert.AreEqual(SignalKind.Ping, received[0].Kind);
+            Assert.AreEqual(0, received[0].Slot);
+            Assert.IsTrue(received[0].Attached);
+            Assert.AreEqual("Cannon b", received[0].Label, "Markup characters are removed from labels.");
+            var marker = System.Array.Find(controller.GetComponentsInChildren<Transform>(true), t => t.name.StartsWith("Ping") && t.gameObject.activeSelf);
+            Assert.IsNotNull(marker, "A ping marker is shown.");
+
+            // The limiter runs on unscaled time, so wait on the same clock instead of assuming frames take a fixed time.
+            float cooldownEnds = start + Signals.CooldownSeconds + .3f;
+            float giveUp = Time.realtimeSinceStartup + 30f;
+            while (Time.unscaledTime < cooldownEnds && Time.realtimeSinceStartup < giveUp) yield return null;
+            hud.Session.SignalRpc(SignalKind.Thanks, Vector3.zero, false, default);
+            yield return new WaitForSeconds(.4f);
+            hud.Session.SignalRpc((SignalKind)99, Vector3.zero, false, default);   // not a signal: ignored
+            yield return new WaitForSeconds(.4f);
+            hud.Session.SignalReceived -= recorder.Record;
+            Assert.AreEqual(2, received.Count, "The signal after the cooldown was lost.");
+            Assert.AreEqual(SignalKind.Thanks, received[1].Kind);
+            yield return new ExitPlayMode();
+        }
+
         // Optional visual check (set SHIPMAYHAM_CAPTURE=1): renders lobby and HUD states to Logs/Hud*.png.
         [UnityTest] public IEnumerator CaptureHudScreens()
         {
@@ -189,6 +236,21 @@ namespace ShipMayham.Tests
             yield return new WaitForSecondsRealtime(.3f);
             yield return Capture(hud, controller, "Logs/HudPauseSettings.png");
             hud.View.CloseMenu(true);
+            yield return new WaitForSeconds(.2f);
+
+            // Signals: a ping on the cannon, an emote, and the wheel.
+            Transform shipRoot = hud.Session.ShipRoot;
+            hud.Session.SignalRpc(SignalKind.Ping, new Vector3(3.2f, 1.6f, 4f), true, new Unity.Collections.FixedString32Bytes("Cannon"));
+            yield return new WaitForSeconds(1.1f);
+            hud.Session.SignalRpc(SignalKind.Thanks, Vector3.zero, false, default);
+            yield return new WaitForSeconds(.5f);
+            yield return Capture(hud, controller, "Logs/HudSignals.png");
+            var viewType = typeof(PrototypeView);
+            viewType.GetProperty("WheelOpen").GetSetMethod(true).Invoke(hud.View, new object[] { true });
+            viewType.GetProperty("WheelSelection").GetSetMethod(true).Invoke(hud.View, new object[] { (SignalKind?)SignalKind.Help });
+            yield return null; yield return null;
+            yield return Capture(hud, controller, "Logs/HudWheel.png");
+            viewType.GetProperty("WheelOpen").GetSetMethod(true).Invoke(hud.View, new object[] { false });
             yield return new WaitForSeconds(.2f);
 
             // The purser's desk, then the world around it.

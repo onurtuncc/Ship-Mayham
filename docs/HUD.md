@@ -41,6 +41,17 @@ informational (nothing to press) and a `PromptTone.Blocked` prompt is drawn in r
 To add a new interactable: extend `PromptCatalog` (or build an `InteractionPrompt` where the target is found) and
 add the case to `InteractionTargeting` and the input dispatch in `PrototypeView.Update`. Control glyphs live in `HudControls.Label`.
 
+## Signals: pings and emotes
+
+Crews have no voice or text chat, so they signal. `Q` (gamepad D-pad up): a **tap** pings what the crosshair is on (a station,
+passenger, harbor spot; otherwise the floor point being looked at); a **hold** opens the emote wheel (`SignalWheel`), where
+the pointer or right stick chooses *Help!* (up), *Thanks!* (right), *Watch out!* (down) or *Over here!* (left) and releasing
+sends it. Looking is frozen while the wheel is open. `PrototypeSession.SignalRpc` sends the signal to the host, which checks it,
+rate-limits each crew member to one per second (`SignalLimiter`), cleans the label and relays it to everyone
+(`SignalReceived`). `SignalLayer` then draws ping markers (kept on the screen edge when out of view, coloured per crew slot)
+and emote bubbles above the sender's head; `PrototypeFeedback` plays the gesture (wave, bow, point, angry) and a short cue.
+Signals never change the voyage.
+
 ## Settings and the in-game menu
 
 `GameSettings` (`Runtime/Settings`) holds the player's preferences on the device: master, music and effects volume,

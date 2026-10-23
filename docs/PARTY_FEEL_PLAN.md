@@ -24,7 +24,7 @@ GDD'ye göre eksikler ve party oyunu iyileştirmeleri, kararlaştırılan sıra 
 
 ## Dilimler
 
-Her dilim: kod, birim ve sahne testleri, doküman, commit. Ağı değiştirenler protokol sürümünü artırır (dilim 1 `UnstuckRpc` ile 13'e çıkardı; 2, 4, 6 ve 7 de artıracak).
+Her dilim: kod, birim ve sahne testleri, doküman, commit. Ağı değiştirenler protokol sürümünü artırır (dilim 1 `UnstuckRpc` ile 13'e çıkardı; 2 `SignalRpc` ile 14'e çıkardı; 4, 6 ve 7 de artıracak).
 
 1. **Ayarlar ve oyun içi menü** (Settings store, kaydırıcılar, UI ölçeği, kamera sarsıntısı, fare hassasiyeti, titreşim, Esc menüsü, "I'm stuck"). Diğer dilimlerin bağımlılığıdır.
 2. **Ping ve emote** (`Q`, çark, dünya işaretçisi, konuşma balonu, host yayını).
