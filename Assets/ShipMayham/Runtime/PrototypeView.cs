@@ -20,6 +20,7 @@ namespace ShipMayham
         public float MouseSensitivity = .12f;
         public float StickLookSpeed = 140f;
         public float FirstPersonFieldOfView = 75f;
+        public float LobbyOrbitDegreesPerSecond = 6f;
         public Vector3 HeldItemOffset = new Vector3(.32f, -.28f, .65f);
         public Vector3 HeldPassengerOffset = new Vector3(.9f, -1.25f, 1.4f);
         [Header("Helm chase camera")]
@@ -217,7 +218,7 @@ namespace ShipMayham
 
         private void Update()
         {
-            if (Session == null || !Session.IsSpawned) return;
+            if (Session == null || !Session.IsSpawned || Session.InLobby) return;
             int local = Session.LocalCrewIndex;
             if (local < 0) return;
             Vector2 input = Vector2.zero;
@@ -323,7 +324,8 @@ namespace ShipMayham
             if (Session == null || Camera == null) return;
             bool active = Session != null && Session.IsSpawned;
             int local = active ? Session.LocalCrewIndex : -1;
-            bool firstPerson = local >= 0;
+            // The lobby is an interface over a calm view of the ship: no look, no movement, a free cursor.
+            bool firstPerson = local >= 0 && !Session.InLobby;
             if (firstPerson != IsFirstPerson)
             {
                 IsFirstPerson = firstPerson;
@@ -408,9 +410,10 @@ namespace ShipMayham
                 bool me = local == i;
                 // Hide only the local body, never the root or another client's representation.
                 // The local body is hidden in first person, but visible when the helm uses the chase camera.
-                if (crewVisuals[i] != null) crewVisuals[i].gameObject.SetActive(!me || ChaseCameraActive);
-                CrewLabels[i].gameObject.SetActive(!me);
-                CrewLabels[i].text = $"P{i + 1}{(me ? " (YOU)" : "")}{(crew.AtHelm ? " / HELM" : "")}";
+                if (crewVisuals[i] != null) crewVisuals[i].gameObject.SetActive(!me || ChaseCameraActive || Session.InLobby);
+                CrewLabels[i].gameObject.SetActive(!me && !Session.InLobby);
+                string crewName = LobbyRules.DisplayName(Session.Profiles.Count > i ? Session.Profiles[i].Name.ToString() : null, i);
+                CrewLabels[i].text = $"{crewName}{(me ? " (YOU)" : "")}{(crew.AtHelm ? " / HELM" : "")}";
                 if (crew.AtCannon) CrewLabels[i].text += " / GUNNER";
                 if (crew.AtCrane) CrewLabels[i].text += " / CRANE";
                 if (crew.OnShore) CrewLabels[i].text += " / ASHORE";
@@ -439,7 +442,9 @@ namespace ShipMayham
             }
             else
             {
-                Camera.transform.position = ship.TransformPoint(new Vector3(0, 24, -19));
+                // In the lobby the overview camera drifts slowly around the ship.
+                Quaternion orbit = Session.InLobby ? Quaternion.Euler(0, Time.unscaledTime * LobbyOrbitDegreesPerSecond, 0) : Quaternion.identity;
+                Camera.transform.position = ship.TransformPoint(orbit * new Vector3(0, 24, -19));
                 Camera.transform.LookAt(ship.position);
                 Target = InteractionTarget.None;
             }

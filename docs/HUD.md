@@ -9,8 +9,9 @@ scene: `PrototypeHud.Awake` creates a `HudController` in play mode, so scenes an
 
 | Screen | Class | Shown when |
 | --- | --- | --- |
-| Lobby | `MenuScreen` | No voyage session is spawned (create / join online voyage, play solo, cancel). |
-| Voyage HUD | `GameHud` | Session spawned. |
+| Main menu | `MenuScreen` | No voyage session is spawned. Pages: main (nickname, host online, join online, play solo, settings, quit), join (code), settings (sound). Connection status and cancel sit under the card. |
+| Lobby | `LobbyScreen` | Online voyage in the lobby phase: join code with copy, four slots with ready state, Ready (guests) or Start voyage (host, enabled when everyone else is ready). |
+| Voyage HUD | `GameHud` | Session spawned and the voyage has started. |
 | Controls | `HelpOverlay` | `F1` toggles; glyphs follow the last-used device (keyboard or gamepad). |
 
 ## Voyage HUD layout (1920x1080 reference, `CanvasScaler` match 0.5)
@@ -49,6 +50,7 @@ to press `Esc` while the mouse look is captured.
 ## Testing
 
 - `HudPromptTests` covers `PromptCatalog`, control glyphs and building the lobby canvas.
-- `HudSceneTests` checks the lobby-to-HUD switch in the real scene. Run with `SHIPMAYHAM_CAPTURE=1` to render
-  `Logs/HudLobby.png`, `Logs/HudGame.png` and `Logs/HudHelp.png` for visual review.
+- `HudSceneTests` checks menu, lobby and voyage HUD switching in the real scene (the lobby is entered by setting
+  `Session.LobbyBeforeVoyage` before `ConnectSolo`). Run with `SHIPMAYHAM_CAPTURE=1` to render `Logs/HudMenu.png`,
+  `HudJoin.png`, `HudSettings.png`, `HudLobby.png`, `HudGame.png`, `HudPrompt.png`, `HudContext.png` and `HudHelp.png`.
 - `GameHud.CursorLockedOverride` lets captures show the aiming UI without a real pointer lock.

@@ -104,6 +104,7 @@ namespace ShipMayham
             ReleaseCrewResponsibilities(i);
             Crew[i] = default;
             crewPlayerIds[i] = null;
+            ClearLobbySlot(i);
             ResetCommandStream(i);
         }
 
@@ -111,6 +112,8 @@ namespace ShipMayham
         {
             int i = FindCrew(clientId);
             if (i < 0) return;
+            // Nothing is worth keeping for a player who leaves before the voyage starts.
+            if (InLobby) { LeaveSlot(i); return; }
             ReleaseCrewResponsibilities(i);
             Crew[i].ClientId = ulong.MaxValue;
             Crew[i].JumpHeight = Crew[i].VerticalSpeed = 0;
@@ -169,6 +172,7 @@ namespace ShipMayham
             if (!Finite(dt) || dt <= 0) return;
             dt = Mathf.Min(dt, .1f);
             clock += dt;
+            if (InLobby) return;
             Vector2 helmInput = Vector2.zero;
             bool helmManned = false;
             for (int i = 0; i < MaxCrew; i++)

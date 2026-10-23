@@ -16,7 +16,7 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
-        public const ushort NetworkProtocolVersion = 10;
+        public const ushort NetworkProtocolVersion = 11;
         public NetworkManager Manager;
         public PrototypeSession Session;
         public PrototypeView View;
@@ -54,6 +54,8 @@ namespace ShipMayham
 
         /// <summary>Who may hold a crew slot; shared with the session so it never has to look the HUD up.</summary>
         public CrewRoster Roster => roster;
+        /// <summary>Online hosts wait in the lobby until they start the voyage. Automated validation builds turn this off.</summary>
+        public bool LobbyBeforeVoyage { get; set; } = true;
 
         private void Update()
         {
@@ -136,6 +138,7 @@ namespace ShipMayham
         {
             attempted = true;
             onlineMode = true;
+            if (Session != null) Session.LobbyBeforeVoyage = host && LobbyBeforeVoyage;
             status = host ? "Creating Relay voyage..." : "Joining Relay voyage...";
             statusIsError = false;
             connectionLost = false;

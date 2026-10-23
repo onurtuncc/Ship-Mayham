@@ -33,6 +33,41 @@ namespace ShipMayham.Tests
             yield return new ExitPlayMode();
         }
 
+        [UnityTest] public IEnumerator LobbyHoldsTheVoyageUntilTheHostStarts()
+        {
+            yield return new EnterPlayMode();
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            var controller = hud.GetComponentInChildren<HudController>(true);
+            hud.Session.LobbyBeforeVoyage = true;
+            hud.ConnectSolo();
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.IsTrue(hud.Session.IsSpawned);
+            deadline = Time.realtimeSinceStartup + 2;
+            while (!hud.Session.InLobby && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return new WaitForSeconds(.5f);
+
+            Assert.IsTrue(hud.Session.InLobby);
+            Assert.IsTrue(controller.transform.Find("LobbyScreen").gameObject.activeSelf);
+            Assert.IsFalse(controller.transform.Find("GameHud").gameObject.activeSelf);
+            Assert.IsFalse(controller.transform.Find("MenuScreen").gameObject.activeSelf);
+            Assert.IsFalse(hud.View.IsFirstPerson, "The lobby leaves the cursor free.");
+            Assert.AreEqual(PlayerNickname.Current, hud.Session.Profiles[0].Name.ToString(), "The nickname reaches the host once the slot exists.");
+            Vector2 standing = hud.Session.Simulation.Crew[0].Position;
+            hud.Session.MoveRpc(Vector2.right);
+            yield return new WaitForSeconds(.5f);
+            Assert.AreEqual(standing, hud.Session.Simulation.Crew[0].Position, "Movement is ignored in the lobby.");
+
+            hud.Session.StartVoyageRpc();
+            yield return new WaitForSeconds(.6f);
+            Assert.IsFalse(hud.Session.InLobby);
+            Assert.IsFalse(controller.transform.Find("LobbyScreen").gameObject.activeSelf);
+            Assert.IsTrue(controller.transform.Find("GameHud").gameObject.activeSelf);
+            Assert.IsTrue(hud.View.IsFirstPerson);
+            yield return new ExitPlayMode();
+        }
+
         // Optional visual check (set SHIPMAYHAM_CAPTURE=1): renders lobby and HUD states to Logs/Hud*.png.
         [UnityTest] public IEnumerator CaptureHudScreens()
         {
@@ -43,11 +78,21 @@ namespace ShipMayham.Tests
             var controller = hud.GetComponentInChildren<HudController>(true);
             Directory.CreateDirectory("Logs");
             yield return null;
-            yield return Capture(hud, controller, "Logs/HudLobby.png");
+            yield return Capture(hud, controller, "Logs/HudMenu.png");
+            controller.Menu.Show(MenuScreen.Page.Join);
+            yield return null;
+            yield return Capture(hud, controller, "Logs/HudJoin.png");
+            controller.Menu.Show(MenuScreen.Page.Settings);
+            yield return null;
+            yield return Capture(hud, controller, "Logs/HudSettings.png");
 
+            hud.Session.LobbyBeforeVoyage = true;
             hud.ConnectSolo();
             float deadline = Time.realtimeSinceStartup + 5;
             while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return new WaitForSeconds(.8f);
+            yield return Capture(hud, controller, "Logs/HudLobby.png");
+            hud.Session.StartVoyageRpc();
             GameHud.CursorLockedOverride = true;
             yield return new WaitForSeconds(.8f);
             yield return Capture(hud, controller, "Logs/HudGame.png");

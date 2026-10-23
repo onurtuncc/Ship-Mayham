@@ -1,10 +1,13 @@
 using System;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
 namespace ShipMayham
 {
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
+    /// <summary>Online voyages start in the lobby; Voyage is the default so solo play and old states are unchanged.</summary>
+    public enum SessionPhase : byte { Voyage, Lobby }
     public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
@@ -20,6 +23,7 @@ namespace ShipMayham
     public struct VoyageState : INetworkSerializable, IEquatable<VoyageState>
     {
         public VoyagePhase Phase;
+        public SessionPhase SessionPhase;
         public Vector2 Position;
         public float Heading, Speed, Health, Elapsed;
         public float HullShield;
@@ -43,7 +47,7 @@ namespace ShipMayham
         public int CheckedTickets, CollectedFares, RescueCount, LastUnpaid, LastMissing, LastRescueCosts;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
-            s.SerializeValue(ref Phase); s.SerializeValue(ref Position);
+            s.SerializeValue(ref Phase); s.SerializeValue(ref SessionPhase); s.SerializeValue(ref Position);
             s.SerializeValue(ref Heading); s.SerializeValue(ref Speed); s.SerializeValue(ref Health); s.SerializeValue(ref Elapsed);
             s.SerializeValue(ref HullShield);
             s.SerializeValue(ref Route);
@@ -121,6 +125,28 @@ namespace ShipMayham
             s.SerializeValue(ref Reaction); s.SerializeValue(ref ReactionRemaining);
         }
         public bool Equals(PassengerState other) => ValueType.Equals(this, other);
+    }
+
+    /// <summary>What the lobby shows about a crew slot. Names are truncated to what the network string holds.</summary>
+    [Serializable]
+    public struct CrewProfile : INetworkSerializable, IEquatable<CrewProfile>
+    {
+        public bool Ready;
+        public FixedString64Bytes Name;
+
+        public static CrewProfile From(string name, bool ready)
+        {
+            var profile = new CrewProfile { Ready = ready };
+            if (!string.IsNullOrEmpty(name)) profile.Name.CopyFromTruncated(name);
+            return profile;
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
+        {
+            s.SerializeValue(ref Ready); s.SerializeValue(ref Name);
+        }
+
+        public bool Equals(CrewProfile other) => Ready == other.Ready && Name.Equals(other.Name);
     }
 
     [Serializable]

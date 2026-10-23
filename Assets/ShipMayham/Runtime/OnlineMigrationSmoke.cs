@@ -76,6 +76,8 @@ namespace ShipMayham
                 while (!File.Exists(codePath)) yield return null;
                 code = File.ReadAllText(codePath).Trim();
             }
+            // The validation run drives the voyage itself; it must not wait for a human to press Start.
+            hud.LobbyBeforeVoyage = false;
             hud.ConnectOnline(host, code, profile);
             while (!session.IsSpawned || session.LocalCrewIndex < 0 || string.IsNullOrEmpty(hud.OnlineCode)) yield return null;
             int originalSlot = session.LocalCrewIndex;

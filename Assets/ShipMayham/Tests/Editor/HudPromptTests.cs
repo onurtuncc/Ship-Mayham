@@ -138,8 +138,13 @@ namespace ShipMayham.Tests
                     .Invoke(controller, null);
                 Assert.IsTrue(menu.gameObject.activeSelf);
                 Assert.IsFalse(controller.transform.Find("GameHud").gameObject.activeSelf);
-                Assert.IsNotNull(menu.GetComponentInChildren<InputField>(true));
-                Assert.AreEqual(4, menu.GetComponentsInChildren<Button>(true).Length, "Create, Join, Solo and Cancel.");
+                Assert.AreEqual(MenuScreen.Page.Main, controller.Menu.Current);
+                foreach (string button in new[] { "Host", "JoinOnline", "Solo", "Settings", "Join", "Sound", "Cancel" })
+                    Assert.IsNotNull(System.Array.Find(menu.GetComponentsInChildren<Transform>(true), t => t.name == button), button);
+                Assert.AreEqual(2, menu.GetComponentsInChildren<InputField>(true).Length, "Nickname and join code.");
+                controller.Menu.Show(MenuScreen.Page.Join);
+                Assert.AreEqual(MenuScreen.Page.Join, controller.Menu.Current);
+                Assert.IsNotNull(controller.transform.Find("LobbyScreen"));
             }
             finally
             {

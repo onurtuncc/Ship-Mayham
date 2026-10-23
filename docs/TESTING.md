@@ -43,7 +43,7 @@ $env:SHIPMAYHAM_CAPTURE = "1"
 ```
 
 - `GameFeelTests` → `Logs/GameFeel.png`
-- `HudSceneTests.CaptureHudScreens` → `Logs/HudLobby.png`, `HudGame.png`, `HudPrompt.png`, `HudContext.png`, `HudHelp.png`
+- `HudSceneTests.CaptureHudScreens` → `Logs/HudMenu.png`, `HudJoin.png`, `HudSettings.png`, `HudLobby.png`, `HudGame.png`, `HudPrompt.png`, `HudContext.png`, `HudHelp.png`
 
 Değişken yokken bu testler atlanır. Batch'te grafik cihazı gerektiğinden `-nographics` verilmez.
 
@@ -51,4 +51,5 @@ Değişken yokken bu testler atlanır. Batch'te grafik cihazı gerektiğinden `-
 
 - Test koşusu `Library/PackageCache` içindeki `shadergraph` için `GUID` derleme hataları yazdırabilir; bu proje kodunun hatası değildir ve sonucu etkilemez.
 - Yeni `.cs` dosyalarının `.meta` dosyalarını Unity üretir; commit'e eklemeyi unutma.
+- Otomatik Relay doğrulama build'leri (`--ship-online-host`) lobiyi atlar (`PrototypeHud.LobbyBeforeVoyage = false`); lobi akışı yerelde `HudSceneTests` ve `LobbyTests` ile sınanır, gerçek Relay üzerinden elle denenmelidir.
 - Ağ şemasını değiştiren her değişiklik protokol sürümünü ve migration snapshot'ını da güncellemelidir (bunu yakalayan otomatik bir kontrol yoktur).

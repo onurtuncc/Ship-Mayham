@@ -12,7 +12,7 @@ Gereksinim: Unity **6000.4.6f1**.
 
 1. Projeyi Unity'de aç ve derlemenin bitmesini bekle.
 2. `Assets/ShipMayham/Scenes/ShipPrototype.unity` sahnesini aç (veya **Ship Mayham → Open Prototype**).
-3. Play'e bas. **Play solo** tek başına, **Create online voyage** arkadaşlarla (Unity Relay, port yönlendirme gerekmez), **Join** ise paylaşılan koddur.
+3. Play'e bas. Ana menüde bir takma ad seç. **Play solo** doğrudan oyuna girer. **Host online** bir **lobi** açar (Unity Relay, port yönlendirme gerekmez): kodu paylaş, arkadaşlar **Join online** ile katılıp **Ready** basar, hepsi hazır olunca sen **Start voyage** dersin. Sefer başladıktan sonra da katılınabilir.
 
 Windows build: **Ship Mayham → Build Prototype (Windows)**. WebGL yayını: [docs/WEBGL_DEPLOYMENT.md](docs/WEBGL_DEPLOYMENT.md).
 

@@ -14,11 +14,14 @@ namespace ShipMayham
         private Canvas canvas;
         private MenuScreen menu;
         private GameHud game;
+        private LobbyScreen lobby;
         private bool gamepad;
 
         public bool UsingGamepad => gamepad;
         public Canvas Canvas => canvas;
         public GameHud Game => game;
+        public LobbyScreen Lobby => lobby;
+        public MenuScreen Menu => menu;
 
         public static HudController Create(PrototypeHud owner)
         {
@@ -43,6 +46,7 @@ namespace ShipMayham
             gameObject.AddComponent<GraphicRaycaster>();
             HudKit.EnsureEventSystem();
             menu = new MenuScreen(owner, transform);
+            lobby = new LobbyScreen(owner, transform);
             game = new GameHud(owner, transform);
         }
 
@@ -52,10 +56,13 @@ namespace ShipMayham
             canvas.enabled = !hud.IsReloading;
             if (!canvas.enabled) return;
             DetectInputDevice();
-            bool inGame = hud.Session != null && hud.Session.IsSpawned;
-            menu.SetVisible(!inGame);
-            game.SetVisible(inGame);
-            if (!inGame) { menu.Refresh(); return; }
+            bool inSession = hud.Session != null && hud.Session.IsSpawned;
+            bool inLobby = inSession && hud.Session.InLobby;
+            menu.SetVisible(!inSession);
+            lobby.SetVisible(inLobby);
+            game.SetVisible(inSession && !inLobby);
+            if (!inSession) { menu.Refresh(); return; }
+            if (inLobby) { lobby.Tick(); return; }
             if (Keyboard.current?.f1Key.wasPressedThisFrame == true) game.ToggleHelp();
             game.Tick(Time.unscaledDeltaTime, gamepad);
         }

@@ -20,6 +20,13 @@ namespace ShipMayham
         public readonly NetworkVariable<VoyageEventState> ActiveEvent = new NetworkVariable<VoyageEventState>();
         public NetworkList<CrewState> Crew;
         public NetworkList<PassengerState> Passengers;
+        /// <summary>Per-slot nickname and ready flag for the lobby screen and world labels.</summary>
+        public NetworkList<CrewProfile> Profiles;
+        /// <summary>Set by the connection layer before the host spawns: an online voyage waits in the lobby until the host starts it.</summary>
+        public bool LobbyBeforeVoyage { get; set; }
+        public bool InLobby => IsSpawned && Voyage.Value.SessionPhase == SessionPhase.Lobby;
+        private bool GameplayOpen => Simulation != null && !Simulation.InLobby;
+        private bool nicknameSent;
         public VoyageSimulation Simulation { get; private set; }
         public string Notice { get; private set; } = "Board passengers at the manifest, then take the helm.";
         public float NoticeUntil { get; private set; }
@@ -35,11 +42,13 @@ namespace ShipMayham
         {
             Crew = new NetworkList<CrewState>();
             Passengers = new NetworkList<PassengerState>();
+            Profiles = new NetworkList<CrewProfile>();
             NoticeUntil = Time.unscaledTime + 8;
         }
 
         public override void OnNetworkSpawn()
         {
+            nicknameSent = false;
             if (!IsServer) return;
             var stations = new StationDefinition[Stations.Length];
             for (int i = 0; i < stations.Length; i++) stations[i] = new StationDefinition(Stations[i].Kind, Stations[i].DeckPosition(ShipRoot));
@@ -51,6 +60,7 @@ namespace ShipMayham
             }
             Simulation = new VoyageSimulation(stations, seats, Harbor != null, (uint)UnityEngine.Random.Range(1, int.MaxValue));
             CareerProgressStore.Load(ref Simulation.State);
+            if (LobbyBeforeVoyage) Simulation.OpenLobby();
             bool restored = VoyageMigrationDataHandler.RestorePending(Simulation);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (OnlineTransportActive) Debug.Log($"SHIP_CREW_RESTORE restored={restored}");
@@ -82,6 +92,13 @@ namespace ShipMayham
             if (OnlineTransportActive)
                 Debug.Log($"SHIP_CREW_BIND connection={id} identity={!string.IsNullOrEmpty(identity)} previousSlot={previousSlot} slot={slot}");
 #endif
+        }
+
+        private void Update()
+        {
+            if (nicknameSent || !IsSpawned || LocalCrewIndex < 0) return;
+            nicknameSent = true;
+            SetNicknameRpc(new FixedString64Bytes(PlayerNickname.Current));
         }
 
         private void Connected(ulong id) { BindConnection(id); Publish(); }
@@ -135,6 +152,11 @@ namespace ShipMayham
             ActiveEvent.Value = Simulation.Event;
             for (int i = 0; i < VoyageSimulation.MaxCrew; i++)
                 if (Crew.Count <= i) Crew.Add(Simulation.Crew[i]); else if (!Crew[i].Equals(Simulation.Crew[i])) Crew[i] = Simulation.Crew[i];
+            for (int i = 0; i < VoyageSimulation.MaxCrew; i++)
+            {
+                var profile = CrewProfile.From(Simulation.CrewName(i), Simulation.CrewReady(i));
+                if (Profiles.Count <= i) Profiles.Add(profile); else if (!Profiles[i].Equals(profile)) Profiles[i] = profile;
+            }
             for (int i = 0; i < VoyageSimulation.MaxPassengers; i++)
                 if (Passengers.Count <= i) Passengers.Add(Simulation.Passengers[i]); else if (!Passengers[i].Equals(Simulation.Passengers[i])) Passengers[i] = Simulation.Passengers[i];
         }
@@ -169,6 +191,34 @@ namespace ShipMayham
             Publish();
         }
 
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void SetNicknameRpc(FixedString64Bytes nickname, RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            Simulation.SetNickname(rpc.Receive.SenderClientId, nickname.ToString());
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void SetReadyRpc(bool ready, RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.SetReady(sender, ready);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void StartVoyageRpc(RpcParams rpc = default)
+        {
+            if (Simulation == null) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.StartVoyage(sender);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
         public int LocalCrewIndex
         {
             get
@@ -194,7 +244,7 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void HarborCommandRpc(HarborAction action, RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.HarborCommand(sender, action);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
@@ -204,7 +254,7 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void SelectRouteRpc(RouteProfile route, RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.SelectRoute(sender, route);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
@@ -214,7 +264,7 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void SelectLiveryRpc(ShipLivery livery, RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.SelectLivery(sender, livery);
             NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
@@ -224,7 +274,7 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void ToggleDockJobRpc(RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.ToggleDockJob(sender);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
@@ -234,7 +284,7 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void SelectDockJobRpc(DockJobKind kind, RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.ToggleDockJob(sender, kind);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
@@ -244,13 +294,13 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void AimPassengerRpc(float yaw, RpcParams rpc = default)
         {
-            Simulation?.AimPassenger(rpc.Receive.SenderClientId, yaw);
+            if (GameplayOpen) Simulation.AimPassenger(rpc.Receive.SenderClientId, yaw);
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void PassengerCommandRpc(int passenger, PassengerAction action, float yaw, RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.PassengerCommand(sender, passenger, action, yaw);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
@@ -264,7 +314,7 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone, Delivery = RpcDelivery.Unreliable)]
         public void MoveCommandsRpc(MoveCommandPacket packet, RpcParams rpc = default)
         {
-            Simulation?.ApplyMoveCommands(rpc.Receive.SenderClientId, packet);
+            if (GameplayOpen) Simulation.ApplyMoveCommands(rpc.Receive.SenderClientId, packet);
         }
 
         [Rpc(SendTo.NotServer, Delivery = RpcDelivery.Unreliable)]
@@ -288,13 +338,13 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void MoveRpc(Vector2 input, RpcParams rpc = default)
         {
-            Simulation?.SetInput(rpc.Receive.SenderClientId, input);
+            if (GameplayOpen) Simulation.SetInput(rpc.Receive.SenderClientId, input);
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void JumpRpc(RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             Simulation.Jump(rpc.Receive.SenderClientId);
             Publish();
         }
@@ -302,7 +352,7 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void InteractRpc(int target, bool helmAction, RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = helmAction ? Simulation.HelmAction(sender) : Simulation.Interact(sender, target);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
@@ -312,13 +362,13 @@ namespace ShipMayham
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void AimCannonRpc(Vector2 aim, RpcParams rpc = default)
         {
-            Simulation?.AimCannon(rpc.Receive.SenderClientId, aim);
+            if (GameplayOpen) Simulation.AimCannon(rpc.Receive.SenderClientId, aim);
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void CannonActionRpc(Vector2 aim, bool reload, RpcParams rpc = default)
         {
-            if (Simulation == null) return;
+            if (!GameplayOpen) return;
             ulong sender = rpc.Receive.SenderClientId;
             string result = reload ? Simulation.ReloadCannon(sender) : Simulation.FireCannon(sender, aim);
             NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
