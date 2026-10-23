@@ -139,7 +139,7 @@ namespace ShipMayham
             routeButtons[2].onClick.AddListener(() => session.SelectRouteRpc(RouteProfile.StormPassage));
             _ = routeRow;
 
-            jobSection = Section(Root, "Job", "TOWN JOB");
+            jobSection = Section(Root, "Job", "DOCK JOB");
             jobInfo = HudKit.Label(jobSection.transform, "Info", 19, HudKit.Ink);
             jobInfo.horizontalOverflow = HorizontalWrapMode.Wrap;
             jobButtonsRoot = HudKit.Node(jobSection.transform, "Buttons").gameObject;
