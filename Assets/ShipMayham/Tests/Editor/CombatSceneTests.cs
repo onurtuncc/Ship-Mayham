@@ -52,7 +52,7 @@ namespace ShipMayham.Tests
             session.InteractRpc(8, false);
             foreach (var frame in Wait(.2f)) yield return frame;
             Assert.IsTrue(session.Crew[0].AtCannon);
-            Assert.That(hud.View.FocusText, Does.Contain("reload"));
+            Assert.AreEqual("Reload", hud.View.Prompt.Hint1.Label);
             session.AimCannonRpc(new Vector2(60, 10));
             foreach (var frame in Wait(.2f)) yield return frame;
             Assert.That(Quaternion.Angle(visual.CannonPivot.localRotation, Quaternion.Euler(10, 60, 0)), Is.LessThan(.01f));

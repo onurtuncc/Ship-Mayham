@@ -29,7 +29,9 @@ Girdi (PrototypeView) ──niyet──▶ PrototypeSession (NetworkBehaviour, R
 - **`PrototypeView`**: yerel Player'ın girdisini okur, bakış/kamerayı yönetir, etkileşim hedefini seçer (`FindTarget`) ve Crew member/yolcu görsellerini durumdan çizer. Oyun kuralı içermez.
 - **Sunum bileşenleri** (`Prototype*View`, `Ship/`, `Feedback/`, `Motion/`): yalnızca durumu okuyup görsel/ses/efekt üretir. Görsel değiştirmek için `Visuals` çocukları değiştirilir; gameplay anchor'ları ve referanslar korunur.
 - **HUD** (`UI/`): bkz. [HUD.md](HUD.md). `PrototypeView.Prompt`, `Session` ve `Voyage` durumunu okur; hiçbir kural değiştirmez.
-- **`PrototypeHud`**: HUD'ın adı kalsa da artık yalnızca bağlantı akışını yönetir: solo, Relay oturumu kurma/katılma, bağlantı onayı, host migration olayları, sahneyi yeniden yükleyerek menüye dönüş.
+- **`PrototypeHud`**: HUD'ın adı kalsa da artık yalnızca bağlantı akışını yönetir: solo, Relay oturumu kurma/katılma, host migration olayları, sahneyi yeniden yükleyerek menüye dönüş.
+- **`CrewRoster`**: slotlara kimin girebileceği: bağlantı onayı, bağlantının arkasındaki kalıcı oyuncu kimliği ve oturum listesiyle uzlaştırılmayı bekleyen ayrılmalar. Unity veya Relay nesnesi tutmaz; `PrototypeHud` oluşturur, `PrototypeSession.Roster` üzerinden paylaşılır (statik erişim yoktur) ve doğrudan test edilir.
+- **`InteractionTargeting`** (`Runtime/Interaction`): crosshair'in neyin üzerinde olduğunu ve ne yapılabileceğini belirler; tipli `InteractionTarget` döndürür. Kamera gerektirmez; göz konumu ve bakış yönü girdidir.
 
 ## Kural: host otoritesi
 

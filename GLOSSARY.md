@@ -22,6 +22,10 @@ _Avoid_: Server (oyuncu olarak anlatırken)
 Join code ile paylaşılan, en çok dört Player'lık internet oturumu. Solo oyun aynı kuralları ağsız yerel host ile çalıştırır.
 _Avoid_: Lobi, oda, session (genel anlamda)
 
+**Crew roster**:
+Kayıt defteri: hangi Player'ın hangi Crew member slotuna girebileceği ve ayrılan bir Player'ın slotunun ne zaman boşaltılacağı.
+_Avoid_: Oyuncu listesi, lobi listesi
+
 **Join code**:
 Bir Online voyage'a katılmak için paylaşılan kısa kod.
 _Avoid_: Oda kodu, davet kodu
@@ -183,6 +187,10 @@ _Avoid_: Sprint, milestone
 **Roadmap phase** (faz):
 GDD ve planın yol haritası aşaması (Faz 0–8). Bir Voyage phase değildir ve bir Slice ile bire bir eşleşmez.
 _Avoid_: Phase (tek başına)
+
+**Interaction target**:
+Crosshair'in üzerinde olduğu ve Crew member'ın etkileşime girebileceği şey: bir Station, Passenger, Harbor noktası veya hurda paketi.
+_Avoid_: Focus, hedef nesne
 
 **Prompt**:
 Crosshair'in baktığı nesne için HUD'da gösterilen eylem özeti (başlık, tuş, eylem, detay, maliyet).

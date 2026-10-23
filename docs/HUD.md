@@ -29,14 +29,16 @@ extend into it.
 
 ## Interaction prompts
 
-`PrototypeView.FindTarget` still produces `FocusText` (kept for tests and logs) and now also a structured
-`InteractionPrompt` (`View.Prompt`) built by the pure functions in `PromptCatalog`. A *targeted* prompt (object the
+`InteractionTargeting.Find` (`Runtime/Interaction`) decides what the crosshair is on and returns an
+`InteractionTarget`: a typed kind and index (station, passenger, harbor action, salvage bundle) plus the
+`InteractionPrompt` (`View.Target`, `View.Prompt`) built by the pure functions in `PromptCatalog`. The eye position
+and look direction are plain inputs, so no camera is needed to call it. A *targeted* prompt (object the
 crosshair is on) is drawn as a card with title, key cap, action, detail line and an optional coin cost. Prompts
 without a target (`Targeted == false`) are drawn as the bottom hint strip. A prompt with `HudControl.None` is
 informational (nothing to press) and a `PromptTone.Blocked` prompt is drawn in red.
 
 To add a new interactable: extend `PromptCatalog` (or build an `InteractionPrompt` where the target is found) and
-set `Prompt` next to `FocusedTarget` in `PrototypeView`. Control glyphs live in `HudControls.Label`.
+add the case to `InteractionTargeting` and the input dispatch in `PrototypeView.Update`. Control glyphs live in `HudControls.Label`.
 
 ## Port panel
 

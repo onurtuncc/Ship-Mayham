@@ -12,6 +12,9 @@ namespace ShipMayham
         public PrototypeStation[] Stations;
         public Transform[] PassengerAnchors;
         public PrototypeHarbor Harbor;
+        /// <summary>Crew admission and identity; null for a session without a connection layer (tests), which behaves like solo.</summary>
+        public CrewRoster Roster { get; set; }
+        private bool OnlineTransportActive => Roster != null && Roster.OnlineMode;
         public readonly NetworkVariable<VoyageState> Voyage = new NetworkVariable<VoyageState>();
         public readonly NetworkVariable<EncounterState> Encounter = new NetworkVariable<EncounterState>();
         public readonly NetworkVariable<VoyageEventState> ActiveEvent = new NetworkVariable<VoyageEventState>();
@@ -50,7 +53,7 @@ namespace ShipMayham
             CareerProgressStore.Load(ref Simulation.State);
             bool restored = VoyageMigrationDataHandler.RestorePending(Simulation);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (PrototypeHud.OnlineTransportActive) Debug.Log($"SHIP_CREW_RESTORE restored={restored}");
+            if (OnlineTransportActive) Debug.Log($"SHIP_CREW_RESTORE restored={restored}");
 #endif
             NetworkManager.OnClientConnectedCallback += Connected;
             NetworkManager.OnClientDisconnectCallback += Disconnected;
@@ -70,13 +73,13 @@ namespace ShipMayham
 
         private void BindConnection(ulong id)
         {
-            string identity = PrototypeHud.PlayerIdentity(id);
+            string identity = Roster?.PlayerIdentity(id);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             int previousSlot = Simulation.FindPlayer(identity);
 #endif
             int slot = Simulation.Join(id, identity);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (PrototypeHud.OnlineTransportActive)
+            if (OnlineTransportActive)
                 Debug.Log($"SHIP_CREW_BIND connection={id} identity={!string.IsNullOrEmpty(identity)} previousSlot={previousSlot} slot={slot}");
 #endif
         }
@@ -85,7 +88,7 @@ namespace ShipMayham
         private void Disconnected(ulong id)
         {
             if (!IsSpawned || !IsServer || Simulation == null || NetworkManager.ShutdownInProgress) return;
-            if (PrototypeHud.OnlineTransportActive) Simulation.SuspendConnection(id);
+            if (OnlineTransportActive) Simulation.SuspendConnection(id);
             else Simulation.Leave(id);
             Publish();
         }
@@ -94,7 +97,7 @@ namespace ShipMayham
         {
             if (!IsServer || Simulation == null) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (PrototypeHud.OnlineTransportActive) Debug.Log($"SHIP_CREW_DEPART slot={Simulation.FindPlayer(playerId)}");
+            if (OnlineTransportActive) Debug.Log($"SHIP_CREW_DEPART slot={Simulation.FindPlayer(playerId)}");
 #endif
             Simulation.LeavePlayer(playerId);
             Publish();

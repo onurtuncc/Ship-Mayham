@@ -60,8 +60,8 @@ namespace ShipMayham.Tests
             Assert.AreEqual(5, session.Voyage.Value.Reputation);
             sim.Crew[0].Position = new Vector2(5, -8);
             foreach (var frame in Wait(.6f)) yield return frame;
-            Assert.AreEqual(PrototypeHarbor.Target(HarborAction.BoardShip), view.FocusedTarget);
-            Assert.That(view.FocusText, Does.Contain("board ship"));
+            Assert.AreEqual(InteractionTarget.Harbor(HarborAction.BoardShip), view.Target);
+            Assert.That(view.Prompt.Action, Does.Contain("Board ship"));
             Assert.That(harbor.Labels[1].characterSize, Is.EqualTo(.02f));
             Assert.That(harbor.Labels[1].transform.localScale.x, Is.InRange(.25f, 2));
             Assert.IsFalse(session.Stations[0].Label.gameObject.activeSelf, "Ship labels should not clutter the shore view.");

@@ -30,11 +30,8 @@ namespace ShipMayham.Tests
                 hud.Session = pending.GetComponent<PrototypeSession>();
                 Assert.IsFalse(hud.Session.IsSpawned);
                 Assert.IsNull(hud.Session.Simulation);
-                typeof(PrototypeHud).GetMethod("OnlinePlayerLeft", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .Invoke(hud, new object[] { "departed-before-spawn" });
-                var departures = (HashSet<string>)typeof(PrototypeHud)
-                    .GetField("pendingDepartures", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(hud);
-                CollectionAssert.Contains(departures, "departed-before-spawn", "An unapplied departure must survive until the voyage is ready.");
+                hud.OnlinePlayerLeft("departed-before-spawn");
+                Assert.IsTrue(hud.Roster.HasPendingDeparture("departed-before-spawn"), "An unapplied departure must survive until the voyage is ready.");
             }
             finally { hud.Session = original; Object.DestroyImmediate(pending); }
         }
@@ -52,28 +49,25 @@ namespace ShipMayham.Tests
             var sim = hud.Session.Simulation;
             int slot = sim.Join(77, "current-peer");
             Assert.GreaterOrEqual(slot, 0);
-            var left = typeof(PrototypeHud).GetMethod("OnlinePlayerLeft", BindingFlags.Instance | BindingFlags.NonPublic);
-            var reconcile = typeof(PrototypeHud).GetMethod("ReconcileOnlineDepartures", BindingFlags.Instance | BindingFlags.NonPublic);
-            var admitted = (HashSet<string>)typeof(PrototypeHud).GetField("admittedPlayers", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(hud);
-            var pending = (HashSet<string>)typeof(PrototypeHud).GetField("pendingDepartures", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(hud);
-            admitted.Add("current-peer");
-            left.Invoke(hud, new object[] { "current-peer" });
+            var roster = hud.Roster;
+            Assert.IsTrue(roster.TryAdmit(77, System.Text.Encoding.UTF8.GetBytes("current-peer"), out _));
+            roster.QueueDeparture("current-peer");
             // A stale/duplicated indexed departure must not clear a current member,
             // even while its NGO connection has not rebound after migration.
             sim.SuspendConnection(77);
-            reconcile.Invoke(hud, new object[] { new HashSet<string> { "current-peer" } });
+            roster.ReconcileDepartures(new HashSet<string> { "current-peer" }, hud.Session.RemoveOnlinePlayer);
             Assert.IsTrue(sim.Crew[slot].Active);
             Assert.AreEqual(slot, sim.FindPlayer("current-peer"));
-            Assert.IsTrue(admitted.Contains("current-peer"));
-            Assert.IsEmpty(pending);
+            Assert.IsTrue(roster.IsAdmitted("current-peer"));
+            Assert.AreEqual(0, roster.PendingDepartureCount);
             Assert.AreEqual(slot, sim.Join(88, "current-peer"));
 
-            left.Invoke(hud, new object[] { "current-peer" });
-            reconcile.Invoke(hud, new object[] { new HashSet<string>() });
+            roster.QueueDeparture("current-peer");
+            roster.ReconcileDepartures(new HashSet<string>(), hud.Session.RemoveOnlinePlayer);
             Assert.IsFalse(sim.Crew[slot].Active);
             Assert.AreEqual(-1, sim.FindPlayer("current-peer"));
-            Assert.IsFalse(admitted.Contains("current-peer"));
-            Assert.IsEmpty(pending);
+            Assert.IsFalse(roster.IsAdmitted("current-peer"));
+            Assert.AreEqual(0, roster.PendingDepartureCount);
         }
 
         [Test]

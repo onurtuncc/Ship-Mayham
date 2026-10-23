@@ -31,10 +31,9 @@ namespace ShipMayham
         public Color DrinkColor = new Color(.15f, .6f, 1f);
         [Tooltip("Optional hull meshes to recolor. Classic restores their authored property blocks.")]
         public Renderer[] LiveryRenderers;
-        public int FocusedTarget { get; private set; } = -1;
-        public string FocusText { get; private set; } = "";
-        /// <summary>Structured version of <see cref="FocusText"/> for the HUD.</summary>
-        public InteractionPrompt Prompt { get; private set; }
+        /// <summary>What the local crosshair is on; refreshed every frame the local crew member is active.</summary>
+        public InteractionTarget Target { get; private set; }
+        public InteractionPrompt Prompt => Target.Prompt;
         public bool IsFirstPerson { get; private set; }
         /// <summary>True while the local helmsman uses the elevated follow camera instead of first person.</summary>
         public bool ChaseCameraActive { get; private set; }
@@ -271,7 +270,7 @@ namespace ShipMayham
                 FindTarget(Session.Crew[local]);
                 if (!Session.Crew[local].AtHelm && !Session.Crew[local].AtCannon && !Session.Crew[local].OnShore)
                 {
-                    int passenger = FocusedTarget - Session.Stations.Length;
+                    int passenger = Target.Kind == InteractionKind.Passenger ? Target.Index : -1;
                     if (keyboard?.fKey.wasPressedThisFrame == true || pad?.buttonNorth.wasPressedThisFrame == true)
                         Session.PassengerCommandRpc(passenger, PassengerAction.CheckTicket, lookYaw);
                     if (keyboard?.gKey.wasPressedThisFrame == true || pad?.buttonEast.wasPressedThisFrame == true)
@@ -282,16 +281,16 @@ namespace ShipMayham
                 if (keyboard?.eKey.wasPressedThisFrame == true || pad?.buttonSouth.wasPressedThisFrame == true)
                 {
                     if (Session.Crew[local].AtCrane) Session.HarborCraneActionRpc(false);
-                    else if (FocusedTarget <= -200 && FocusedTarget > -200 - HarborTownLayout.SalvageCount)
-                        Session.PickUpSalvageRpc(-200 - FocusedTarget);
-                    else if (FocusedTarget <= -100)
+                    else if (Target.Kind == InteractionKind.Salvage)
+                        Session.PickUpSalvageRpc(Target.Index);
+                    else if (Target.Kind == InteractionKind.Harbor)
                     {
-                        var action = (HarborAction)(-100 - FocusedTarget);
+                        var action = Target.HarborAction;
                         if (Session.Voyage.Value.DockJobActive && (action == HarborAction.BuyFood || VoyageSimulation.IsPortCargo(Session.Crew[local].Carrying)))
                             Session.DockItemCommandRpc(action, Session.Voyage.Value.DockJobType);
                         else Session.HarborCommandRpc(action);
                     }
-                    else Session.InteractRpc(FocusedTarget, false);
+                    else Session.InteractRpc(Target.InteractionId(Session.Stations.Length), false);
                 }
                 if (Session.Crew[local].AtHelm && (keyboard?.cKey.wasPressedThisFrame == true || pad?.buttonNorth.wasPressedThisFrame == true)) ToggleChaseCamera();
                 if (!Session.Crew[local].AtCannon && (keyboard?.spaceKey.wasPressedThisFrame == true || pad?.buttonWest.wasPressedThisFrame == true))
@@ -316,132 +315,8 @@ namespace ShipMayham
             }
         }
 
-        private void FindTarget(CrewState crew)
-        {
-            FocusedTarget = -1;
-            Prompt = default;
-            if (crew.AtCannon) { FocusText = "LMB / RT: fire | R / X: reload | E / A: release cannon\nCrew: carry rounds from AMMO to CANNON."; Prompt = PromptCatalog.ForCannon(); return; }
-            if (crew.AtHelm) { FocusText = "E / A: release helm   |   Space / X: depart or dock   |   C / Y: change camera"; Prompt = PromptCatalog.ForHelm(); return; }
-            if (crew.AtCrane) { FocusText = "CRANE: WASD / stick moves hook (north up) | Space / X: lift / land | E / A: release"; Prompt = PromptCatalog.ForCrane(); return; }
-            if (Session.LocalCarriedPassengerIndex >= 0) { FocusText = "G / B: put down | LMB / RT: throw (-5 happiness)\nOverboard: another -20 happiness + 15 coins. Rescue: 8s."; Prompt = PromptCatalog.ForCarriedPassenger(); return; }
-            if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) { FocusText = "Land before interacting"; Prompt = PromptCatalog.ForAirborne(); return; }
-            float bestAngle = 24f;
-            FocusText = "Look at a nearby station or passenger";
-            if (crew.OnShore)
-            {
-                FocusText = "Harbor: food / drink packs 12 coins, hull shield 30. Return at the green gangway marker.";
-                FindHarborTarget(crew, ref bestAngle);
-                return;
-            }
-            for (int i = 0; i < Session.Stations.Length; i++)
-            {
-                var station = Session.Stations[i];
-                float distance = Vector2.Distance(crew.Position, station.DeckPosition(Session.ShipRoot));
-                if (distance > VoyageSimulation.InteractionRange) continue;
-                float angle = Vector3.Angle(Camera.transform.forward, station.InteractionAnchor.position + Vector3.up * .65f - Camera.transform.position);
-                if (angle >= bestAngle) continue;
-                bestAngle = angle;
-                FocusedTarget = i;
-                Prompt = PromptCatalog.ForStation(station.Kind, Session.Voyage.Value, Session.Encounter.Value, crew);
-                FocusText = "E / A: " + station.DisplayName;
-                if (station.Kind == StationKind.RepairSupply)
-                    FocusText = crew.Carrying == ServiceItem.RepairKit ? "E / A: return quick patch kit" : $"E / A: take kit ({Session.Voyage.Value.RepairKitStock} in store) -> REPAIR";
-                else if (station.Kind == StationKind.Repair)
-                    FocusText = crew.Carrying == ServiceItem.RepairKit
-                        ? $"E / A: deliver kit ({Session.Voyage.Value.ReadyRepairKits}/{VoyageSimulation.RepairKitBufferCapacity} bench slots used)"
-                        : Session.Voyage.Value.Leak == 0 ? "Hull watertight | carry KITS here to prepare quick patches"
-                        : Session.Voyage.Value.ReadyRepairKits > 0 ? "E / A: use one quick kit -> seal leak + up to 8 hull"
-                        : $"E / A: manual patch {Session.Voyage.Value.RepairSteps}/4 | or bring a kit from KITS";
-                if (station.Kind == StationKind.Ammo)
-                    FocusText = crew.Carrying == ServiceItem.Ammo ? "E / A: return cannonball to magazine" : $"E / A: take cannonball ({Session.Encounter.Value.MagazineAmmo} in magazine)";
-                else if (station.Kind == StationKind.Cannon && crew.Carrying == ServiceItem.Ammo)
-                {
-                    var e = Session.Encounter.Value;
-                    int occupied = e.ReadyAmmo + (e.ReloadRemaining > 0 ? 1 : 0);
-                    FocusText = $"E / A: deliver cannonball ({occupied}/{VoyageSimulation.CannonBufferCapacity} rack slots used)";
-                }
-                if (VoyageSimulation.IsUpgrade(station.Kind))
-                    FocusText += $" ({VoyageSimulation.UpgradeCost(station.Kind, Session.Voyage.Value)} coins; at port)";
-            }
-            for (int i = 0; i < Session.Passengers.Count; i++)
-            {
-                if (!Session.Passengers[i].Active) continue;
-                if (Session.Passengers[i].Motion != PassengerMotion.OnDeck) continue;
-                Vector3 p = Session.Passengers[i].Position;
-                float distance = Vector2.Distance(crew.Position, new Vector2(p.x, p.z));
-                if (distance > VoyageSimulation.InteractionRange) continue;
-                float angle = Vector3.Angle(Camera.transform.forward, Session.ShipRoot.TransformPoint(p + Vector3.up) - Camera.transform.position);
-                if (angle >= bestAngle) continue;
-                bestAngle = angle;
-                FocusedTarget = Session.Stations.Length + i;
-                var passenger = Session.Passengers[i];
-                Prompt = PromptCatalog.ForPassenger(i, passenger);
-                string ticket = !passenger.TicketChecked ? "F / Y: check ticket" : !passenger.FarePaid ? "F / Y: collect 40 coins" : "Ticket valid";
-                string service = passenger.Request == ServiceItem.None ? "No order" : "E / A: serve " + passenger.Request;
-                FocusText = $"Passenger {i + 1} -> North Port | {PassengerPresentation.TicketText(passenger)}\n{service} | {ticket} | G / B: lift";
-            }
-            FindHarborTarget(crew, ref bestAngle);
-        }
-
-        private void FindHarborTarget(CrewState crew, ref float bestAngle)
-        {
-            var harbor = Session.Harbor;
-            if (harbor == null || !harbor.IsOpen) return;
-            int first = crew.OnShore ? 1 : 0, last = crew.OnShore ? HarborTownLayout.StationsPerPort : 0;
-            for (int i = first; i <= last; i++)
-            {
-                var action = (HarborAction)i;
-                if (Vector2.Distance(crew.Position, VoyageSimulation.HarborPoint(action)) > VoyageSimulation.InteractionRange) continue;
-                Vector3 point = harbor.Point(action) + Vector3.up * .7f;
-                float angle = Vector3.Angle(Camera.transform.forward, point - Camera.transform.position);
-                if (angle >= bestAngle) continue;
-                bestAngle = angle;
-                FocusedTarget = PrototypeHarbor.Target(action);
-                FocusText = PrototypeHarbor.Prompt(action);
-                Prompt = PromptCatalog.ForHarbor(action, Session.Voyage.Value, crew);
-                if (Session.Voyage.Value.DockJobActive)
-                {
-                    if (Session.Voyage.Value.DockJobType == DockJobKind.CraneLoading)
-                    {
-                        if (crew.Carrying == ServiceItem.CraneCrate) FocusText = "E / A: deliver crate at LOAD PAD | FISH MARKET / FOOD accepts returns";
-                        continue;
-                    }
-                    if (Session.Voyage.Value.DockJobType == DockJobKind.SalvageRun)
-                    {
-                        if (VoyageSimulation.IsSalvage(crew.Carrying)) FocusText = "E / A: deliver salvage at PORT OFFICE | FOOD accepts returns";
-                        continue;
-                    }
-                    if (Session.Voyage.Value.DockJobType == DockJobKind.LuggageSort)
-                    {
-                        FocusText = action == HarborAction.BuyFood
-                            ? VoyageSimulation.IsLuggage(crew.Carrying) ? "E / A: return tagged bag" : "E / A: take next tagged bag (A / B / C)"
-                            : VoyageSimulation.IsLuggage(crew.Carrying)
-                                ? $"Bag {VoyageSimulation.LuggageTag(crew.Carrying)} -> {VoyageSimulation.LuggageDesk(Session.Voyage.Value, crew.Carrying)} | E / A: deliver at matching desk"
-                                : PrototypeHarbor.Prompt(action);
-                        continue;
-                    }
-                    if (action == HarborAction.BuyFood)
-                        FocusText = crew.Carrying == ServiceItem.Cargo ? "E / A: return cargo crate" : "E / A: pick up cargo crate — deliver at HULL";
-                    else if (action == HarborAction.MaintainHull && crew.Carrying == ServiceItem.Cargo)
-                        FocusText = "E / A: deliver cargo crate";
-                }
-            }
-            if (!crew.OnShore || !Session.Voyage.Value.DockJobActive || Session.Voyage.Value.DockJobType != DockJobKind.SalvageRun) return;
-            for (int index = 0; index < HarborTownLayout.SalvageCount; index++)
-            {
-                if ((Session.Voyage.Value.DockJobDeliveredMask & (1 << index)) != 0) continue;
-                ServiceItem item = (ServiceItem)((int)ServiceItem.SalvageA + index);
-                bool held = false;
-                foreach (var member in Session.Crew) if (member.Active && member.Carrying == item) held = true;
-                if (held || Vector2.Distance(crew.Position, HarborTownLayout.SalvagePoint(index)) > VoyageSimulation.InteractionRange) continue;
-                Vector3 point = VoyageSimulation.HarborOrigin(Session.Voyage.Value) + new Vector3(HarborTownLayout.SalvagePoint(index).x, 1, HarborTownLayout.SalvagePoint(index).y);
-                float angle = Vector3.Angle(Camera.transform.forward, point - Camera.transform.position);
-                if (angle >= bestAngle) continue;
-                bestAngle = angle; FocusedTarget = -200 - index;
-                FocusText = $"E / A: take salvage bundle {index + 1}/3 -> PORT OFFICE";
-                Prompt = PromptCatalog.ForSalvage(index);
-            }
-        }
+        private void FindTarget(CrewState crew) =>
+            Target = InteractionTargeting.Find(Session, crew, Camera.transform.position, Camera.transform.forward);
 
         private void LateUpdate()
         {
@@ -566,7 +441,7 @@ namespace ShipMayham
             {
                 Camera.transform.position = ship.TransformPoint(new Vector3(0, 24, -19));
                 Camera.transform.LookAt(ship.position);
-                FocusedTarget = -1;
+                Target = InteractionTarget.None;
             }
             foreach (var label in CrewLabels) WorldLabelPresentation.UpdateLabel(label, Camera);
             for (int i = 0; i < PassengerVisuals.Length; i++)
@@ -584,7 +459,7 @@ namespace ShipMayham
                 PassengerVisuals[i].rotation = ship.rotation * passengerVisualRotations[i] *
                     (p.Motion == PassengerMotion.Airborne ? Quaternion.Euler(0, 0, Time.time * 360) : Quaternion.identity);
                 if (passengerBuoys[i] != null) passengerBuoys[i].gameObject.SetActive(p.Motion == PassengerMotion.Rescuing);
-                bool focused = FocusedTarget == Session.Stations.Length + i;
+                bool focused = Target.IsPassenger(i);
                 bool rescuing = p.Motion == PassengerMotion.Rescuing;
                 PassengerLabels[i].gameObject.SetActive(!heldByMe && (rescuing || Vector3.Distance(Camera.transform.position, PassengerVisuals[i].position) < 7));
                 PassengerLabels[i].transform.position = PassengerVisuals[i].position + ship.rotation * passengerLabelOffsets[i];
@@ -600,7 +475,7 @@ namespace ShipMayham
             {
                 WorldLabelPresentation.UpdateLabel(station.Label, Camera);
                 station.Label.gameObject.SetActive((local < 0 || !Session.Crew[local].OnShore) && Vector3.Distance(station.Label.transform.position, Camera.transform.position) < 10);
-                station.Label.color = FocusedTarget >= 0 && FocusedTarget < Session.Stations.Length && Session.Stations[FocusedTarget] == station ? Color.yellow : Color.white;
+                station.Label.color = Target.Kind == InteractionKind.Station && Session.Stations[Target.Index] == station ? Color.yellow : Color.white;
             }
         }
 
@@ -641,7 +516,7 @@ namespace ShipMayham
             Camera.transform.SetPositionAndRotation(pivot - rotation * Vector3.forward * (ChaseDistance * (1f + .22f * speed01)), rotation);
             Camera.fieldOfView = ChaseFieldOfView + speed01 * 6f;
             Camera.nearClipPlane = .3f;
-            FocusedTarget = -1;
+            Target = InteractionTarget.None;
         }
 
         private void ApplyLivery(ShipLivery livery)

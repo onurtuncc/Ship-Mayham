@@ -18,24 +18,6 @@ namespace ShipMayham
         public int PortIndex => Session.Voyage.Value.Phase == VoyagePhase.Arrived ? 1 : 0;
         public Vector3 Point(HarborAction action) => action == HarborAction.GoAshore ? ShipGate.position :
             ShoreMarkers[PortIndex * HarborTownLayout.StationsPerPort + (int)action - 1].position;
-        public static int Target(HarborAction action) => -100 - (int)action;
-        public static string Prompt(HarborAction action)
-        {
-            switch (action)
-            {
-                case HarborAction.GoAshore: return "E / A: go ashore (empty hands)";
-                case HarborAction.BoardShip: return "E / A: board ship";
-                case HarborAction.BuyFood: return "E / A: buy 8 food for 12 coins | storage cap 32";
-                case HarborAction.BuyDrink: return "E / A: buy 8 drinks for 12 coins | storage cap 32";
-                case HarborAction.HarborMaster: return "E / A: speak to harbor master | routes / town jobs";
-                case HarborAction.PaintShop: return "E / A: visit paint dock | choose your ship colors";
-                case HarborAction.FishMarket: return "E / A: take / return fish crate for CRANE LOADING";
-                case HarborAction.CraneLoadingPad: return "E / A: deliver fish crate to loading pad";
-                case HarborAction.CraneControls: return "E / A: operate harbor crane (CRANE LOADING job)";
-                default: return "E / A: hull protection — 30 coins, absorbs 20 damage";
-            }
-        }
-
         private void LateUpdate()
         {
             bool open = IsOpen;

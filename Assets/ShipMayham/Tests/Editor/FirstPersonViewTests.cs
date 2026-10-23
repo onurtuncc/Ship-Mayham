@@ -115,10 +115,10 @@ namespace ShipMayham.Tests
             hud.Session.Simulation.Crew[0].Position = new Vector2(-4, 1.5f);
             foreach (var frame in Wait(.6f)) yield return frame;
             int drink = System.Array.FindIndex(hud.Session.Stations, s => s.Kind == StationKind.Drink);
-            Assert.AreEqual(drink, hud.View.FocusedTarget, "Equally nearby food is behind the camera.");
+            Assert.IsTrue(hud.View.Target.IsStation(drink), "Equally nearby food is behind the camera.");
             hud.Session.Simulation.Crew[0].Position = new Vector2(-4, 4.5f);
             foreach (var frame in Wait(.6f)) yield return frame;
-            Assert.AreEqual(-1, hud.View.FocusedTarget, "The drink station is still in range, but now behind us.");
+            Assert.IsTrue(hud.View.Target.IsNone, "The drink station is still in range, but now behind us.");
             LogAssert.NoUnexpectedReceived();
         }
 

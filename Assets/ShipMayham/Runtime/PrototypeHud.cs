@@ -24,15 +24,11 @@ namespace ShipMayham
         private string sessionCode = "";
         private string status = "Create an online voyage, or enter a friend's join code.";
         private bool attempted, reloading;
-        private readonly HashSet<ulong> admittedClients = new HashSet<ulong>();
-        private readonly HashSet<string> admittedPlayers = new HashSet<string>();
-        private readonly HashSet<string> pendingDepartures = new HashSet<string>();
-        private readonly Dictionary<ulong, string> playerIdentities = new Dictionary<ulong, string>();
+        private readonly CrewRoster roster = new CrewRoster();
         private ISession onlineSession;
         private IClientSessionNetwork onlineNetwork;
         private VoyageMigrationDataHandler migrationHandler;
-        private bool onlineMode;
-        private static PrototypeHud instance;
+        private bool onlineMode { get => roster.OnlineMode; set => roster.OnlineMode = value; }
         private bool connectionLost, statusIsError;
         /// <summary>Latest connection message for the lobby screen.</summary>
         public string Status => status;
@@ -56,9 +52,8 @@ namespace ShipMayham
         public SessionError? LastMigrationError { get; private set; }
         public NetworkState? OnlineNetworkState => onlineNetwork?.State;
 
-        public static bool OnlineTransportActive => instance != null && instance.onlineMode;
-        public static string PlayerIdentity(ulong clientId) =>
-            instance != null && instance.playerIdentities.TryGetValue(clientId, out string playerId) ? playerId : null;
+        /// <summary>Who may hold a crew slot; shared with the session so it never has to look the HUD up.</summary>
+        public CrewRoster Roster => roster;
 
         private void Update()
         {
@@ -67,18 +62,17 @@ namespace ShipMayham
 
         private void Awake()
         {
-            instance = this;
             Application.runInBackground = true;
             if (Application.isPlaying) HudController.Create(this);
             migrationHandler = new VoyageMigrationDataHandler(() => Session != null ? Session.Simulation : null);
-            Manager.ConnectionApprovalCallback = Approve;
+            if (Session != null) Session.Roster = roster;
+            Manager.ConnectionApprovalCallback = roster.Approve;
             Manager.OnClientDisconnectCallback += Disconnected;
         }
 
         private void OnDestroy()
         {
             UnsubscribeOnlineSession();
-            if (instance == this) instance = null;
             if (Manager != null)
             {
                 Manager.OnClientDisconnectCallback -= Disconnected;
@@ -86,32 +80,9 @@ namespace ShipMayham
             }
         }
 
-        private void Approve(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
-        {
-            string playerId = request.Payload != null && request.Payload.Length > 0
-                ? Encoding.UTF8.GetString(request.Payload)
-                : null;
-            bool knownOnlinePlayer = !string.IsNullOrEmpty(playerId) && admittedPlayers.Contains(playerId);
-            int admittedCount = onlineMode ? admittedPlayers.Count : admittedClients.Count;
-            response.Approved = knownOnlinePlayer || admittedClients.Contains(request.ClientNetworkId) || admittedCount < VoyageSimulation.MaxCrew;
-            if (response.Approved)
-            {
-                admittedClients.Add(request.ClientNetworkId);
-                if (!string.IsNullOrEmpty(playerId))
-                {
-                    admittedPlayers.Add(playerId);
-                    playerIdentities[request.ClientNetworkId] = playerId;
-                }
-            }
-            response.CreatePlayerObject = false;
-            response.Pending = false;
-            response.Reason = response.Approved ? "" : "The ship already has four crew members.";
-        }
-
         private void Disconnected(ulong id)
         {
-            admittedClients.Remove(id);
-            playerIdentities.Remove(id);
+            roster.ClientDisconnected(id);
             if (id == Manager.LocalClientId)
             {
                 connectionLost = onlineMode;
@@ -168,10 +139,7 @@ namespace ShipMayham
             status = host ? "Creating Relay voyage..." : "Joining Relay voyage...";
             statusIsError = false;
             connectionLost = false;
-            admittedClients.Clear();
-            admittedPlayers.Clear();
-            pendingDepartures.Clear();
-            playerIdentities.Clear();
+            roster.Clear();
             CompletedMigrations = 0;
             LastMigrationError = null;
 
@@ -276,39 +244,20 @@ namespace ShipMayham
             Debug.LogWarning(status);
         }
 
-        private void OnlinePlayerLeft(string playerId)
+        /// <summary>Session callback; the departure is applied once the voyage is ready and the roster confirms it.</summary>
+        public void OnlinePlayerLeft(string playerId)
         {
-            pendingDepartures.Add(playerId);
+            roster.QueueDeparture(playerId);
             FlushPendingDepartures();
         }
 
         private void FlushPendingDepartures()
         {
-            if (pendingDepartures.Count == 0 || !onlineMode || onlineSession == null || !onlineSession.IsHost ||
+            if (roster.PendingDepartureCount == 0 || !onlineMode || onlineSession == null || !onlineSession.IsHost ||
                 Session == null || !Session.IsSpawned || !Session.IsServer || Session.Simulation == null) return;
             var currentPlayers = new HashSet<string>(StringComparer.Ordinal);
             foreach (var player in onlineSession.Players) currentPlayers.Add(player.Id);
-            ReconcileOnlineDepartures(currentPlayers);
-        }
-
-        private void ReconcileOnlineDepartures(ISet<string> currentPlayers)
-        {
-            // Lobby deltas can arrive after a newer roster was applied. The SDK's
-            // indexed PlayerHasLeft callback is not sufficient authority to delete
-            // a stable crew identity that is still in the current session roster.
-            foreach (string playerId in pendingDepartures)
-            {
-                if (currentPlayers.Contains(playerId))
-                {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    if (onlineMode) Debug.Log("SHIP_CREW_DEPART_IGNORED current session member");
-#endif
-                    continue;
-                }
-                admittedPlayers.Remove(playerId);
-                Session.RemoveOnlinePlayer(playerId);
-            }
-            pendingDepartures.Clear();
+            roster.ReconcileDepartures(currentPlayers, Session.RemoveOnlinePlayer);
         }
 
         private void OnlineSessionEnded()
