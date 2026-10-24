@@ -60,7 +60,7 @@ namespace ShipMayham
             }
         }
 
-        public static string TicketText(PassengerState p) => !p.TicketChecked ? "Ticket: unchecked" : p.FarePaid ? "Ticket: PAID" : "Ticket: DUE 40";
+        public static string TicketText(PassengerState p) => !p.TicketChecked ? "Ticket: unchecked" : p.WorkedFare ? "Ticket: WORKED OFF" : p.FarePaid ? "Ticket: PAID" : "Ticket: DUE 40";
 
         public static string ReactionText(PassengerState p)
         {

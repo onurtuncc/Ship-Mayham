@@ -411,7 +411,7 @@ namespace ShipMayham
                 {
                     int passenger = Target.Kind == InteractionKind.Passenger ? Target.Index : -1;
                     if (passenger >= 0 && (keyboard?.rKey.wasPressedThisFrame == true || pad?.dpad.down.wasPressedThisFrame == true))
-                        Session.DeckCommandRpc(DeckAction.CalmPassenger, passenger);
+                        Session.DeckCommandRpc(Session.Passengers[passenger].TicketChecked && !Session.Passengers[passenger].FarePaid ? DeckAction.WorkFare : DeckAction.CalmPassenger, passenger);
                     if (Target.Kind == InteractionKind.Station && (keyboard?.rKey.wasPressedThisFrame == true || pad?.dpad.down.wasPressedThisFrame == true))
                     {
                         var kind = Session.Stations[Target.Index].Kind;

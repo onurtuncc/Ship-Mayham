@@ -25,6 +25,11 @@ namespace ShipMayham
             {
                 FindStation(session, crew, eye, forward, ref best, ref target);
                 FindPassenger(session, crew, eye, forward, ref best, ref target);
+                DeckPoint(session, crew, eye, forward, VoyageSimulation.PlugLocker, DeckAction.TakePlug,
+                    InteractionPrompt.Target("Temporary plug locker", "Take / return plug", "Carry to REPAIR for a 20-second hold"), ref best, ref target);
+                if (session.Opportunity.Value.ChestAvailable && Vector2.Distance(session.Voyage.Value.Position, session.Opportunity.Value.ChestPosition) <= 15)
+                    DeckPoint(session, crew, eye, forward, VoyageSimulation.RescueRope, DeckAction.HaulChest,
+                        InteractionPrompt.Target("Recovery rope", "Haul sea chest", "Below 1 m/s; +30 on successful arrival"), ref best, ref target);
                 if (session.Emergency.Value.Fire == FirePhase.Burning &&
                     Vector2.Distance(crew.Position, VoyageSimulation.FirePoint) <= VoyageSimulation.InteractionRange)
                 {
@@ -44,6 +49,16 @@ namespace ShipMayham
             }
             FindHarbor(session, crew, eye, forward, ref best, ref target);
             return target;
+        }
+
+        private static void DeckPoint(PrototypeSession session, in CrewState crew, Vector3 eye, Vector3 forward, Vector2 spot,
+            DeckAction action, InteractionPrompt prompt, ref float best, ref InteractionTarget target)
+        {
+            if (Vector2.Distance(crew.Position, spot) > VoyageSimulation.InteractionRange) return;
+            Vector3 point = session.ShipRoot.TransformPoint(new Vector3(spot.x, .8f, spot.y));
+            float angle = Vector3.Angle(forward, point - eye);
+            if (angle >= best) return;
+            best = angle; target = InteractionTarget.DeckTask(action, prompt, point);
         }
 
         private static void FindStation(PrototypeSession session, in CrewState crew, Vector3 eye, Vector3 forward, ref float best, ref InteractionTarget target)

@@ -37,6 +37,7 @@ namespace ShipMayham
             ResetNavigation();
             ResetDeck();
             ResetEmergencies();
+            ResetOpportunities();
         }
 
         public int FindCrew(ulong clientId)
@@ -213,12 +214,13 @@ namespace ShipMayham
             TickNavigation(dt);
             TickDeck(dt);
             TickEmergencies(dt);
+            TickOpportunities(dt);
             if (State.Elapsed >= nextLeak && State.Leak == 0)
             {
                 State.Leak = 1;
                 State.RepairSteps = 0;
             }
-            if (State.Leak != 0) DamageHull(dt * .65f);
+            if (State.Leak != 0 && Opportunity.PlugRemaining <= 0) DamageHull(dt * .65f);
             if (State.Health <= 0) { Settle(false); return; }
             for (int i = 0; i < MaxPassengers; i++)
             {
@@ -293,6 +295,12 @@ namespace ShipMayham
                 case StationKind.Drink: return TakeItem(i, ServiceItem.Drink);
                 case StationKind.Repair:
                     if (!RepairSuppliesOpen) return "Repair bench closed. Prepare a new voyage.";
+                    if (Crew[i].Carrying == ServiceItem.TemporaryPlug)
+                    {
+                        if (State.Leak == 0 || Opportunity.PlugRemaining > 0) return "A temporary plug needs an unblocked active leak.";
+                        Crew[i].Carrying = ServiceItem.None; Opportunity.PlugsUsed++; Opportunity.PlugRemaining = 20;
+                        return "Leak held for 20 seconds. Use the time to diagnose valves or apply a permanent patch.";
+                    }
                     if (Crew[i].Carrying == ServiceItem.RepairKit) return DeliverRepairKit(i);
                     if (State.Leak == 0)
                     {
@@ -376,6 +384,7 @@ namespace ShipMayham
             if (Crew[crew].Carrying == ServiceItem.Ammo) Encounter.MagazineAmmo++;
             if (Crew[crew].Carrying == ServiceItem.RepairKit) State.RepairKitStock++;
             if (Crew[crew].Carrying == ServiceItem.CraneCrate) State.CraneStock++;
+            if (Crew[crew].Carrying == ServiceItem.TemporaryPlug) Opportunity.PlugsAvailable++;
             Crew[crew].Carrying = ServiceItem.None;
         }
 
@@ -477,7 +486,7 @@ namespace ShipMayham
                 if (!passenger.Active) continue;
                 if (passenger.Motion == PassengerMotion.Rescuing) { State.LastMissing++; continue; }
                 if (!passenger.FarePaid) State.LastUnpaid++;
-                else if (success) State.LastTickets += 40;
+                else if (success && !passenger.WorkedFare) State.LastTickets += 40;
             }
             State.LastServices = success ? State.Served * 8 : 0;
             float satisfaction = 0;
@@ -486,7 +495,7 @@ namespace ShipMayham
             State.LastRescueCosts = State.RescueCount * 15;
             State.LastCosts = State.Served * 2 + Mathf.CeilToInt((100 - State.Health) * .5f) + State.LastRescueCosts;
             State.LastBounty = success ? Encounter.Bounty : 0;
-            State.LastEventBonus = success ? Event.Reward : 0;
+            State.LastEventBonus = success ? Event.Reward + Opportunity.ChestReward : 0;
             State.LastRouteBonus = success ? RouteBonus() : 0;
             State.LastReputation = success ? RouteReputation() : 0;
             State.Reputation += State.LastReputation;
@@ -516,6 +525,7 @@ namespace ShipMayham
             ResetNavigation();
             ResetDeck();
             ResetEmergencies();
+            ResetOpportunities();
             for (int i = 0; i < MaxCrew; i++)
             {
                 Crew[i].AtHelm = false;

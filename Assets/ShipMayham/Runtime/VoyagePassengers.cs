@@ -73,6 +73,7 @@ namespace ShipMayham
             target.Routine = PassengerRoutine.Seated; target.RoamIn = 15;
             if (action == PassengerAction.CheckTicket)
             {
+                target.WorkRemaining = 0;
                 string inspection = InspectPassengerForEvent(passenger);
                 if (!target.TicketChecked)
                 {
@@ -90,6 +91,7 @@ namespace ShipMayham
                 return "Fare collected: +40 ticket income on successful arrival." + inspection;
             }
             if (Crew[slot].Carrying != ServiceItem.None) return "Serve or return your item before lifting a passenger.";
+            target.WorkRemaining = 0;
             target.Motion = PassengerMotion.Carried;
             target.CarrierSlot = slot;
             passengerCarryYaw[slot] = Mathf.Repeat(yaw, 360);

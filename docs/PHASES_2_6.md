@@ -35,3 +35,14 @@ At REPAIR, R cycles A/B/C valves; a pressure clue identifies the hot pipe. E app
 correct selection stops the leak without a kit; incorrect selection costs 2 hull. Existing manual and kit repair remain.
 Isolation intentionally does not stop an unrelated hull leak.
 Phases 2–4: 17/17 focused tests passed, exit 0 (Logs/Phase4-Final.xml).
+
+## Phase 5 — alternative resolutions and sea opportunity
+
+An inspected unpaid passenger can accept a cleaning job with R / D-pad down when a spill exists.
+They walk to the spill and work for six seconds; the debt is settled without adding 40 ticket coins.
+Manual payment or pickup interrupts unfinished work. A bounded task timeout prevents blocked NPC jobs.
+The plug locker on deck supplies two temporary plugs: carry one to REPAIR to pause leak damage for 20 seconds.
+The leak still needs a valve, manual patch or quick kit. Returned/disconnected plugs conserve inventory.
+A sea chest appears off the direct route: approach within 15 m, slow below 1 m/s and E at the port-side recovery rope.
+Its 30-coin bonus pays once on successful arrival, never on pickup. All task/countdown state migrates.
+Phases 2–5: 22/22 focused tests passed, exit 0 (Logs/Phase5.xml).

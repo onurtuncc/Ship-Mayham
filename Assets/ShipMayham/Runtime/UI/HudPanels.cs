@@ -74,6 +74,9 @@ namespace ShipMayham
                     if (Vector2.Distance(s.Position, shoal) <= 60)
                         Place(90 + shoal.x * .75f, 235 - shoal.y * .9f, "ROCK", HudKit.Warning, true, 11);
                 }
+                var opportunity = session.Opportunity.Value;
+                if (opportunity.ChestAvailable)
+                    Place(90 + opportunity.ChestPosition.x * .75f, 235 - opportunity.ChestPosition.y * .9f, "CHEST", HudKit.Coin, true, 11);
                 if (encounter.Pirate == PiratePhase.Warning || encounter.Pirate == PiratePhase.Attacking)
                 {
                     Vector2 pirate = encounter.PiratePosition;

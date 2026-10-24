@@ -147,7 +147,8 @@ namespace ShipMayham
         public static InteractionPrompt ForPassenger(int index, in PassengerState p)
         {
             string title = $"Passenger {index + 1}";
-            string ticket = PassengerPresentation.TicketText(p) + $" | {p.Personality} | R / D-pad down: reassure";
+            string ticket = PassengerPresentation.TicketText(p) + $" | {p.Personality}" +
+                (p.TicketChecked && !p.FarePaid ? " | R / D-pad down: cleaning job instead of fare" : " | R / D-pad down: reassure");
             if (p.Request != ServiceItem.None)
             {
                 var check = !p.TicketChecked ? new PromptHint(HudControl.Check, "Check ticket") : !p.FarePaid ? new PromptHint(HudControl.Check, "Collect fare") : default;

@@ -65,6 +65,7 @@ namespace ShipMayham
             if (active && emergency.Fire == FirePhase.Burning) text += emergency.Isolated
                 ? "\nFIRE ISOLATED — get extinguisher: R at KITS; spray: E at fire"
                 : "\nFIRE — R at POWER isolates damage; R at KITS equips extinguisher";
+            if (active && session.Opportunity.Value.PlugRemaining > 0) text += $"\nTEMPORARY PLUG: {session.Opportunity.Value.PlugRemaining:0}s — finish a permanent repair";
             if (text != lastWarning) { warning.text = text; lastWarning = text; }
         }
         private void OnDestroy() { if (material != null) Destroy(material); }

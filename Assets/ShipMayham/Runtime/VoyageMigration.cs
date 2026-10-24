@@ -8,7 +8,8 @@ namespace ShipMayham
     [Serializable]
     internal sealed class VoyageMigrationSnapshot
     {
-        public int Version = 14;
+        public int Version = 15;
+        public VoyageOpportunityState Opportunity;
         public ShipEmergencyState Emergency;
         public DeckConditionState Deck;
         public NavigationState Navigation;
@@ -72,6 +73,7 @@ namespace ShipMayham
                 Navigation = Navigation,
                 Deck = Deck,
                 Emergency = Emergency,
+                Opportunity = Opportunity,
                 Crew = (CrewState[])Crew.Clone(),
                 Passengers = (PassengerState[])Passengers.Clone(),
                 CrewPlayerIds = (string[])crewPlayerIds.Clone(),
@@ -93,7 +95,7 @@ namespace ShipMayham
         {
             if (data == null || data.Length == 0) throw new ArgumentException("Migration data is empty.", nameof(data));
             VoyageMigrationSnapshot snapshot = JsonUtility.FromJson<VoyageMigrationSnapshot>(Encoding.UTF8.GetString(data));
-            if (snapshot == null || snapshot.Version != 14 || snapshot.Crew?.Length != MaxCrew ||
+            if (snapshot == null || snapshot.Version != 15 || snapshot.Crew?.Length != MaxCrew ||
                 snapshot.Passengers?.Length != MaxPassengers || snapshot.CrewPlayerIds?.Length != MaxCrew)
                 throw new InvalidOperationException("Unsupported or incomplete voyage migration snapshot.");
 
@@ -103,6 +105,7 @@ namespace ShipMayham
             Navigation = snapshot.Navigation;
             Deck = snapshot.Deck;
             Emergency = snapshot.Emergency;
+            Opportunity = snapshot.Opportunity;
             Array.Copy(snapshot.Crew, Crew, MaxCrew);
             Array.Copy(snapshot.Passengers, Passengers, MaxPassengers);
             Array.Copy(snapshot.CrewPlayerIds, crewPlayerIds, MaxCrew);

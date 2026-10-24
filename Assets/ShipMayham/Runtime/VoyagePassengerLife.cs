@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ShipMayham
 {
-    public enum DeckAction : byte { CleanSpill, CalmPassenger, TakeExtinguisher, Extinguish, IsolateFire, SelectValve }
+    public enum DeckAction : byte { CleanSpill, CalmPassenger, TakeExtinguisher, Extinguish, IsolateFire, SelectValve, TakePlug, WorkFare, HaulChest }
     [Serializable]
     public struct DeckConditionState : INetworkSerializable, IEquatable<DeckConditionState>
     {
@@ -31,6 +31,7 @@ namespace ShipMayham
             ref var p = ref Passengers[index];
             p.CalmRemaining = Mathf.Max(0, p.CalmRemaining - dt);
             if (State.Phase != VoyagePhase.Sailing || p.Motion != PassengerMotion.OnDeck) return;
+            if (p.WorkRemaining > 0) { TickPassengerWork(index, dt); return; }
             bool danger = Navigation.WaveActive || Encounter.Pirate == PiratePhase.Attacking;
             if (p.Personality == PassengerPersonality.Nervous && danger && p.CalmRemaining <= 0)
                 p.Satisfaction = Mathf.Max(0, p.Satisfaction - dt * .2f);
@@ -94,6 +95,7 @@ namespace ShipMayham
         public string DeckCommand(ulong clientId, DeckAction action, int passenger = -1)
         {
             if (action >= DeckAction.TakeExtinguisher && action <= DeckAction.SelectValve) return SafetyCommand(clientId, action);
+            if (action >= DeckAction.TakePlug && action <= DeckAction.HaulChest) return OpportunityCommand(clientId, action, passenger);
             int slot = FindCrew(clientId);
             if (slot < 0 || InLobby || (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing)) return "Deck tasks are closed.";
             var crew = Crew[slot];
