@@ -375,6 +375,26 @@ namespace ShipMayham.Tests
             yield return new ExitPlayMode();
         }
 
+        // Optional visual check: the main menu with a saved world (set SHIPMAYHAM_CAPTURE=1).
+        [UnityTest] public IEnumerator CaptureContinueMenu()
+        {
+            if (string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("SHIPMAYHAM_CAPTURE"))) Assert.Ignore("Set SHIPMAYHAM_CAPTURE=1 to render HUD previews.");
+            yield return new EnterPlayMode();
+            WorldSave.ForceEnabled = true;
+            var sim = new VoyageSimulation(System.Array.Empty<StationDefinition>(), new Vector2[8]);
+            sim.Join(5, "host");
+            sim.State.Voyage = 4; sim.State.Wallet = 312; sim.State.Reputation = 2;
+            WorldSave.Save(sim.ExportMigrationData(), WorldSaveInfo.From(sim.State, 2, "Captain Pip", WorldSave.NowUnix() - 1800));
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            var controller = hud.GetComponentInChildren<HudController>(true);
+            Directory.CreateDirectory("Logs");
+            yield return null;
+            yield return Capture(hud, controller, "Logs/HudContinue.png");
+            WorldSave.Clear();
+            yield return new ExitPlayMode();
+        }
+
         private static IEnumerator CaptureWorld(PrototypeHud hud, HudController controller, string path, Vector3 from, Vector3 to, float fieldOfView)
         {
             yield return null;

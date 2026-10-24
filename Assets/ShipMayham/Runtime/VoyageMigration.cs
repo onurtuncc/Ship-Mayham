@@ -55,6 +55,9 @@ namespace ShipMayham
             pendingSnapshot = migrationData == null ? null : (byte[])migrationData.Clone();
         }
 
+        /// <summary>Queues a snapshot for the next simulation, exactly like a host migration does (also used to continue a saved world).</summary>
+        public static void Stage(byte[] snapshot) => pendingSnapshot = snapshot == null ? null : (byte[])snapshot.Clone();
+
         public static bool RestorePending(VoyageSimulation target)
         {
             if (target == null || pendingSnapshot == null || pendingSnapshot.Length == 0) return false;

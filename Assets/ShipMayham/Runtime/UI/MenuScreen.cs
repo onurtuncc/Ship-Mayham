@@ -43,9 +43,10 @@ namespace ShipMayham
             nicknameField = BuildInput(main, "Nickname", "NICKNAME", PlayerNickname.Current, NicknameLimit, 28, InputField.CharacterValidation.None);
             nicknameField.onEndEdit.AddListener(value => nicknameField.text = PlayerNickname.Set(value));
             Spacer(main, 6);
-            buttons.Add(AddButton(main, "Host", "HOST ONLINE", HudKit.Accent, 28, 70, () => hud.ConnectOnline(true), true));
+            if (WorldSave.TryPeekStored(out var saved)) BuildContinueBlock(main, saved, buttons);
+            buttons.Add(AddButton(main, "Host", "HOST ONLINE", HudKit.Accent, 28, 70, () => { WorldSave.Discard(); hud.ConnectOnline(true); }, true));
             buttons.Add(AddButton(main, "JoinOnline", "JOIN ONLINE", new Color(.22f, .5f, .78f), 26, 62, () => Show(Page.Join)));
-            buttons.Add(AddButton(main, "Solo", "PLAY SOLO", new Color(1, 1, 1, .14f), 24, 56, hud.ConnectSolo));
+            buttons.Add(AddButton(main, "Solo", "PLAY SOLO", new Color(1, 1, 1, .14f), 24, 56, () => { WorldSave.Discard(); hud.ConnectSolo(); }));
             buttons.Add(AddButton(main, "Settings", "SETTINGS", new Color(1, 1, 1, .14f), 24, 56, () => Show(Page.Settings)));
 #if !UNITY_WEBGL
             buttons.Add(AddButton(main, "Quit", "QUIT", new Color(.8f, .3f, .3f, .55f), 22, 48, Quit));
@@ -62,6 +63,7 @@ namespace ShipMayham
             // ---- Settings
             var settings = NewPage(screen, Page.Settings, "SETTINGS", null);
             settingsPanel = new SettingsPanel(settings);
+            if (WorldSave.Exists) buttons.Add(BuildEraseButton(settings));
             buttons.Add(AddButton(settings, "BackFromSettings", "BACK", new Color(1, 1, 1, .14f), 22, 50, () => Show(Page.Main)));
             actionButtons = buttons.ToArray();
 
@@ -83,6 +85,54 @@ namespace ShipMayham
         }
 
         private const int NicknameLimit = LobbyRules.MaxNameLength;
+
+        /// <summary>The saved world: what it is and how to continue it, alone or as an online host that friends can rejoin.</summary>
+        private void BuildContinueBlock(RectTransform main, in WorldSaveInfo saved, System.Collections.Generic.List<Button> buttons)
+        {
+            var caption = HudKit.Label(main, "SavedCaption", 16, HudKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Bold);
+            caption.text = "YOUR LAST WORLD";
+            HudKit.Size(caption, height: 20);
+            var summary = HudKit.Label(main, "SavedSummary", 19, HudKit.Ink, TextAnchor.MiddleLeft);
+            summary.text = WorldSave.Describe(saved, WorldSave.NowUnix());
+            summary.horizontalOverflow = HorizontalWrapMode.Wrap;
+            HudKit.Size(summary, height: 52);
+            var row = HudKit.Node(main, "ContinueRow");
+            HudKit.Size(row, height: 62);
+            HudKit.Row(row, 12).childForceExpandWidth = true;
+            var solo = HudKit.MakeButton(row, "ContinueSolo", "CONTINUE SOLO", new Color(.3f, .62f, .4f), 22);
+            solo.onClick.AddListener(() => { if (WorldSave.Stage(RestoreMode.Solo)) hud.ConnectSolo(); else RefuseSavedWorld(); });
+            var online = HudKit.MakeButton(row, "ContinueOnline", "CONTINUE ONLINE", new Color(.3f, .62f, .4f), 22);
+            online.onClick.AddListener(() => { if (WorldSave.Stage(RestoreMode.Host)) hud.ConnectOnline(true); else RefuseSavedWorld(); });
+            buttons.Add(solo);
+            buttons.Add(online);
+            var note = HudKit.Label(main, "SavedNote", 15, HudKit.TextMuted, TextAnchor.MiddleLeft);
+            note.text = "Friends rejoin online with the new code and keep their seats. Starting a new world replaces this save.";
+            note.horizontalOverflow = HorizontalWrapMode.Wrap;
+            HudKit.Size(note, height: 40);
+            Spacer(main, 4);
+        }
+
+        private void RefuseSavedWorld()
+        {
+            WorldSave.Discard();
+            Debug.LogWarning("The saved world could not be loaded and was ignored.");
+        }
+
+        private Button BuildEraseButton(RectTransform settings)
+        {
+            var erase = HudKit.MakeButton(settings, "EraseSave", "ERASE SAVED WORLD", new Color(.8f, .3f, .3f, .55f), 20);
+            HudKit.Size(erase, height: 46);
+            var label = erase.GetComponentInChildren<Text>();
+            bool armed = false;
+            erase.onClick.AddListener(() =>
+            {
+                if (!armed) { armed = true; label.text = "CLICK AGAIN TO ERASE"; return; }
+                WorldSave.Clear();
+                label.text = "SAVED WORLD ERASED";
+                erase.interactable = false;
+            });
+            return erase;
+        }
 
         private RectTransform NewPage(Transform parent, Page page, string title, string subtitle)
         {

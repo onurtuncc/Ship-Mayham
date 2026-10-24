@@ -76,6 +76,14 @@ namespace ShipMayham
             CareerProgressStore.Load(ref Simulation.State);
             if (LobbyBeforeVoyage) Simulation.OpenLobby();
             bool restored = VoyageMigrationDataHandler.RestorePending(Simulation);
+            var restoreMode = restored ? WorldSave.TakeRestore() : RestoreMode.None;
+            if (restoreMode != RestoreMode.None)
+            {
+                // A continued world has no players yet: online players keep their slot by identity, everyone else starts clean.
+                Simulation.ReadyForNewParty(keepIdentifiedPlayers: restoreMode == RestoreMode.Host);
+                if (LobbyBeforeVoyage) Simulation.OpenLobby();
+            }
+            else WorldSave.CancelRestore();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (OnlineTransportActive) Debug.Log($"SHIP_CREW_RESTORE restored={restored}");
 #endif
@@ -87,6 +95,7 @@ namespace ShipMayham
 
         public override void OnNetworkDespawn()
         {
+            if (IsServer && Simulation != null) SaveWorldNow();
             if (NetworkManager != null)
             {
                 NetworkManager.OnClientConnectedCallback -= Connected;
@@ -141,6 +150,7 @@ namespace ShipMayham
         {
             if (!IsSpawned || !IsServer || Simulation == null) return;
             Simulation.Tick(Time.fixedDeltaTime);
+            TickWorldSave(Time.fixedDeltaTime);
             publishTimer += Time.fixedDeltaTime;
             if (publishTimer >= PublishInterval)
             {
@@ -148,6 +158,35 @@ namespace ShipMayham
                 Publish();
                 SendMotionSnapshot();
             }
+        }
+
+        /// <summary>Seconds between automatic saves of the world while it is at port.</summary>
+        public const float WorldSaveInterval = 15f;
+        private float worldSaveTimer;
+        private VoyagePhase lastSavePhase = VoyagePhase.Sailing;
+
+        private void TickWorldSave(float dt)
+        {
+            if (!WorldSave.Enabled || Simulation.InLobby) return;
+            var phase = Simulation.State.Phase;
+            if (!WorldSave.IsSavablePhase(phase)) { lastSavePhase = phase; worldSaveTimer = 0; return; }
+            // Arriving at port saves soon, once the report has settled; staying at port saves every interval.
+            if (phase != lastSavePhase) { lastSavePhase = phase; worldSaveTimer = Mathf.Max(worldSaveTimer, WorldSaveInterval - 3f); }
+            worldSaveTimer += dt;
+            if (worldSaveTimer >= WorldSaveInterval) SaveWorldNow();
+        }
+
+        /// <summary>Writes the world for "continue". Only the host saves, only at port and never in the lobby.</summary>
+        public bool SaveWorldNow()
+        {
+            if (!IsServer || Simulation == null || Simulation.InLobby || !WorldSave.Enabled) return false;
+            worldSaveTimer = 0;
+            if (!WorldSave.IsSavablePhase(Simulation.State.Phase)) return false;
+            string host = null;
+            for (int i = 0; i < VoyageSimulation.MaxCrew; i++)
+                if (Simulation.IsHostSlot(i)) host = Simulation.CrewName(i);
+            var info = WorldSaveInfo.From(Simulation.State, Simulation.ActiveCrewCount, string.IsNullOrEmpty(host) ? PlayerNickname.Current : host, WorldSave.NowUnix());
+            return WorldSave.Save(Simulation.ExportMigrationData(), info);
         }
 
         private void SendMotionSnapshot()

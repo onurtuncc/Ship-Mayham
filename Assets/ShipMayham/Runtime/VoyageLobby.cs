@@ -26,7 +26,7 @@ namespace ShipMayham
         public bool AllReady()
         {
             for (int i = 0; i < MaxCrew; i++)
-                if (LobbyRules.WaitingOnPlayer(Crew[i].Active, IsHostSlot(i), crewReady[i])) return false;
+                if (LobbyRules.WaitingOnPlayer(Crew[i].Active && Crew[i].ClientId != ulong.MaxValue, IsHostSlot(i), crewReady[i])) return false;
             return true;
         }
 
