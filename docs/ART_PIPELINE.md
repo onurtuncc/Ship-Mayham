@@ -175,3 +175,7 @@ Unity'ye statik FBX'lerde Blender +Y (ön) → Unity −Z ve X yansır; `Gangway
 ### `Mixamo_GetUpFromFall` (25 Ekim, elle yazılmış)
 
 `Mixamo_FallingFlatImpact`'ın son karesinden (yüzüstü yatış, kalça y≈0,075 m) `Mixamo_DizzyIdle`'ın ilk karesine (ayakta duruş) 45 kare, 30 fps, döngüsüz. Başlangıç ve bitiş pozları gerçek klip karelerinden okunur (`Tools/BlenderAssets/anim/getup.py`), aradaki kareler kuaterniyon ara değerlemesi ve ilk yarıda ellerin yerde sabit kalması için iki kemikli IK ile üretilir. Kalça konumu başlangıç yatışı ile bitiş duruşu arasında ~0,28 m öne/arkaya kayar (iki uç sabit olduğu için kaçınılmaz). Gerçek karakterde doğrulanmadı.
+
+#### İsteğe bağlı ekstralar (25 Ekim): su tehlikeleri ve toplanabilirler
+
+Aynı hat ve `props_pack.py` ile, kimse istemeden eğlence/çeşitlilik için: `SharkFin` (köpekbalığı yüzgeci + dalga halkası, pivot su çizgisi), `Jellyfish` (denizanası, tehlike), `Crab` (yengeç, kıyı yaşamı), `Starfish` (deniz yıldızı, toplanabilir), `Bucket` (kova), `MessageBottle` (mesajlı şişe), `TreasureMap` (şerit bağlı hazine haritası). Hepsi 512² dokulu, Unity'de import doğrulandı; sahneye bağlı değil.
