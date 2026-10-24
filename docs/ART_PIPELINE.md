@@ -121,3 +121,7 @@ Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre; henüz sahneye ba�
 | `TreasureChest` | 1572 | 0,99 × 0,64 × 0,74 | Hazine sandığı (kapak hafif açık, altın paralar) |
 | `TavernSign` | 1168 | 1,65 × 0,30 × 1,63 | Salty Gull tavernası tabelası (martı kanatları dik, ileride düzeltilebilir) |
 | `FloatingCrate` | 1824 | 1,10 × 1,17 × 1,05 | Denizde sürüklenen sandık (fırsat olayı) |
+
+### `Mixamo_RepairHammering` (24 Ekim, elle yazılmış animasyon)
+
+Mixamo'da çekiç klibi olmadığından `Mixamo_Idle` iskeleti üzerinde `Tools/BlenderAssets/anim/hammer_clip.py` ile yazıldı: 40 kare, 30 fps, döngülü (kaldır → vur → sek → kaldır). Pozlar açı yerine "üst kol ve ön kol şu yöne baksın" hedefleriyle çözülür (Mixamo kemikleri kemik yönüne değil armatür eksenine hizalıdır, eklem konumu `head`'dir). Sağ el çekici kaldırıp göğüs-bel hizasında, ~40 cm önde vurur; sol kol çiviyi tutar; gövde 3° → 10° öne eğilir. Diğer kemikler Idle'ın ilk karesinden sabittir. Önizleme: `docs/art/repair_hammering_preview.png` (çubuk figür + `RepairHammer`). Çekiç el kemiğine takılı değildir; sahnede `RightHand` soketine, sap ön kol yönünde olacak şekilde bağlanmalıdır. Ayrı bir Unity projesinde Humanoid import (`animationType: 3`, `loopTime: 1`) hatasız doğrulandı; ana projede ve gerçek karakter üzerinde oynatma doğrulanmadı. `HumanoidModelPostprocessor` döngü listesi ve `GetVersion` (5) güncellendi.
