@@ -31,6 +31,9 @@ Editor, aynı proje açıkken batch testini çalıştıramaz. Seçenekler:
 GDD genişletmesinin 2–6 numaralı işleri için `NavigationPhaseTests`, `PassengerLifePhaseTests`,
 `EmergencyPhaseTests`, `OpportunityPhaseTests`, `PreparationPhaseTests` ve gerçek sahne/RPC testi
 `AdventureSceneTests` bulunur. Kapsam ve dalın doğrulama sonuçları: [PHASES_2_6.md](PHASES_2_6.md).
+`SmokeInputOwnershipTests`, scripted RPC sürücüsü çalışırken otomatik hareket komutlarının kapatıldığını
+gerçek sahnede sınar. Smoke akışında `ConfigureScriptedInput` kullanın: yalnız `PrototypeView` kapatılırsa
+`PrototypeClientMotion` sıfır komut göndermeye devam eder ve held-input RPC hareketi uygulanmaz.
 
 - Sahneyi okuyan testler `PrototypeSceneFixture`'dan türer; sahneyi eklemeli açıp yalnızca kendi açtığını kapatır. Test sonunda açık sahne bırakılmamalıdır.
 - PlayMode testleri `yield return new EnterPlayMode()` ve `EditorSceneManager.LoadSceneAsyncInPlayMode` çağrılarını **test metodunun kendisinde** yapmalıdır. Yardımcı bir `IEnumerator` içinden yapılırsa sahne yüklenmez ve test `NullReferenceException` ile düşer.

@@ -1,81 +1,120 @@
-# GDD implementation branch — phases 2–6
+# GDD genişletmesi — öncelik listesinin 2–6. maddeleri
 
-Branch: codex/gdd-phases-2-6. Base: 441fef9. This isolated worktree does not merge into main.
-The numbering follows the six-row user-facing plan, not the older numbered GDD sections.
-Phase 1 onboarding belongs to another ongoing work and is not changed here.
+Dal: codex/gdd-phases-2-6. Başlangıç commit'i: 441fef9.
+Bu numaralar eski GDD fazları veya PLAN.md içindeki tarihsel dilim numaraları değildir.
+1. madde (onboarding) kapsam dışında tutuldu. Main'e merge yapılmadı.
 
-## Phase 2 — navigation and workload
+## 2 — Kaptan tehlikeleri ve ekip temposu
 
-Three seeded shoals leave the centre corridor and both ports clear. Crossing quickly costs hull and speed;
-below 1 m/s it is safe. Rocks appear on the minimap within 60 m, with a close-range warning.
-Storm Passage adds a five-second directional rogue-wave warning: face within 30 degrees to avoid damage.
-State, seed and timers replicate and migrate. Wave/event gaps and pirate fire rate use connected-crew pressure
-(4/3/2/1: 1/.8/.6/.45), without changing passenger counts or economy. Active event deadlines are not reset.
-NavigationPhaseTests covers layout, impact cooldown, safe speed, directional avoidance, scaling and migration.
-Human balance and audio/visual feel still require player testing.
+Üç Shoal, sefer tohumu üzerinden belirlenir; limanlar ve merkez koridor açık kalır.
+1 m/s üzerindeki geçişler Hull hasarı ve hız kaybı oluşturur; çarpışma cooldown'ı 4 saniyedir.
+Yakındaki Shoal'lar minimap'te ve yakınlık uyarısında gösterilir.
+Storm Passage'ta beş saniye önceden yönü bildirilen Rogue wave gelir.
+Gemiyi bildirilen yöne 30 derece içinde çevirmek hasarı önler.
 
-Phase 2 validation: 6/6 focused tests passed (Logs/Phase2.xml).
+Bağlı Crew sayısı 4/3/2/1 olduğunda Workload scale sırasıyla 1/.8/.6/.45'tir.
+Event araları, dalga sıklığı ve Pirates atış aralığı ölçeklenir.
+Aktif Event süreleri, Passenger sayısı ve ekonomi değiştirilmez.
 
-## Phase 3 — living passengers and service comedy
+## 3 — Yaşayan Passenger'lar ve temizlik
 
-Patient, impatient and nervous passengers have different waiting/fear responses. At most two take short
-walks into the aisle and return; blocked walkers time out safely. Pickup, servicing and rescue interrupt the routine.
-R / D-pad down while looking at a passenger reassures them, with an anti-spam cooldown.
-Spilled drinks appear on deck, lower nearby satisfaction and can be mopped with three E/A interactions.
-The typed target, replicated state and migration include the new tasks; old seat roots and interaction IDs stay fixed.
-The animation upgrade adds Walking and Standing states using existing Mixamo clips.
-Phase 2+3 validation: 12/12 focused tests passed (Logs/Phase3.xml), exit 0.
+Patient, Impatient ve Nervous profilleri bekleme/korkuya farklı tepki verir.
+En fazla iki Passenger kısa koridor yürüyüşleri yapar ve koltuğuna döner.
+Engellenen yürüyüşler süre aşımıyla güvenle sonlanır.
+Servis sırasında yürüyen Passenger ayakta duraklar; koridorda oturur poza geçmez.
+Taşıma, servis ve Rescue mevcut akışlarla birlikte çalışır.
 
-## Phase 4 — engineering decisions
+Passenger'a bakarken R / D-pad aşağı, 12 saniye cooldown'lı sakinleştirmedir.
+Güvertedeki döküntü yakındaki memnuniyeti azaltır; boş elle üç E/A etkileşimiyle temizlenir.
+Walking/Standing animasyonları mevcut Mixamo kliplerini kullanır; yeni indirme gerekmez.
 
-The electrical fire warns for six seconds before causing damage. Isolating it with R / D-pad down at POWER
-stops fire damage and disables service counters. R at KITS equips/returns a red extinguisher; E at the fire
-uses one of four shared charges. Two sprays extinguish it. Restore the power breakers afterwards.
-At REPAIR, R cycles A/B/C valves; a pressure clue identifies the hot pipe. E applies the selected valve:
-correct selection stops the leak without a kit; incorrect selection costs 2 hull. Existing manual and kit repair remain.
-Isolation intentionally does not stop an unrelated hull leak.
-Phases 2–4: 17/17 focused tests passed, exit 0 (Logs/Phase4-Final.xml).
+## 4 — Mühendislik kararları
 
-## Phase 5 — alternative resolutions and sea opportunity
+Elektrik yangını altı saniye önceden uyarır. Yanarken Hull hasarı verir.
+POWER'da R / D-pad aşağı devreyi yalıtır: yangın hasarı durur, Food/Drink tezgâhları kapanır.
+KITS'te R kırmızı söndürücüyü alır/iade eder; yangına bakarken E/A püskürtür.
+Ortak dört şarj vardır; iki püskürtme yangını söndürür. Ardından POWER sigortaları sıfırlanabilir.
+Yalıtım, bağımsız bir Leak'in hasarını durdurmaz.
 
-An inspected unpaid passenger can accept a cleaning job with R / D-pad down when a spill exists.
-They walk to the spill and work for six seconds; the debt is settled without adding 40 ticket coins.
-Manual payment or pickup interrupts unfinished work. A bounded task timeout prevents blocked NPC jobs.
-The plug locker on deck supplies two temporary plugs: carry one to REPAIR to pause leak damage for 20 seconds.
-The leak still needs a valve, manual patch or quick kit. Returned/disconnected plugs conserve inventory.
-A sea chest appears off the direct route: approach within 15 m, slow below 1 m/s and E at the port-side recovery rope.
-Its 30-coin bonus pays once on successful arrival, never on pickup. All task/countdown state migrates.
-Phases 2–5: 22/22 focused tests passed, exit 0 (Logs/Phase5.xml).
+REPAIR'da R, A/B/C vanalarını döndürür; sıcak boru ipucu doğru vanayı gösterir.
+E seçimi uygular: doğru vana kit harcamadan Leak'i kapatır, yanlış vana 2 hasar verir.
+Mevcut dört adımlı elle yama ve Quick patch kit seçeneği korunur.
 
-## Phase 6 — equipment, spending and physical passages
+## 5 — Alternatif çözümler ve deniz fırsatı
 
-At the purser, GEAR / PASSAGE offers a service tray (90 coins: two matching orders) or workshop
-(90: +2 patch kits once per voyage, three-kit repair bench). Buy each once, then refit owned gear free.
-The purchased decorative pennant (60) can be shown/hidden free; it never changes ship performance.
-Choices must be made at port with empty hands, before boarding. Existing engine/seats/comfort remain under UPGRADES.
-The direct practice passage remains available. Safe western and risky eastern passages require two ordered
-physical gate visits before docking, paying +12/+25 respectively on successful arrival.
-The western gates avoid the shoals; eastern gates run close to them. These are navigation paths, not new ports/maps.
-The minimap and named world markers guide the next gate.
-Career v2 stores purchased equipment/pennant and reads v1 saves without losing the wallet.
-Migration snapshot 16 / network protocol 20 includes all new state: use matching builds for all peers.
-Any future integration with the other development branches must reconcile/rebump protocol versions together.
-PreparationPhaseTests covers inventory conservation, repeat purchases, kit-grant farming, course gates and save compatibility.
-Phases 2–6 plus career checks: 35/35 focused tests passed (Logs/Phase6-Focused.xml).
+İncelenmiş fakat ödenmemiş Ticket için, döküntü varken Passenger'a R ile temizlik işi önerilebilir.
+Passenger döküntüye yürür ve altı saniye çalışır; Fare kapanır fakat 40 Coins üretilmez.
+Elle tahsilat veya Passenger'ı kaldırmak bitmemiş işi iptal eder.
+Engellenen işlerde süre aşımı vardır; tamamlanan iş tekrar gelir oluşturmaz.
 
-## Integration and presentation notes
+Güverte dolabından iki Temporary plug alınabilir; REPAIR'da kullanmak Leak'i 20 saniye tutar.
+Kalıcı yama/vana/kit hâlâ gerekir. İade ve bağlantı kaybı envanteri korur.
+Elde taşınan tıkaç kahverengi ve söndürücüden/siparişlerden ayrı biçimdedir.
 
-New gameplay remains in focused host-owned VoyageSimulation partials; presentation does not authorize actions.
-RPC commands validate sender slot, phase, range, station use, jumping and held items.
-All new simulation state replicates and survives host migration, including in-progress timers and NPC jobs.
-The scene's existing IDs, station anchors and seat roots are unchanged.
-PrototypeNavigationView and PrototypeDeckLifeView generate named primitive presentation roots at runtime;
-these are deliberately temporary visualizations, not final art. Replace the visual creation in these presenters
-without moving authoritative points (FirePoint, PlugLocker, RescueRope, CourseGate and ShoalPosition).
-The passenger controller reuses the project's existing walking/idle clips; no new asset downloads are required.
+Doğrudan güzergâhın batısında Sea chest belirir.
+Gemiyle 15 m içine girip 1 m/s veya altına yavaşladıktan sonra sol Recovery rope noktasında E/A ile alınır.
+30 Coins yalnız başarılı varışta, bir kez ödenir; toplama anında Wallet artmaz.
 
-The full regression run caught a MaterialPropertyBlock constructed during MonoBehaviour initialization;
-it is now created in Start, and a real-scene RPC integration test covers the new presenters.
-Legacy event/combat timing tests now explicitly use four connected crew for baseline cadence.
-Old-snapshot rejection tests assert the JSON version really changed before checking rejection.
-Human four-person playtesting is still required for balance, route readability, comedy and controller feel.
+## 6 — Ekipman, para harcama ve fiziksel güzergâhlar
+
+Purser panelindeki GEAR / PASSAGE sekmesi:
+
+- Service tray: 90 Coins; aynı üründen iki Order taşır. Her servis yalnız birini tüketir.
+- Workshop: 90 Coins; sefer başına bir kez +2 kit, üç kitlik Repair tezgâhı.
+- Pennant: 60 Coins; sonrasında ücretsiz göster/gizle. Mekanik güç etkisi yoktur.
+
+Her ekipman bir kez satın alınır; sahip olunan ekipmanlar limanda ücretsiz değiştirilebilir.
+Workshop bonusu tekrar seçerek çoğaltılamaz. Elde kalan Order'lar iade/kopma sırasında korunur.
+Seçimler limanda, boş elle ve Passenger'lar alınmadan yapılır; mevcut Upgrade'ler UPGRADES sekmesindedir.
+
+Direct practice passage korunur.
+Safe western passage ve Risky eastern shortcut, yanaşmadan önce sıralı iki fiziksel Gate ziyareti gerektirir.
+Başarılı varış bonusları +12/+25'tir. Minimap ve dünya işaretleri sonraki Gate'i gösterir.
+Safe güzergâh ilk Shoal'dan önce batıya sapar; 128 farklı tohumla düz Gate bağlantıları da sınanır.
+Bunlar aynı iki Port arasındaki farklı güzergâhlardır; yeni Port veya harita değildir.
+
+Career progress v2, ekipman/Pennant sahipliğini saklar ve v1 kayıtların Wallet'ını koruyarak okur.
+Migration snapshot 16 ve ağ protokolü 20 tüm yeni durumları taşır.
+Diğer geliştirme dallarıyla birleştirilirken şema sürümleri birlikte uzlaştırılmalı/artırılmalıdır.
+
+## Mimari, model değişimi ve kabul sınırları
+
+Kurallar host-otoriter VoyageSimulation partial'larında; sunum eylemleri yetkilendirmez.
+RPC'ler gönderen slotunu, mesafeyi, Voyage phase'i, eldeki nesneyi, zıplamayı ve Station kullanımını doğrular.
+Timer'lar, NPC işleri, envanter ve Gate ilerlemesi replikasyona ve Host migration'a dahildir.
+Mevcut Station sırası, sahne kimlikleri ve koltuk anchor'ları değiştirilmedi.
+
+PrototypeNavigationView ve PrototypeDeckLifeView isimli primitive sunum kökleri üretir.
+Gerçek modeller bu presenter'larda, yetkili FirePoint/PlugLocker/RescueRope/CourseGate/ShoalPosition
+noktalarını değiştirmeden yerleştirilebilir. Bunlar final sanat varlıkları değildir.
+Workshop kitleri mevcut kit modelinden çoğaltılır; ikinci Drink de mavi görünür.
+
+NavigationPhaseTests, PassengerLifePhaseTests, EmergencyPhaseTests, OpportunityPhaseTests,
+PreparationPhaseTests ve AdventureSceneTests yeni mekanikleri kapsar.
+SmokeInputOwnershipTests, otomatik komut sürücüsü ile scripted RPC hareketinin çakışmasını gerçek sahnede sınar.
+Bu çakışma önce iki gerçek süreçte ve başarısız sahne testinde üretildi; düzeltme yalnız development smoke
+sürücüsünün girdi sahipliğindedir, normal oyun hareket kuralları değiştirilmedi.
+
+Dört insanla tempo/denge, rota okunabilirliği, komedi ve gamepad hissi ayrıca oynanarak kabul edilmelidir.
+Bu dal için WebGL yayını veya canlı Relay Host migration kabulü otomatik olarak yapılmış sayılmaz.
+
+## Son doğrulama — 24 Ekim 2026
+
+- Tam EditMode/sahne paketi: 473 test, 472 başarılı, 0 başarısız, 1 isteğe bağlı ekran görüntüsü testi atlandı.
+  Kanıt: Logs/Final-Acceptance.xml ve Logs/Final-Acceptance.log.
+- Windows x64 development build: başarılı, çıkış kodu 0.
+  Mevcut PC render ayarları kullanıldı; geçici validation pipeline kurulmadı.
+  Kanıt: Logs/Final-Acceptance-Build.log. Çıktı: Builds/ShipPrototype/ShipPrototype.exe.
+- Dört gerçek süreçli tam Voyage: host ve üç istemci çıkış kodu 0 / SHIP_SMOKE_PASS.
+  Uzak hareket/zıplama, iki gülle tedariki, uçuşlu çatışma, Quick patch, Ticket/taşıma/atma/Rescue,
+  varış hesabı, Bag sort, liman alışverişi ve yeni Voyage hazırlığı doğrulandı.
+  Kanıt: Logs/VoyageSmoke-20261024-142851-13ad63.
+  Varış Wallet=243, sonraki hazırlık Wallet=219 / Food=23 / Drink=24 / Hull shield=20.
+
+Yeni kararların deterministik kuralları ve Host migration durumu birim testlerindedir;
+yeni menü/temizlik/yangın/sandık komutları AdventureSceneTests içinde gerçek host RPC'siyle çalıştırıldı.
+Dört süreçli kontrol, her yeni kararın uzak Player tarafından denenmesi veya canlı internet kabulü yerine geçmez.
+
+Unity'nin build sırasında kendiliğinden yazdığı genel render/servis ayarları ve materyal metadata'sı bu dala dahil edilmedi.
+Üretilen DefaultVolumeProfile kopyaları silinmedi; Logs/GeneratedBuildAssets altında geri alınabilir biçimde saklandı.
+Geliştirme dalı ayrı çalışma kopyasında kalır; main'e merge veya uzak depoya push yapılmadı.
