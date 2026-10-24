@@ -155,7 +155,7 @@ namespace ShipMayham
             int stock = food ? State.FoodStock : State.DrinkStock;
             // Include items held aboard so returning them cannot exceed the storage cap.
             foreach (var member in Crew)
-                if (member.Active && member.Carrying == (food ? ServiceItem.Food : ServiceItem.Drink)) stock++;
+                if (member.Active && member.Carrying == (food ? ServiceItem.Food : ServiceItem.Drink)) stock += Mathf.Max(1, member.ServiceUnits);
             if (stock + SupplyAmount > SupplyCap) return "Not enough storage for 8 items (maximum 32, including held items).";
             if (State.Wallet < SupplyPrice) return "An 8-item supply pack costs 12 coins.";
             State.Wallet -= SupplyPrice;

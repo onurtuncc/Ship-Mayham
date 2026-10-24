@@ -21,6 +21,18 @@ namespace ShipMayham
         private float deadline;
         private bool sawSailing, sawFour, sawPowerOut, sawPiratesDefeated, sawCarriedPassenger, sawRescue, sawShore, sawBallFlight, sawBagSort, sawQuickPatch;
         private readonly bool[] sawJump = new bool[VoyageSimulation.MaxCrew];
+        /// <summary>Deterministic, non-blocking coastal layout for the straight-line compatibility voyage; hazards stay enabled.</summary>
+        public const uint CaptainSmokeSeed = 1;
+
+        /// <summary>Hands input ownership to the development test driver, not the human-controlled view.</summary>
+        public static void ConfigureScriptedInput(PrototypeView target)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            target.enabled = false;
+            // A live zero-input command stream suppresses the held-input RPC fallback.
+            // The smoke driver owns that fallback, so the predictive input producer must stop too.
+            if (target.TryGetComponent<PrototypeClientMotion>(out var motion)) motion.enabled = false;
+        }
 
         private IEnumerator Start()
         {
@@ -59,11 +71,12 @@ namespace ShipMayham
                 Application.Quit(0);
                 yield break;
             }
-            view.enabled = false; // Test inputs are the sole input source.
+            ConfigureScriptedInput(view);
             bool host = Array.IndexOf(Environment.GetCommandLineArgs(), "--ship-smoke-host") >= 0;
-            hud.Connect(host, "127.0.0.1");
+            hud.Connect(host, "127.0.0.1", 19777);
             while (!session.IsSpawned || session.LocalCrewIndex < 0) yield return null;
             Debug.Log("SHIP_SMOKE_CONNECTED " + (host ? "HOST" : "CLIENT") + " " + session.LocalCrewIndex);
+            if (host) session.Simulation.Hazards.Seed = CaptainSmokeSeed;
             if (!host)
             {
                 // Exercise input RPCs from each remote client. Spawn corridor is clear.

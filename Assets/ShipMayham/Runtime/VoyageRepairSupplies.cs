@@ -24,10 +24,10 @@ namespace ShipMayham
         private string DeliverRepairKit(int slot)
         {
             if (!RepairSuppliesOpen) return "Repair deliveries closed. Prepare a new voyage.";
-            if (State.ReadyRepairKits >= RepairKitBufferCapacity) return "Repair bench full. Keep the kit or return it to KITS.";
+            if (State.ReadyRepairKits >= RepairBufferLimit(State)) return "Repair bench full. Keep the kit or return it to KITS.";
             State.ReadyRepairKits++;
             Crew[slot].Carrying = ServiceItem.None;
-            return $"Kit delivered: {State.ReadyRepairKits}/{RepairKitBufferCapacity}. E / A again at REPAIR applies one to a leak.";
+            return $"Kit delivered: {State.ReadyRepairKits}/{RepairBufferLimit(State)}. E / A again at REPAIR applies one to a leak.";
         }
 
         private void FinishLeakRepair()

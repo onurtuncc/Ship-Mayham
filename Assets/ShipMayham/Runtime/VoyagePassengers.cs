@@ -76,6 +76,8 @@ namespace ShipMayham
             if (Vector2.Distance(Crew[slot].Position, new Vector2(target.Position.x, target.Position.z)) > InteractionRange) return "Move closer to the passenger.";
             if (action == PassengerAction.CheckTicket)
             {
+                target.WorkRemaining = 0;
+                PausePassengerRoutine(ref target);
                 string inspection = InspectPassengerForEvent(passenger);
                 if (!target.TicketChecked)
                 {
@@ -93,6 +95,8 @@ namespace ShipMayham
                 return "Fare collected: +40 ticket income on successful arrival." + inspection;
             }
             if (Crew[slot].Carrying != ServiceItem.None) return "Serve or return your item before lifting a passenger.";
+            target.WorkRemaining = 0;
+            target.Routine = PassengerRoutine.Seated; target.RoamIn = 15;
             target.Motion = PassengerMotion.Carried;
             target.CarrierSlot = slot;
             passengerCarryYaw[slot] = Mathf.Repeat(yaw, 360);
@@ -187,6 +191,7 @@ namespace ShipMayham
             p.Position = new Vector3(Seats[seat].x, .5f, Seats[seat].y);
             p.Velocity = Vector3.zero;
             p.RecoveryRemaining = 0;
+            p.Routine = PassengerRoutine.Seated; p.RoamIn = 15 + passenger * 4;
         }
 
         private Vector3 SafePassengerPosition(int passenger, Vector2 desired)
@@ -213,6 +218,7 @@ namespace ShipMayham
                 if (!Passengers[i].Active) continue;
                 ref var p = ref Passengers[i];
                 p.ReactionRemaining = Mathf.Max(0, p.ReactionRemaining - dt);
+                TickPassengerLife(i, dt);
                 if (p.Motion == PassengerMotion.Carried)
                 {
                     if (p.CarrierSlot < 0 || p.CarrierSlot >= MaxCrew || !Crew[p.CarrierSlot].Active) ReturnPassengerToSeat(i);

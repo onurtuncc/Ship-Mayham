@@ -65,7 +65,7 @@ namespace ShipMayham
         private static InteractionPrompt ForRepairBench(in VoyageState voyage, in CrewState crew)
         {
             if (crew.Carrying == ServiceItem.RepairKit)
-                return InteractionPrompt.Target("Repair bench", "Deliver patch kit", $"Bench {voyage.ReadyRepairKits}/{VoyageSimulation.RepairKitBufferCapacity} kits ready");
+                return InteractionPrompt.Target("Repair bench", "Deliver patch kit", $"Bench {voyage.ReadyRepairKits}/{VoyageSimulation.RepairBufferLimit(voyage)} kits ready");
             if (voyage.Leak == 0)
                 return InteractionPrompt.Target("Repair bench", "Hull watertight", "Bring patch kits here to prepare quick fixes", key: HudControl.None, tone: PromptTone.Info);
             if (voyage.ReadyRepairKits > 0)
@@ -147,7 +147,9 @@ namespace ShipMayham
         public static InteractionPrompt ForPassenger(int index, in PassengerState p)
         {
             string title = $"Passenger {index + 1}";
-            string ticket = PassengerPresentation.TicketText(p);
+            string ticket = PassengerPresentation.TicketText(p) + $" | {p.Personality}" +
+                (p.TicketChecked && !p.FarePaid ? " | R / D-pad down: cleaning job instead of fare" : " | R / D-pad down: reassure");
+
             if (p.Motion != PassengerMotion.OnDeck)
                 return InteractionPrompt.Target(title, "Lift passenger", PassengerPresentation.ReactionText(p), null, HudControl.Carry);
             if (p.Request != ServiceItem.None)

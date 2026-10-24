@@ -67,7 +67,7 @@ namespace ShipMayham.Tests
         [TestCase(null)]
         [TestCase("")]
         [TestCase("not-json")]
-        [TestCase("{\"Version\":2,\"Wallet\":999}")]
+        [TestCase("{\"Version\":3,\"Wallet\":999}")]
         public void InvalidOrUnknownCareerDataIsRejected(string json)
         {
             Assert.IsFalse(CareerProgressStore.TryDecode(json, out _));

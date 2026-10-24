@@ -470,12 +470,13 @@ namespace ShipMayham
             if (local < 0) { HudKit.SetActive(carryRoot, false); return; }
             int passenger = session.LocalCarriedPassengerIndex;
             var item = session.Crew[local].Carrying;
-            int sig = passenger >= 0 ? 1000 + passenger : (int)item;
+            int units = session.Crew[local].ServiceUnits;
+            int sig = passenger >= 0 ? 1000 + passenger : (int)item + units * 128;
             bool show = passenger >= 0 || item != ServiceItem.None;
             HudKit.SetActive(carryRoot, show);
             if (!show || sig == carrySignature) return;
             carrySignature = sig;
-            carryText.text = passenger >= 0 ? $"Passenger {passenger + 1}" : ItemName(item);
+            carryText.text = passenger >= 0 ? $"Passenger {passenger + 1}" : ItemName(item) + (units > 1 ? $" x{units}" : string.Empty);
         }
 
         private void TickResume(bool show)
@@ -501,6 +502,8 @@ namespace ShipMayham
                 case ServiceItem.SalvageB: return "Salvage 2";
                 case ServiceItem.SalvageC: return "Salvage 3";
                 case ServiceItem.CraneCrate: return "Fish crate";
+                case ServiceItem.Extinguisher: return "Fire extinguisher";
+                case ServiceItem.TemporaryPlug: return "Temporary leak plug";
                 default: return string.Empty;
             }
         }

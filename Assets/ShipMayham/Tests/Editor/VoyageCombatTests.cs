@@ -142,6 +142,7 @@ namespace ShipMayham.Tests
         }
         [Test] public void WarningPrecedesAttackAndFirstHitCutsPower()
         {
+            sim.Join(13); // Four-person baseline; smaller crews get slower enemy fire.
             Depart(); Advance(12);
             Assert.AreEqual(PiratePhase.Warning, sim.Encounter.Pirate);
             Assert.AreEqual(0, sim.Encounter.PirateShotsFired);

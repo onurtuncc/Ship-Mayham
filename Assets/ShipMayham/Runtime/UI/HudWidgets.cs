@@ -74,6 +74,7 @@ namespace ShipMayham
             HudKit.Size(line, height: 38);
             HudKit.Row(line, 8);
             var dot = IconShapes.Create(line, "Icon", tint, 20, shape);
+
             HudKit.Size(dot, 20, 20);
             value = HudKit.Label(line, "Value", 32, HudKit.Ink, TextAnchor.MiddleLeft, FontStyle.Bold);
             delta = HudKit.Label(line, "Delta", 20, HudKit.Good, TextAnchor.MiddleLeft, FontStyle.Bold);

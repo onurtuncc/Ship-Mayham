@@ -23,6 +23,10 @@ namespace ShipMayham
         private readonly GameObject root;
         private readonly Text coinsText, passengerText;
         private readonly Button boardButton;
+        private readonly GameObject upgradeSection, preparationSection;
+        private readonly Text preparationStatus;
+        private readonly Button[] preparations = new Button[6];
+        private bool showPreparation;
         private readonly UpgradeRow[] rows = new UpgradeRow[3];
         private bool wasOpen;
         private int signature = int.MinValue;
@@ -58,7 +62,26 @@ namespace ShipMayham
 
             Spacer(card.transform, 6);
             Caption(card.transform, "SHIP UPGRADES");
-            for (int i = 0; i < rows.Length; i++) rows[i] = BuildUpgradeRow(card.transform, i);
+            var tabs = HudKit.Node(card.transform, "PreparationTabs"); HudKit.Row(tabs, 10); HudKit.Size(tabs, height: 38);
+            var upgradesTab = HudKit.MakeButton(tabs, "UpgradesTab", "UPGRADES", new Color(.2f,.4f,.5f), 20);
+            var prepTab = HudKit.MakeButton(tabs, "GearTab", "GEAR / PASSAGE", new Color(.3f,.35f,.5f), 20);
+            HudKit.Size(upgradesTab, flexibleWidth: 1); HudKit.Size(prepTab, flexibleWidth: 1);
+            upgradesTab.onClick.AddListener(() => { showPreparation = false; ApplyTabs(); });
+            prepTab.onClick.AddListener(() => { showPreparation = true; ApplyTabs(); });
+            var upgradesNode = HudKit.Node(card.transform, "UpgradeOptions"); HudKit.Column(upgradesNode, 10, new RectOffset());
+            upgradeSection = upgradesNode.gameObject;
+            for (int i = 0; i < rows.Length; i++) rows[i] = BuildUpgradeRow(upgradesNode, i);
+            var prepNode = HudKit.Node(card.transform, "AdventureOptions"); HudKit.Column(prepNode, 8, new RectOffset()); preparationSection = prepNode.gameObject;
+            preparationStatus = HudKit.Label(prepNode, "PreparationStatus", 18, HudKit.TextMuted); HudKit.Size(preparationStatus, height: 44);
+            var labels = new[] { "SERVICE TRAY — 90", "WORKSHOP — 90", "DECORATIVE PENNANT — 60", "SAFE WESTERN PASSAGE — +12", "RISKY EASTERN SHORTCUT — +25", "DIRECT PRACTICE PASSAGE" };
+            for (int i = 0; i < preparations.Length; i++)
+            {
+                int index = i;
+                preparations[i] = HudKit.MakeButton(prepNode, "Preparation" + i, labels[i], new Color(.2f,.4f,.5f), 20);
+                HudKit.Size(preparations[i], height: 40);
+                preparations[i].onClick.AddListener(() => hud.Session.PrepareVoyageRpc((PreparationAction)index));
+            }
+            ApplyTabs();
 
             Spacer(card.transform, 4);
             var close = HudKit.MakeButton(card.transform, "Close", "CLOSE", new Color(1, 1, 1, .14f), 24);
@@ -72,6 +95,11 @@ namespace ShipMayham
             var label = HudKit.Label(parent, "Caption", 17, HudKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Bold);
             label.text = text;
             HudKit.Size(label, height: 24);
+        }
+
+        private void ApplyTabs()
+        {
+            upgradeSection.SetActive(!showPreparation); preparationSection.SetActive(showPreparation);
         }
 
         private static void Spacer(Transform parent, float height) => HudKit.Size(HudKit.Node(parent, "Spacer"), height: height);
@@ -107,6 +135,7 @@ namespace ShipMayham
             if (!open) { wasOpen = false; return; }
             var s = hud.Session.Voyage.Value;
             int sig = System.HashCode.Combine((int)s.Phase, s.Boarded, s.Wallet, s.EngineLevel, s.CapacityLevel, s.ComfortLevel, s.DockJobActive ? 1 : 0, s.Voyage);
+            sig = sig * 31 + s.OwnedEquipment * 7 + (int)s.Equipment + (s.OwnedPennant ? 1 : 0) + (int)hud.Session.Journey.Value.Course * 11;
             if (sig != signature || !wasOpen)
             {
                 signature = sig;
@@ -122,6 +151,12 @@ namespace ShipMayham
 
         private void Apply(in VoyageState s)
         {
+            bool prepare = s.Phase == VoyagePhase.Arrived || s.Phase == VoyagePhase.Boarding && s.Boarded == 0;
+            preparationStatus.text = $"Fitted: {s.Equipment} | Passage: {hud.Session.Journey.Value.Course}\nTray: 2 orders. Workshop: +2 kits / 3-kit bench.";
+            HudKit.SetLabel(preparations[0], (s.OwnedEquipment & 2) != 0 ? "FIT OWNED SERVICE TRAY" : "BUY SERVICE TRAY — 90");
+            HudKit.SetLabel(preparations[1], (s.OwnedEquipment & 4) != 0 ? "FIT OWNED WORKSHOP" : "BUY WORKSHOP — 90");
+            HudKit.SetLabel(preparations[2], s.OwnedPennant ? "SHOW / HIDE OWNED PENNANT" : "BUY DECORATIVE PENNANT — 60");
+            for (int i = 0; i < preparations.Length; i++) preparations[i].interactable = prepare && (i < 3 || s.Phase == VoyagePhase.Boarding);
             coinsText.text = s.Wallet + " coins";
             bool boarding = s.Phase == VoyagePhase.Boarding;
             bool settled = s.Phase == VoyagePhase.Arrived || s.Phase == VoyagePhase.Failed;

@@ -34,6 +34,12 @@ namespace ShipMayham
                 case PassengerMotion.OnDeck: break;
                 default: return PassengerPose.Panicked;
             }
+
+            if (p.Routine == PassengerRoutine.Working)
+                return UnityEngine.Vector2.Distance(new UnityEngine.Vector2(p.Position.x, p.Position.z), p.RoutineTarget) > 1
+                    ? PassengerPose.Walking : PassengerPose.Standing;
+            if (p.Routine == PassengerRoutine.Strolling || p.Routine == PassengerRoutine.Returning) return PassengerPose.Walking;
+            if (p.Routine == PassengerRoutine.Watching) return PassengerPose.Standing;
             if (p.ReactionRemaining > 0)
             {
                 switch (p.Reaction)
@@ -66,7 +72,7 @@ namespace ShipMayham
             }
         }
 
-        public static string TicketText(PassengerState p) => !p.TicketChecked ? "Ticket: unchecked" : p.FarePaid ? "Ticket: PAID" : "Ticket: DUE 40";
+        public static string TicketText(PassengerState p) => !p.TicketChecked ? "Ticket: unchecked" : p.WorkedFare ? "Ticket: WORKED OFF" : p.FarePaid ? "Ticket: PAID" : "Ticket: DUE 40";
 
         public static string ReactionText(PassengerState p)
         {

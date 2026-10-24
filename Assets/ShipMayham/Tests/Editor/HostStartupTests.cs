@@ -37,7 +37,7 @@ namespace ShipMayham.Tests
                 Assert.IsFalse(ReferenceEquals(manager.NetworkConfig.PlayerPrefab, null));
             }
 
-            if (solo) hud.ConnectSolo(); else hud.Connect(true);
+            if (solo) hud.ConnectSolo(); else hud.Connect(true, "127.0.0.1", 0);
             float deadline = Time.realtimeSinceStartup + 5;
             while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.IsTrue(manager.IsHost, "Host must start through the same Connect path as the HUD button.");

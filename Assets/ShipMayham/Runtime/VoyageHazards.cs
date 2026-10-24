@@ -98,6 +98,7 @@ namespace ShipMayham
                 if (Hazards.WaveRemaining <= 0) ResolveWave();
                 return;
             }
+            if (Hazards.NextWaveAt > State.Elapsed) Hazards.NextWaveAt += dt * (1 - CrewPressure);
             if (Hazards.NextWaveAt < 0 || State.Elapsed < Hazards.NextWaveAt) return;
             // The harbor entrance stays calm: a wave that is due close to the port waits.
             if (Vector2.Distance(State.Position, Destination) < HazardLogic.SafeFromPort)

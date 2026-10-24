@@ -37,6 +37,10 @@ namespace ShipMayham
             ResetWorkload();
             ResetEncounter();
             ResetEvents();
+            ResetDeck();
+            ResetEmergencies();
+            ResetOpportunities();
+            ResetJourney();
         }
 
         public int FindCrew(ulong clientId)
@@ -177,6 +181,7 @@ namespace ShipMayham
             dt = Mathf.Min(dt, .1f);
             clock += dt;
             if (InLobby) return;
+            GrantWorkshopKits();
             Vector2 helmInput = Vector2.zero;
             bool helmManned = false;
             for (int i = 0; i < MaxCrew; i++)
@@ -212,12 +217,16 @@ namespace ShipMayham
             TickEncounter(dt);
             TickCannonballs(dt, previousShip, previousPirate);
             TickEvents(dt);
+            TickDeck(dt);
+            TickEmergencies(dt);
+            TickOpportunities(dt);
+            TickJourney();
             if (State.Elapsed >= nextLeak && State.Leak == 0)
             {
                 State.Leak = 1;
                 State.RepairSteps = 0;
             }
-            if (State.Leak != 0) DamageHull(dt * .65f);
+            if (State.Leak != 0 && Opportunity.PlugRemaining <= 0) DamageHull(dt * .65f);
             if (State.Health <= 0) { Settle(false); return; }
             for (int i = 0; i < MaxPassengers; i++)
             {
@@ -230,7 +239,7 @@ namespace ShipMayham
                     Passengers[i].RequestTimer = 0;
                 }
                 if (Passengers[i].Request != ServiceItem.None && Passengers[i].RequestTimer > 18)
-                    Passengers[i].Satisfaction = Mathf.Max(0, Passengers[i].Satisfaction - dt * (State.ComfortLevel > 0 ? .22f : .45f));
+                    Passengers[i].Satisfaction = Mathf.Max(0, Passengers[i].Satisfaction - dt * (State.ComfortLevel > 0 ? .22f : .45f) * PatienceFactor(Passengers[i].Personality));
             }
         }
 
@@ -281,6 +290,7 @@ namespace ShipMayham
                     for (int p = 0; p < State.Boarded; p++) Passengers[p] = new PassengerState
                     { Active = true, Satisfaction = 100, Request = p % 2 == 0 ? ServiceItem.Food : ServiceItem.Drink,
                         FarePaid = p != (State.Voyage - 1) % State.Boarded, CarrierSlot = -1,
+                        Personality = (PassengerPersonality)(p % 3), RoamIn = 15 + p * 4,
                         Position = new Vector3(Seats[p].x, .5f, Seats[p].y) };
                     return "Passengers aboard. Take the helm; Space departs.";
                 case StationKind.Helm:
@@ -291,6 +301,12 @@ namespace ShipMayham
                 case StationKind.Drink: return TakeItem(i, ServiceItem.Drink);
                 case StationKind.Repair:
                     if (!RepairSuppliesOpen) return "Repair bench closed. Prepare a new voyage.";
+                    if (Crew[i].Carrying == ServiceItem.TemporaryPlug)
+                    {
+                        if (State.Leak == 0 || Opportunity.PlugRemaining > 0) return "A temporary plug needs an unblocked active leak.";
+                        Crew[i].Carrying = ServiceItem.None; Opportunity.PlugsUsed++; Opportunity.PlugRemaining = 20;
+                        return "Leak held for 20 seconds. Use the time to diagnose valves or apply a permanent patch.";
+                    }
                     if (Crew[i].Carrying == ServiceItem.RepairKit) return DeliverRepairKit(i);
                     if (State.Leak == 0)
                     {
@@ -298,6 +314,7 @@ namespace ShipMayham
                         if (!string.IsNullOrEmpty(cargoResult)) return cargoResult;
                     }
                     if (State.Leak == 0) return "Hull is watertight.";
+                    if (Emergency.ValveAdjusted && Crew[i].Carrying == ServiceItem.None) return ApplyLeakValve();
                     if (State.ReadyRepairKits > 0)
                     {
                         if (Crew[i].Carrying != ServiceItem.None) return "Free your hands before applying a quick patch.";
@@ -317,6 +334,7 @@ namespace ShipMayham
                 case StationKind.Cannon: return Crew[i].Carrying == ServiceItem.Ammo ? DeliverAmmo(i) : TakeCannon(i);
                 case StationKind.Ammo: return TakeOrReturnAmmo(i);
                 case StationKind.Power:
+                    if (Emergency.Fire == FirePhase.Burning) return "Fire circuit unsafe. R isolates it; get an extinguisher at KITS.";
                     if (!Encounter.PowerOut) return "Power is online.";
                     Encounter.PowerRepairSteps++;
                     Tally(i, TallyKind.Repairs);
@@ -346,6 +364,7 @@ namespace ShipMayham
             if (State.Phase != VoyagePhase.Sailing) return "Use the manifest to prepare another voyage.";
             if (Vector2.Distance(State.Position, Destination) > DockRadius) return "Get within 12 m of the destination marker.";
             if (State.Speed > 1) return "Too fast to dock. Hold S to brake below 1 m/s.";
+            if (Journey.Course != PassageCourse.Direct && Journey.Checkpoints < 2) return "Visit both marked passage gates before docking.";
             Settle(true);
             return "Docked! Earnings paid to the shared wallet.";
         }
@@ -360,19 +379,24 @@ namespace ShipMayham
             }
             if (Encounter.PowerOut) return "No power! Reset 3 breakers at the POWER panel. Held orders can still be served.";
             if (item == ServiceItem.Food && State.FoodStock <= 0 || item == ServiceItem.Drink && State.DrinkStock <= 0) return "Out of stock this voyage.";
-            if (item == ServiceItem.Food) State.FoodStock--; else State.DrinkStock--;
+            int units = State.Equipment == ShipEquipment.ServiceTray ? Mathf.Min(2, item == ServiceItem.Food ? State.FoodStock : State.DrinkStock) : 1;
+            if (item == ServiceItem.Food) State.FoodStock -= units; else State.DrinkStock -= units;
             Crew[crew].Carrying = item;
+            Crew[crew].ServiceUnits = (byte)units;
             return $"Carrying {item}. E beside a passenger with the matching request.";
         }
 
         private void ReturnItem(int crew)
         {
-            if (Crew[crew].Carrying == ServiceItem.Food) State.FoodStock++;
-            if (Crew[crew].Carrying == ServiceItem.Drink) State.DrinkStock++;
+            int units = Mathf.Max(1, Crew[crew].ServiceUnits);
+            if (Crew[crew].Carrying == ServiceItem.Food) State.FoodStock += units;
+            if (Crew[crew].Carrying == ServiceItem.Drink) State.DrinkStock += units;
             if (Crew[crew].Carrying == ServiceItem.Ammo) Encounter.MagazineAmmo++;
             if (Crew[crew].Carrying == ServiceItem.RepairKit) State.RepairKitStock++;
             if (Crew[crew].Carrying == ServiceItem.CraneCrate) State.CraneStock++;
+            if (Crew[crew].Carrying == ServiceItem.TemporaryPlug) Opportunity.PlugsAvailable++;
             Crew[crew].Carrying = ServiceItem.None;
+            Crew[crew].ServiceUnits = 0;
         }
 
         private string Serve(int crew, int passenger)
@@ -382,10 +406,12 @@ namespace ShipMayham
             if (!p.Active || p.Request == ServiceItem.None) return "No order here.";
             if (p.Motion != PassengerMotion.OnDeck) return "Wait until the passenger is back on deck.";
             if (Crew[crew].Carrying != p.Request) return $"Passenger wants {p.Request}.";
+            PausePassengerRoutine(ref p);
             p.Request = ServiceItem.None;
             p.RequestTimer = 0;
             p.Satisfaction = Mathf.Min(100, p.Satisfaction + 15);
-            Crew[crew].Carrying = ServiceItem.None;
+            if (Crew[crew].ServiceUnits > 1) Crew[crew].ServiceUnits--;
+            else { Crew[crew].Carrying = ServiceItem.None; Crew[crew].ServiceUnits = 0; }
             State.Served++;
             Tally(crew, TallyKind.Orders);
             RecordServiceForEvent(passenger);
@@ -473,7 +499,7 @@ namespace ShipMayham
                 if (!passenger.Active) continue;
                 if (passenger.Motion == PassengerMotion.Rescuing) { State.LastMissing++; continue; }
                 if (!passenger.FarePaid) State.LastUnpaid++;
-                else if (success) State.LastTickets += 40;
+                else if (success && !passenger.WorkedFare) State.LastTickets += 40;
             }
             State.LastServices = success ? State.Served * 8 : 0;
             float satisfaction = 0;
@@ -482,8 +508,8 @@ namespace ShipMayham
             State.LastRescueCosts = State.RescueCount * 15;
             State.LastCosts = State.Served * 2 + Mathf.CeilToInt((100 - State.Health) * .5f) + State.LastRescueCosts;
             State.LastBounty = success ? Encounter.Bounty : 0;
-            State.LastEventBonus = success ? Event.Reward : 0;
-            State.LastRouteBonus = success ? RouteBonus() : 0;
+            State.LastEventBonus = success ? Event.Reward + Opportunity.ChestReward : 0;
+            State.LastRouteBonus = success ? RouteBonus() + PassageBonus() : 0;
             State.LastReputation = success ? RouteReputation() : 0;
             State.Reputation += State.LastReputation;
             State.LastNet = State.LastTickets + State.LastServices + State.LastTips + State.LastBounty + State.LastEventBonus + State.LastRouteBonus - State.LastCosts;
@@ -501,6 +527,7 @@ namespace ShipMayham
             var old = State;
             State = new VoyageState { Health = 100, Voyage = old.Voyage + 1, Wallet = old.Wallet,
                 EngineLevel = old.EngineLevel, CapacityLevel = old.CapacityLevel, ComfortLevel = old.ComfortLevel,
+                Equipment = old.Equipment, OwnedEquipment = old.OwnedEquipment, OwnedPennant = old.OwnedPennant, PennantVisible = old.PennantVisible,
                 FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield,
                 RepairKitStock = VoyageRepairKits,
                 Reputation = old.Reputation, Livery = old.Livery, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted };
@@ -511,6 +538,10 @@ namespace ShipMayham
             ResetWorkload();
             ResetEncounter();
             ResetEvents();
+            ResetDeck();
+            ResetEmergencies();
+            ResetOpportunities();
+            ResetJourney();
             for (int i = 0; i < MaxCrew; i++)
             {
                 Crew[i].AtHelm = false;
@@ -518,6 +549,7 @@ namespace ShipMayham
                 Crew[i].AtCrane = false;
                 Crew[i].OnShore = false;
                 Crew[i].Carrying = ServiceItem.None;
+                Crew[i].ServiceUnits = 0;
                 Crew[i].Position = new Vector2(-1.5f + i, -6);
                 Crew[i].JumpHeight = 0;
                 Crew[i].VerticalSpeed = 0;

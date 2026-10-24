@@ -14,7 +14,7 @@ namespace ShipMayham
 
         public int ActiveCrewCount
         {
-            get { int count = 0; foreach (var crew in Crew) if (crew.Active) count++; return count; }
+            get { int count = 0; foreach (var crew in Crew) if (crew.Active && crew.ClientId != ulong.MaxValue) count++; return count; }
         }
 
         /// <summary>The pressure factor for the crew that is aboard right now.</summary>

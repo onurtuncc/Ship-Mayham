@@ -8,13 +8,15 @@ namespace ShipMayham
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
     /// <summary>Online voyages start in the lobby; Voyage is the default so solo play and old states are unchanged.</summary>
     public enum SessionPhase : byte { Voyage, Lobby }
-    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate }
+    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate, Extinguisher, TemporaryPlug }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     /// <summary>Landing (lying after a throw), Dizzy, Standing (just put down) and Returning (walking to a seat) are the transitions between being handled and sitting again.</summary>
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing, Landing, Dizzy, Standing, Returning }
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
+    public enum PassengerPersonality : byte { Patient, Impatient, Nervous }
+    public enum PassengerRoutine : byte { Seated, Strolling, Watching, Returning, Working }
     public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull, HarborMaster, PaintShop, FishMarket, CraneLoadingPad, CraneControls }
     public enum RouteProfile : byte { CoastalFerry, MarketRun, StormPassage }
     public enum ShipLivery : byte { Classic, Seafoam, Sunset }
@@ -41,6 +43,9 @@ namespace ShipMayham
         public int CraneStock, CraneReady;
         public float CraneSwayTime;
         public int EngineLevel, CapacityLevel, ComfortLevel;
+        public ShipEquipment Equipment;
+        public int OwnedEquipment;
+        public bool OwnedPennant, PennantVisible;
         /// <summary>Server clock in milliseconds when this state was produced; ignored by equality so it never forces a send.</summary>
         public uint TimeMs;
         public int Reputation, LastReputation;
@@ -62,6 +67,7 @@ namespace ShipMayham
             s.SerializeValue(ref CraneHook); s.SerializeValue(ref CraneHolding);
             s.SerializeValue(ref CraneStock); s.SerializeValue(ref CraneReady); s.SerializeValue(ref CraneSwayTime);
             s.SerializeValue(ref EngineLevel); s.SerializeValue(ref CapacityLevel); s.SerializeValue(ref ComfortLevel);
+            s.SerializeValue(ref Equipment); s.SerializeValue(ref OwnedEquipment); s.SerializeValue(ref OwnedPennant); s.SerializeValue(ref PennantVisible);
             s.SerializeValue(ref TimeMs);
             s.SerializeValue(ref Reputation); s.SerializeValue(ref LastReputation);
             s.SerializeValue(ref LastTickets); s.SerializeValue(ref LastServices); s.SerializeValue(ref LastTips);
@@ -82,6 +88,7 @@ namespace ShipMayham
         public ulong ClientId;
         public Vector2 Position;
         public ServiceItem Carrying;
+        public byte ServiceUnits;
         public float JumpHeight, VerticalSpeed;
         /// <summary>Walking velocity, so a predicting client can reconcile to the exact server state.</summary>
         public Vector2 Velocity;
@@ -93,6 +100,7 @@ namespace ShipMayham
         {
             s.SerializeValue(ref Active); s.SerializeValue(ref AtHelm); s.SerializeValue(ref ClientId);
             s.SerializeValue(ref Position); s.SerializeValue(ref Carrying);
+            s.SerializeValue(ref ServiceUnits);
             s.SerializeValue(ref AtCannon);
             s.SerializeValue(ref OnShore);
             s.SerializeValue(ref AtCrane);
@@ -102,7 +110,7 @@ namespace ShipMayham
         public bool Equals(CrewState other) => Active == other.Active && AtHelm == other.AtHelm &&
             ClientId == other.ClientId && Position.Equals(other.Position) && Carrying == other.Carrying && AtCannon == other.AtCannon &&
             JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane &&
-            Velocity.Equals(other.Velocity) && InputAck == other.InputAck;
+            Velocity.Equals(other.Velocity) && InputAck == other.InputAck && ServiceUnits == other.ServiceUnits;
     }
 
     [Serializable]
@@ -119,6 +127,12 @@ namespace ShipMayham
         public Vector3 Position, Velocity;
         public float RecoveryRemaining, ReactionRemaining;
         public PassengerReaction Reaction;
+        public PassengerPersonality Personality;
+        public PassengerRoutine Routine;
+        public Vector2 RoutineTarget;
+        public float RoutineTimer, RoamIn, CalmRemaining;
+        public float WorkRemaining;
+        public bool WorkedFare;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref Active); s.SerializeValue(ref Request);
@@ -127,6 +141,9 @@ namespace ShipMayham
             s.SerializeValue(ref SeatClaim);
             s.SerializeValue(ref Position); s.SerializeValue(ref Velocity); s.SerializeValue(ref RecoveryRemaining);
             s.SerializeValue(ref Reaction); s.SerializeValue(ref ReactionRemaining);
+            s.SerializeValue(ref Personality); s.SerializeValue(ref Routine); s.SerializeValue(ref RoutineTarget);
+            s.SerializeValue(ref RoutineTimer); s.SerializeValue(ref RoamIn); s.SerializeValue(ref CalmRemaining);
+            s.SerializeValue(ref WorkRemaining); s.SerializeValue(ref WorkedFare);
         }
         public bool Equals(PassengerState other) => ValueType.Equals(this, other);
     }

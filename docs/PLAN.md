@@ -1,5 +1,11 @@
 # Ship Mayham — Uygulama Planı
 
+**GDD genişletmesi — öncelik listesinin 2–6. maddeleri:** Kaptan tehlikeleri ve ekip temposu,
+gezinen yolcular/temizlik, yangın/vana müdahaleleri, çalışarak bilet ödeme/geçici tıkaç/deniz sandığı,
+servis tepsisi/teknik depo/flama ve fiziksel rota kapıları ayrı `codex/gdd-phases-2-6` dalında uygulandı.
+Buradaki 2–6 numaraları aşağıdaki tarihsel geliştirme dilimlerinin numaraları değildir;
+1. madde (onboarding) bu dalın kapsamında değildir. Kontroller, sınırlar ve doğrulama: [PHASES_2_6.md](PHASES_2_6.md).
+
 **On dokuzuncu geliştirme dilimi:** Kara için iki rollü vinç yükleme mini oyunu: fiziksel yük tedariki, iki yuvalı pad, operatör kontrolü, salınan kanca ve mavnaya indirme. Yeni işin 7 odaklı kontrolü geçti; eski sefer/Relay döngüleri tekrarlanmadı. Kaynak v9; web dilim 18/v8'de, sonraki toplu kara yayınına kadar ayrı. [HARBOR_CRANE.md](HARBOR_CRANE.md).
 
 **On sekizinci geliştirme dilimi:** İki limanda geniş gezilebilir kasaba, gerçek model dükkânlar ve NPC'ler, yeni kara haritası ve üç noktadan paralel hurda toplama/teslim işi eklendi. Yalnız yeni kara alanı/iş için 7 odaklı kontrol ve build çalıştırıldı; eski uzun sefer/Relay akışları bu dilimde tekrarlanmadı. [HARBOR_TOWN.md](HARBOR_TOWN.md).

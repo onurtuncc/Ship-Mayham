@@ -209,6 +209,8 @@ namespace ShipMayham
 
         private void Awake()
         {
+            if (GetComponent<PrototypeNavigationView>() == null) gameObject.AddComponent<PrototypeNavigationView>().View = this;
+            if (GetComponent<PrototypeDeckLifeView>() == null) gameObject.AddComponent<PrototypeDeckLifeView>().View = this;
             chasePreferred = LoadChasePreference();
             clientMotion = GetComponent<PrototypeClientMotion>();
             if (clientMotion == null) clientMotion = gameObject.AddComponent<PrototypeClientMotion>();
@@ -409,6 +411,15 @@ namespace ShipMayham
                 if (!Session.Crew[local].AtHelm && !Session.Crew[local].AtCannon && !Session.Crew[local].OnShore)
                 {
                     int passenger = Target.Kind == InteractionKind.Passenger ? Target.Index : -1;
+                    if (passenger >= 0 && (keyboard?.rKey.wasPressedThisFrame == true || pad?.dpad.down.wasPressedThisFrame == true))
+                        Session.DeckCommandRpc(Session.Passengers[passenger].TicketChecked && !Session.Passengers[passenger].FarePaid ? DeckAction.WorkFare : DeckAction.CalmPassenger, passenger);
+                    if (Target.Kind == InteractionKind.Station && (keyboard?.rKey.wasPressedThisFrame == true || pad?.dpad.down.wasPressedThisFrame == true))
+                    {
+                        var kind = Session.Stations[Target.Index].Kind;
+                        if (kind == StationKind.RepairSupply) Session.DeckCommandRpc(DeckAction.TakeExtinguisher);
+                        else if (kind == StationKind.Power) Session.DeckCommandRpc(DeckAction.IsolateFire);
+                        else if (kind == StationKind.Repair) Session.DeckCommandRpc(DeckAction.SelectValve);
+                    }
                     if (keyboard?.fKey.wasPressedThisFrame == true || pad?.buttonNorth.wasPressedThisFrame == true)
                         Session.PassengerCommandRpc(passenger, PassengerAction.CheckTicket, lookYaw);
                     if (keyboard?.gKey.wasPressedThisFrame == true || pad?.buttonEast.wasPressedThisFrame == true)
@@ -419,6 +430,7 @@ namespace ShipMayham
                 if (keyboard?.eKey.wasPressedThisFrame == true || pad?.buttonSouth.wasPressedThisFrame == true)
                 {
                     if (Session.Crew[local].AtCrane) Session.HarborCraneActionRpc(false);
+                    else if (Target.Kind == InteractionKind.DeckTask) Session.DeckCommandRpc((DeckAction)Target.Index);
                     else if (Target.Kind == InteractionKind.Salvage)
                         Session.PickUpSalvageRpc(Target.Index);
                     else if (Target.Kind == InteractionKind.Station && Session.Stations[Target.Index].Kind == StationKind.Manifest)
@@ -627,6 +639,11 @@ namespace ShipMayham
                 passengerFacing[i] = PassengerFacing(i, p, passengerFacing[i]);
                 PassengerVisuals[i].rotation = ship.rotation * passengerFacing[i] *
                     (p.Motion == PassengerMotion.Airborne ? Quaternion.Euler(0, 0, Time.time * 360) : Quaternion.identity);
+                if (p.Motion == PassengerMotion.OnDeck && (p.Routine == PassengerRoutine.Strolling || p.Routine == PassengerRoutine.Returning || p.Routine == PassengerRoutine.Working))
+                {
+                    Vector3 direction = new Vector3(p.RoutineTarget.x - p.Position.x, 0, p.RoutineTarget.y - p.Position.z);
+                    if (direction.sqrMagnitude > .01f) PassengerVisuals[i].rotation = ship.rotation * Quaternion.LookRotation(direction) * passengerVisualRotations[i];
+                }
                 if (passengerBuoys[i] != null) passengerBuoys[i].gameObject.SetActive(p.Motion == PassengerMotion.Rescuing);
                 bool focused = Target.IsPassenger(i);
                 bool rescuing = p.Motion == PassengerMotion.Rescuing;
@@ -634,6 +651,7 @@ namespace ShipMayham
                 PassengerLabels[i].transform.position = PassengerVisuals[i].position + ship.rotation * passengerLabelOffsets[i];
                 PassengerLabels[i].text = $"{i + 1}: {(p.Request == ServiceItem.None ? "Happy" : p.Request.ToString())} / {p.Satisfaction:0}%\n{PassengerPresentation.TicketText(p)}";
                 if (focused || rescuing) PassengerLabels[i].text += "\n" + PassengerPresentation.ReactionText(p);
+                if (focused) PassengerLabels[i].text += $"\n{p.Personality} / {p.Routine}";
                 if (focused && p.Motion == PassengerMotion.OnDeck)
                     PassengerLabels[i].text += "\n" + PassengerPresentation.CueText(PassengerPresentation.CueFor(p, Session.ActiveEvent.Value, state, i));
                 PassengerLabels[i].color = p.Motion == PassengerMotion.Rescuing || (p.TicketChecked && !p.FarePaid) ? new Color(1, .65f, .2f) : Color.white;
@@ -719,7 +737,7 @@ namespace ShipMayham
             if (salvageVisuals[slot] != null) salvageVisuals[slot].gameObject.SetActive(salvage);
             if (repairKitVisuals[slot] != null) repairKitVisuals[slot].gameObject.SetActive(repairKit);
             if (luggageItemVisuals[slot] != null) luggageItemVisuals[slot].gameObject.SetActive(luggage);
-            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && !luggage && !repairKit && !salvage && !craneCrate);
+            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && item != ServiceItem.Extinguisher && item != ServiceItem.TemporaryPlug && !luggage && !repairKit && !salvage && !craneCrate);
             if (item == ServiceItem.None) return;
             Color color = item == ServiceItem.Ammo ? new Color(.12f, .14f, .18f) : item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
             if (luggage) color = VoyageSimulation.LuggageColor(item);

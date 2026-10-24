@@ -16,7 +16,8 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
-        public const ushort NetworkProtocolVersion = 17;
+        public const ushort NetworkProtocolVersion = 22;
+
         public NetworkManager Manager;
         public PrototypeSession Session;
         public PrototypeView View;
@@ -115,13 +116,18 @@ namespace ShipMayham
         }
 
         public void Connect(bool host, string hostAddress = null)
+            => Connect(host, hostAddress, 7777);
+
+        /// <summary>Explicit local port for isolated LAN/testing sessions; port zero requests an OS-assigned host port.</summary>
+        public void Connect(bool host, string hostAddress, ushort port)
         {
+            if (!host && port == 0) throw new ArgumentOutOfRangeException(nameof(port), "A client needs its host's listening port.");
             if (Manager.IsListening || attempted) return;
             attempted = true;
             onlineMode = false;
             if (hostAddress != null) address = hostAddress;
             PrepareNetworkConfig();
-            Manager.GetComponent<UnityTransport>().SetConnectionData(address.Trim(), 7777, host ? "0.0.0.0" : null);
+            Manager.GetComponent<UnityTransport>().SetConnectionData(address.Trim(), port, host ? "0.0.0.0" : null);
             bool started = host ? Manager.StartHost() : Manager.StartClient();
             status = started ? "Connecting..." : "Connection could not start. Reload and retry.";
             statusIsError = !started;

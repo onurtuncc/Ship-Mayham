@@ -58,9 +58,11 @@ namespace ShipMayham
                 lastMotion[i] = motion;
                 // A change of handling beats any gesture still playing: a thrown passenger must not keep clapping.
                 if (changed && Time.time < oneShotUntil[i]) oneShotUntil[i] = 0;
-                if (Time.time < oneShotUntil[i]) continue;
+                if (Time.time < oneShotUntil[i] && passenger.Routine == PassengerRoutine.Seated && motion == PassengerMotion.OnDeck) continue;
+
                 var cue = PassengerPresentation.CueFor(passenger, session.ActiveEvent.Value, session.Voyage.Value, i);
                 var pose = PassengerPresentation.PoseFor(passenger, cue);
+                if (!animator.HasState(0, Animator.StringToHash(pose.ToString()))) pose = PassengerPose.Seated;
                 if (pose == PassengerPose.Seated && passenger.Active && Time.time >= nextFlavour[i])
                 {
                     nextFlavour[i] = Time.time + Random.Range(12f, 30f);
