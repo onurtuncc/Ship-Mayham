@@ -266,6 +266,8 @@ namespace ShipMayham
                 DistanceToPort = Vector2.Distance(s.Position, VoyageSimulation.Destination),
                 Leak = s.Leak != 0,
             };
+            var hazards = session.Hazards.Value;
+            context.HazardWarning = hazards.Wave == WavePhase.Warning || NearestShoal(s, hazards, out _) >= 0;
             if (!context.InVoyage) return context;
             var crew = session.Crew[local];
             context.AtHelm = crew.AtHelm;
@@ -364,7 +366,10 @@ namespace ShipMayham
             bool voyageOpen = s.Phase == VoyagePhase.Boarding || s.Phase == VoyagePhase.Sailing;
             bool atCrane = local >= 0 && session.Crew[local].AtCrane;
             bool craneInTarget = atCrane && Vector2.Distance(VoyageSimulation.CraneLandingPoint(s), VoyageSimulation.CraneBarge) <= VoyageSimulation.CraneLandingRadius;
+            var hz = session.Hazards.Value;
+            int shoalIndex = NearestShoal(s, hz, out float shoalGap);
             int sig = HashCode(s.Leak, s.RepairSteps, s.ReadyRepairKits, e.PowerOut ? 1 : 0, e.PowerRepairSteps, (int)e.Pirate);
+            sig = sig * 31 + HashCode(hz.Wave == WavePhase.Warning ? 1 : 0, Mathf.CeilToInt(hz.WaveRemaining), hz.Wave == WavePhase.Warning ? Mathf.RoundToInt(HazardLogic.TurnToFace(s.Heading, hz.WaveBearing) / 5f) : 0, shoalIndex, Mathf.RoundToInt(shoalGap / 3f));
             sig = sig * 31 + HashCode(Mathf.CeilToInt(e.WarningRemaining), Mathf.RoundToInt(e.PirateHealth), Mathf.RoundToInt(e.EnemyShotRemaining * 2), e.Ammo, e.MagazineAmmo, e.ReadyAmmo);
             sig = sig * 31 + HashCode(Mathf.RoundToInt(e.ReloadRemaining * 2), e.CannonLoaded ? 1 : 0, (int)ev.Phase, (int)ev.Kind, ev.Progress, ev.TargetPassenger, Mathf.CeilToInt(ev.Remaining));
             sig = sig * 31 + HashCode(Mathf.RoundToInt(ev.CoolingTime * 2), atCrane ? 1 : 0, craneInTarget ? 1 : 0, s.CraneHolding ? 1 : 0, s.DockJobProgress, gamepad ? 1 : 0, voyageOpen ? 1 : 0);
@@ -372,6 +377,7 @@ namespace ShipMayham
             alertSignature = sig;
 
             alerts.Begin();
+            if (voyageOpen && s.Phase == VoyagePhase.Sailing) AddHazards(s, hz, shoalIndex, shoalGap);
             if (atCrane)
             {
                 alerts.Add(craneInTarget ? HudKit.Good : HudKit.Info, $"CRANE   {s.DockJobProgress}/{VoyageSimulation.DockJobGoal} landed",
@@ -393,6 +399,27 @@ namespace ShipMayham
             }
             if (voyageOpen && ev.Phase == VoyageEventPhase.Active) AddEvent(ev, gamepad);
             alerts.End();
+        }
+
+        /// <summary>The shoal the captain should watch for, or -1. Only meaningful while sailing.</summary>
+        private static int NearestShoal(in VoyageState s, in HazardState hz, out float gap)
+        {
+            gap = 0;
+            if (s.Phase != VoyagePhase.Sailing) return -1;
+            int count = ShoalSet.For(hz.Seed, s.Route);
+            return HazardLogic.NearestAhead(s.Position, s.Heading, ShoalSet.Shoals, count, out gap);
+        }
+
+        private void AddHazards(in VoyageState s, in HazardState hz, int shoalIndex, float shoalGap)
+        {
+            if (hz.Wave == WavePhase.Warning)
+            {
+                int turn = Mathf.RoundToInt(HazardLogic.TurnToFace(s.Heading, hz.WaveBearing));
+                string how = Mathf.Abs(turn) <= HazardLogic.WaveSafeAngle ? "Hold this heading!" : turn > 0 ? $"Turn right {turn}°." : $"Turn left {-turn}°.";
+                alerts.Add(HudKit.Danger, $"ROGUE WAVE   {Mathf.CeilToInt(hz.WaveRemaining)}s", $"Coming from the {HazardLogic.Compass(hz.WaveBearing)}. Point the bow at it. {how}");
+            }
+            if (shoalIndex >= 0)
+                alerts.Add(HudKit.Warning, $"SHOAL AHEAD   {shoalGap:0} m", "Steer around the rocks. A slow ship takes less damage.");
         }
 
         private void AddEvent(in VoyageEventState e, bool gamepad)

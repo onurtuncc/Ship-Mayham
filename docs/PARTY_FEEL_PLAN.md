@@ -31,7 +31,7 @@ Her dilim: kod, birim ve sahne testleri, doküman, commit. Ağı değiştirenler
 3. **Uyarlanabilir müzik ve gevezelik** (procedural katmanlar, ses veriyolu ayrımı).
 4. **Sefer sonu ödülleri** (host sayaçları, rapor bölümü).
 5. **Onboarding tips** (olay bazlı kartlar, kayıt, Settings anahtarı). Yapıldı: `TipLogic`/`TipStore`/`TipCard`, 9 ipucu, "Show all tips again" düğmesi. Ağ değişmedi.
-6. **Kaptan engelleri** (Shoal, Rogue wave, minimap).
+6. **Kaptan engelleri** (Shoal, Rogue wave, minimap). Yapıldı: `HazardLogic`/`VoyageHazards`/`HazardView`, protokol 16, snapshot 12. Sayılar (hasar, bekleme, açı) ilk deneme değerleridir, insanlı turdan sonra ayarlanmalı.
 7. **Workload scale** (oyuncu sayısına göre ölçekleme) ve renkten bağımsız ikonlar.
 
 Sıra, bağımlılığa göre: 1 önce gelir (müziğin kaydırıcıları ve diğer dilimlerin ayar anahtarları buradadır).

@@ -62,11 +62,22 @@ rate-limits each crew member to one per second (`SignalLimiter`), cleans the lab
 and emote bubbles above the sender's head; `PrototypeFeedback` plays the gesture (wave, bow, point, angry) and a short cue.
 Signals never change the voyage.
 
+## Captain hazards
+
+While sailing, the alert stack warns about the two hazards. **SHOAL AHEAD** (amber) appears when a shoal lies within 45 m of the ship's
+edge, roughly in front of the bow (or very close); the minimap shows shoals within 60 m as tan dots. **ROGUE WAVE** (red) counts down the
+5 s warning with the compass direction the wave comes from and how far to turn the bow ("Turn right 80°", "Hold this heading!"); a bow
+within 50° of the wave avoids the damage. `PrototypeFeedback` adds a horn, a banner (WaveWarning, WaveDodged) and a SHOAL! popup.
+Shoals are drawn by `HazardView` (rounded rock lumps ringed with turquoise foam, no colliders). A hit costs about 2.5 hull per m/s (at
+least 2) with a 1.5 s cooldown and cuts the speed to 35%; a wave hit costs 12 hull and 40% of the speed. Coastal Ferry has 3 shoals and
+no waves, Market Run 4 shoals and a wave every 75-105 s, Storm Passage 6 shoals and a wave every 45-70 s. Shoals and waves never appear
+within 45 m of the departure point or 55 m of the port, so docking is never contested.
+
 ## Onboarding tips
 
 There is no tutorial level. `TipCard` (bottom-left, above the carry pill) shows one **tip** at a time the first time a situation
 comes up: welcome and board passengers, take the helm, the harbor, a leak, pirates, docking, serving orders, checking tickets and
-signals. `TipLogic` holds the pure rules (`Pick` returns the highest-priority unseen tip that applies; leak and pirate tips may
+signals and hazards. `TipLogic` holds the pure rules (`Pick` returns the highest-priority unseen tip that applies; leak and pirate tips may
 interrupt a calmer one), the texts with `{Control}` placeholders that render as the key or button of the device in use, and
 `TipStore` remembers the seen tips on the device (a bit mask in PlayerPrefs). A tip is shown for 9 s, marked seen when it appears and
 never shown again; the Settings "Tips" toggle turns the card off and "Show all tips again" clears the memory. Tips are hidden while a

@@ -187,6 +187,47 @@ namespace ShipMayham.Tests
             yield return new ExitPlayMode();
         }
 
+        [UnityTest] public IEnumerator ShoalsAreDrawnAndAnnouncedWhileSailing()
+        {
+            yield return new EnterPlayMode();
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            var controller = hud.GetComponentInChildren<HudController>(true);
+            hud.ConnectSolo();
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.IsTrue(hud.Session.IsSpawned);
+            yield return new WaitForSeconds(.3f);
+            hud.View.CloseMenu(false);        // without a real pointer lock the menu opens and a solo voyage pauses
+            var sim = hud.Session.Simulation;
+            Assert.IsNull(GameObject.Find("Shoals"), "no shoals in the harbor");
+
+            sim.State.Route = RouteProfile.StormPassage;
+            sim.State.Phase = VoyagePhase.Sailing;
+            yield return new WaitForSeconds(.5f);
+            var view = HazardView.Instance;
+            Assert.IsNotNull(view, "the hazard view installs itself");
+            Assert.Greater(sim.ShoalTotal, 0, $"phase {sim.State.Phase}, health {sim.State.Health}, elapsed {sim.State.Elapsed}, hazards {sim.Hazards.Wave}/{sim.Hazards.Seed}");
+            deadline = Time.realtimeSinceStartup + 3;
+            while (view.DrawnShoals == 0 && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.AreEqual(sim.ShoalTotal, view.DrawnShoals);
+            Assert.AreEqual(sim.Hazards.Seed, hud.Session.Hazards.Value.Seed, "the seed reaches the clients");
+
+            var shoal = sim.ShoalAt(0);
+            sim.State.Heading = 0;
+            sim.State.Speed = 0;
+            sim.State.Position = shoal.Center - new Vector2(0, 25);
+            yield return new WaitForSeconds(.6f);
+            var texts = controller.GetComponentsInChildren<UnityEngine.UI.Text>(false);
+            Assert.IsTrue(System.Array.Exists(texts, t => t.text.StartsWith("SHOAL AHEAD")), "the alert stack warns about the shoal");
+
+            sim.State.Phase = VoyagePhase.Arrived;
+            deadline = Time.realtimeSinceStartup + 3;
+            while (view.DrawnShoals != 0 && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.AreEqual(0, view.DrawnShoals, $"the rocks leave with the voyage (sim {sim.State.Phase}, published {hud.Session.Voyage.Value.Phase}, scale {Time.timeScale}, solo {hud.Session.IsSoloVoyage})");
+            yield return new ExitPlayMode();
+        }
+
         // Optional visual check (set SHIPMAYHAM_CAPTURE=1): renders lobby and HUD states to Logs/Hud*.png.
         [UnityTest] public IEnumerator CaptureHudScreens()
         {
@@ -278,6 +319,23 @@ namespace ShipMayham.Tests
             yield return CaptureWorld(hud, controller, "Logs/WorldGangway.png", new Vector3(-12f, 2.2f, -10f), new Vector3(-9f, .3f, -6f), 60);
             yield return CaptureWorld(hud, controller, "Logs/WorldGangwayLow.png", new Vector3(-10.5f, .9f, -4.5f), new Vector3(-8.7f, .3f, -6f), 60);
             yield return CaptureWorld(hud, controller, "Logs/WorldResident.png", new Vector3(-21f, 1.7f, -9f), new Vector3(-24f, 1.3f, -12f), 50);
+
+            // Captain hazards: a shoal ahead with the rogue wave warning up.
+            sim.State.Route = RouteProfile.StormPassage;
+            sim.State.Phase = VoyagePhase.Sailing;
+            yield return new WaitForSeconds(.4f);
+            var rock = sim.ShoalAt(0);
+            sim.State.Heading = 0;
+            sim.State.Speed = 0;
+            sim.State.Position = rock.Center - new Vector2(0, 22);
+            sim.Hazards.Wave = WavePhase.Warning;
+            sim.Hazards.WaveRemaining = 4f;
+            sim.Hazards.WaveBearing = 90f;
+            yield return new WaitForSeconds(.5f);
+            sim.Hazards.WaveRemaining = 4f;
+            yield return Capture(hud, controller, "Logs/HudHazard.png");
+            Vector3 center = new Vector3(rock.Center.x, 0, rock.Center.y);
+            yield return CaptureWorld(hud, controller, "Logs/WorldShoal.png", center + new Vector3(9f, 5f, -16f), center + new Vector3(0, .3f, 0), 60);
             GameHud.CursorLockedOverride = null;
             yield return new ExitPlayMode();
         }

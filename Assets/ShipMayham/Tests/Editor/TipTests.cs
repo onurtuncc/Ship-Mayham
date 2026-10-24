@@ -148,12 +148,21 @@ namespace ShipMayham.Tests
             c = Boarding(); c.Boarded = 1; c.OpenOrders = true; cases[TipId.ServeOrders] = c;
             c = Boarding(); c.LookingAtPassenger = true; cases[TipId.CheckTickets] = c;
             c = Boarding(); c.Phase = VoyagePhase.Sailing; cases[TipId.Signals] = c;
+            c = Boarding(); c.Phase = VoyagePhase.Sailing; c.HazardWarning = true; cases[TipId.Hazard] = c;
             foreach (TipId id in System.Enum.GetValues(typeof(TipId)))
             {
                 Assert.IsTrue(cases.ContainsKey(id), id + " has no reachability case");
                 var context = cases[id];
                 Assert.IsTrue(TipLogic.Applies(id, context), id.ToString());
             }
+        }
+
+        [Test]
+        public void PriorityOrderListsEveryTipExactlyOnce()
+        {
+            foreach (TipId id in System.Enum.GetValues(typeof(TipId)))
+                Assert.AreEqual(1, System.Array.FindAll(TipLogic.Order, o => o == id).Length, id.ToString());
+            Assert.AreEqual(System.Enum.GetValues(typeof(TipId)).Length, TipLogic.Order.Length);
         }
 
         [Test]

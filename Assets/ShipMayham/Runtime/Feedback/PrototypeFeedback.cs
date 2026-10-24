@@ -122,6 +122,14 @@ namespace ShipMayham
             snapshot.UpgradeLevels = voyage.EngineLevel + voyage.CapacityLevel + voyage.ComfortLevel;
             snapshot.DockJobsCompleted = voyage.DockJobsCompleted; snapshot.RescueCount = voyage.RescueCount; snapshot.CollectedFares = voyage.CollectedFares;
             snapshot.EventPhase = voyageEvent.Phase; snapshot.EventSerial = voyageEvent.Serial;
+            var hazards = session.Hazards.Value;
+            snapshot.WaveWarning = hazards.Wave == WavePhase.Warning; snapshot.WavesDodged = hazards.WavesDodged;
+            snapshot.ShoalNear = false;
+            if (voyage.Phase == VoyagePhase.Sailing)
+            {
+                int shoalCount = ShoalSet.For(hazards.Seed, voyage.Route);
+                snapshot.ShoalNear = HazardLogic.NearestAhead(voyage.Position, voyage.Heading, ShoalSet.Shoals, shoalCount, out _) >= 0;
+            }
             snapshot.Pirate = encounter.Pirate; snapshot.PirateHealth = encounter.PirateHealth;
             snapshot.CrewBallActive = encounter.CrewBall.Active; snapshot.PirateBallActive = encounter.PirateBall.Active;
             if (encounter.CrewBall.Active) lastCrewBall = encounter.CrewBall.Position;
@@ -178,6 +186,14 @@ namespace ShipMayham
                     AddTrauma(.35f + Mathf.Min(.45f, e.Value / 80f)); flash = Mathf.Max(flash, .55f);
                     Fx.Burst(FxKind.Smoke, ship, 10); Fx.Popup($"-{e.Value}", ship + Vector3.up, Red, 1.2f); Sfx(SfxKind.Thud, 1, .9f);
                     Haptics.Pulse(.5f + Mathf.Min(.4f, e.Value / 60f), .3f, .25f); break;
+                case FeedbackKind.WaveWarning:
+                    ShowBanner("ROGUE WAVE!", "Turn the bow toward it", Gold); AddTrauma(.15f); Sfx(SfxKind.Horn, .8f, .85f); break;
+                case FeedbackKind.WaveDodged:
+                    ShowBanner("DODGED!", null, Cyan); Fx.Burst(FxKind.Stars, ship + Vector3.up * 2, 12); Sfx(SfxKind.Chime);
+                    if (CrewAnimator != null) CrewAnimator.PlayOneShotAll(CrewPose.Clap, 2.2f);
+                    break;
+                case FeedbackKind.ShoalAhead:
+                    Fx.Popup("SHOAL!", ship + Vector3.up * 1.2f, Gold, 1.3f); Sfx(SfxKind.Horn, .6f, 1.25f); break;
                 case FeedbackKind.LeakStarted:
                     flash = Mathf.Max(flash, .35f); Fx.Popup("LEAK!", ship + Vector3.up, Red, 1.3f); Sfx(SfxKind.Alarm, .8f); break;
                 case FeedbackKind.LeakFixed:

@@ -66,6 +66,7 @@ namespace ShipMayham
                 HudKit.SetText(title, "ROUTE");
                 Place(60, 48, "DESTINATION", HudKit.Accent, false, 12);
                 Place(60, MapHeight - 22, "DEPARTURE", HudKit.TextMuted, false, 12);
+                if (s.Phase == VoyagePhase.Sailing) PlaceShoals(session, s);
                 Place(90 + s.Position.x * .75f, 235 - s.Position.y * .9f, null, Color.white, true, 15);
                 var encounter = session.Encounter.Value;
                 if (encounter.Pirate == PiratePhase.Warning || encounter.Pirate == PiratePhase.Attacking)
@@ -76,6 +77,21 @@ namespace ShipMayham
             }
             for (int i = used; i < markers.Length; i++) HudKit.SetActive(markers[i].Root, false);
         }
+
+        /// <summary>Shoals appear only once the ship is within <see cref="HazardLogic.MapRange"/> of them.</summary>
+        private void PlaceShoals(PrototypeSession session, in VoyageState s)
+        {
+            var hazards = session.Hazards.Value;
+            int count = ShoalSet.For(hazards.Seed, s.Route);
+            var shoals = ShoalSet.Shoals;
+            for (int i = 0; i < count; i++)
+            {
+                if (Vector2.Distance(s.Position, shoals[i].Center) > HazardLogic.MapRange + shoals[i].Radius) continue;
+                Place(90 + shoals[i].Center.x * .75f, 235 - shoals[i].Center.y * .9f, null, ShoalColor, true, Mathf.Clamp(shoals[i].Radius * 1.8f, 10, 16));
+            }
+        }
+
+        private static readonly Color ShoalColor = new Color(.85f, .62f, .38f);
 
         private void Town(Vector2 point, string label, Color color, float size = 12)
         {
