@@ -346,6 +346,15 @@ namespace ShipMayham.Tests
             }
             sim.Passengers[0].Motion = PassengerMotion.OnDeck;
 
+            // The gangway gate, closed and open.
+            sim.State.Phase = VoyagePhase.Boarding;
+            sim.Crew[0].Position = new Vector2(-3.4f, -6f);
+            for (int frame = 0; frame < 30; frame++) yield return null;
+            yield return CaptureWorld(hud, controller, "Logs/WorldGateClosed.png", ship.TransformPoint(new Vector3(-0.5f, 2.2f, -9.5f)), ship.TransformPoint(new Vector3(-5f, 1.2f, -6f)), 60);
+            sim.Crew[0].Position = new Vector2(-4.4f, -6f);
+            for (int frame = 0; frame < 40; frame++) yield return null;
+            yield return CaptureWorld(hud, controller, "Logs/WorldGateOpen.png", ship.TransformPoint(new Vector3(-0.5f, 2.2f, -9.5f)), ship.TransformPoint(new Vector3(-5f, 1.2f, -6f)), 60);
+
             // Captain hazards: a shoal ahead with the rogue wave warning up.
             sim.State.Route = RouteProfile.StormPassage;
             sim.State.Phase = VoyagePhase.Sailing;

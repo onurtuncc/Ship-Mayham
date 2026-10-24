@@ -101,6 +101,7 @@ namespace ShipMayham
             Crew[i].Position = state.Position; Crew[i].Velocity = state.Velocity;
             Crew[i].JumpHeight = state.JumpHeight; Crew[i].VerticalSpeed = state.VerticalSpeed;
             lastWalkPosition[i] = state.Position;
+            TryGangway(i, input);
         }
 
         // One crew member's share of Tick: stations use the held input, walkers are advanced here only when no command stream

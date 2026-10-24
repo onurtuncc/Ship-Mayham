@@ -83,6 +83,15 @@ namespace ShipMayham
                 inPort ? PromptTone.Normal : PromptTone.Blocked);
         }
 
+        /// <summary>The gangway gate has no button: walking into it opens it, unless the crew member's hands are full.</summary>
+        public static InteractionPrompt ForGate(bool toShore, in CrewState crew)
+        {
+            string action = toShore ? "Walk through to go ashore" : "Walk through to board the ship";
+            if (crew.Carrying != ServiceItem.None)
+                return InteractionPrompt.Target("Gangway gate", action, "Hands must be empty: put your item down first", key: HudControl.None, tone: PromptTone.Blocked);
+            return InteractionPrompt.Target("Gangway gate", action, toShore ? "Supplies and repairs are in town" : "Return to the deck", key: HudControl.None, tone: PromptTone.Info);
+        }
+
         public static InteractionPrompt ForHarbor(HarborAction action, in VoyageState voyage, in CrewState crew)
         {
             if (voyage.DockJobActive)
@@ -92,8 +101,8 @@ namespace ShipMayham
             }
             switch (action)
             {
-                case HarborAction.GoAshore: return InteractionPrompt.Target("Gangway", "Go ashore", "Hands must be empty");
-                case HarborAction.BoardShip: return InteractionPrompt.Target("Gangway", "Board ship", "Return to the deck");
+                case HarborAction.GoAshore:
+                case HarborAction.BoardShip: return ForGate(action == HarborAction.GoAshore, crew);
                 case HarborAction.BuyFood: return InteractionPrompt.Target("Food stall", "Buy food", "+8 food. Storage holds 32", "12 coins");
                 case HarborAction.BuyDrink: return InteractionPrompt.Target("Drink stall", "Buy drinks", "+8 drinks. Storage holds 32", "12 coins");
                 case HarborAction.HarborMaster: return InteractionPrompt.Target("Port office", "Talk to harbor master", "Choose a route or a town job");

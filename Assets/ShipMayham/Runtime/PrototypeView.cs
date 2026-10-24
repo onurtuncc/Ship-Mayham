@@ -163,7 +163,10 @@ namespace ShipMayham
         private float sendTimer;
         private PrototypeClientMotion clientMotion;
         private bool jumpRequested;
-        private Vector3[] crewBlend, crewLastRender, crewNetVelocity;
+        private Vector3[] crewBlend, crewLastRender, crewNetVelocity, crewWorldLast, crewGlide;
+        private bool[] crewWorldKnown;
+        /// <summary>How fast the glide through the gangway gate dies away (per second) and the longest hop it smooths.</summary>
+        private const float GateGlideRate = 4.5f, GateGlideMaxDistance = 8f;
         private bool[] crewFromNet;
         private Vector3 shipNetVelocity; private float shipNetTurnRate;
         private bool shipFromNet;
@@ -233,6 +236,7 @@ namespace ShipMayham
             displayedShore = new bool[CrewRoots.Length];
             crewActiveLastFrame = new bool[CrewRoots.Length];
             crewBlend = new Vector3[CrewRoots.Length]; crewLastRender = new Vector3[CrewRoots.Length];
+            crewWorldLast = new Vector3[CrewRoots.Length]; crewGlide = new Vector3[CrewRoots.Length]; crewWorldKnown = new bool[CrewRoots.Length];
             crewNetVelocity = new Vector3[CrewRoots.Length]; crewFromNet = new bool[CrewRoots.Length];
             crewMotion = new MotionSmoother[CrewRoots.Length];
             for (int i = 0; i < crewMotion.Length; i++) crewMotion[i] = new MotionSmoother { CorrectionRate = 16f, SnapDistance = 3f, MaxSpeed = 12f };
@@ -442,7 +446,7 @@ namespace ShipMayham
                         var action = Target.HarborAction;
                         if (Session.Voyage.Value.DockJobActive && (action == HarborAction.BuyFood || VoyageSimulation.IsPortCargo(Session.Crew[local].Carrying)))
                             Session.DockItemCommandRpc(action, Session.Voyage.Value.DockJobType);
-                        else Session.HarborCommandRpc(action);
+                        else if (action != HarborAction.GoAshore && action != HarborAction.BoardShip) Session.HarborCommandRpc(action);   // the gate opens by walking into it
                     }
                     else Session.InteractRpc(Target.InteractionId(Session.Stations.Length), false);
                 }
@@ -557,7 +561,7 @@ namespace ShipMayham
                 bool show = active && i < Session.Crew.Count && Session.Crew[i].Active && Session.Crew[i].ClientId != ulong.MaxValue;
                 CrewRoots[i].gameObject.SetActive(show);
                 crewActiveLastFrame[i] = show;
-                if (!show) continue;
+                if (!show) { crewWorldKnown[i] = false; continue; }
                 var crew = Session.Crew[i];
                 var target = new Vector3(crew.Position.x, (crew.OnShore ? VoyageSimulation.ShoreHeight : .5f) + crew.JumpHeight, crew.Position.y);
                 // Smooth in the frame the crew member walks in (deck or quay), then place that frame; smoothing in world space made
@@ -579,7 +583,17 @@ namespace ShipMayham
                 crewBlend[i] *= Mathf.Exp(-9f * dt);
                 local3 += crewBlend[i];
                 crewLastRender[i] = local3;
-                CrewRoots[i].position = crew.OnShore ? VoyageSimulation.HarborOrigin(state) + local3 : ship.TransformPoint(local3);
+                Vector3 world = crew.OnShore ? VoyageSimulation.HarborOrigin(state) + local3 : ship.TransformPoint(local3);
+                // Passing the gangway gate changes the area the crew member walks in; glide along the plank instead of jumping.
+                if (crewWorldKnown[i] && displayedShore[i] != crew.OnShore)
+                {
+                    Vector3 jump = crewWorldLast[i] - world;
+                    crewGlide[i] = jump.magnitude <= GateGlideMaxDistance ? jump : Vector3.zero;
+                }
+                crewGlide[i] *= Mathf.Exp(-GateGlideRate * dt);
+                CrewRoots[i].position = world + crewGlide[i];
+                crewWorldLast[i] = CrewRoots[i].position;
+                crewWorldKnown[i] = true;
                 CrewRoots[i].rotation = crew.OnShore ? Quaternion.identity : ship.rotation;
                 displayedShore[i] = crew.OnShore;
                 bool me = local == i;

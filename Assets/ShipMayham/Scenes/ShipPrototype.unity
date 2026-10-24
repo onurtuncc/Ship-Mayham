@@ -228,7 +228,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 10137993}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -4184,7 +4184,7 @@ TextMesh:
   m_GameObject: {fileID: 165024200}
   m_Text: 'ASHORE
 
-    E / A'
+    walk through'
   m_OffsetZ: 0
   m_CharacterSize: 0.07
   m_LineSpacing: 1
@@ -6200,6 +6200,38 @@ Transform:
   m_Children:
   - {fileID: 82612906}
   m_Father: {fileID: 670469243}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &239627001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 239627002}
+  m_Layer: 0
+  m_Name: Model_GangwayGate
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &239627002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239627001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: -0.45, z: 0}
+  m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1905435572}
+  m_Father: {fileID: 987430878}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &240993652
 GameObject:
@@ -24112,6 +24144,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 10137994}
+  - {fileID: 239627002}
   m_Father: {fileID: 482829181}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &987596398
@@ -44057,6 +44090,10 @@ MonoBehaviour:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
+  Tallies:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
 --- !u!114 &1755269989
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -47893,6 +47930,78 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1903683385}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &1905435570
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 239627002}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+      propertyPath: m_Name
+      value: GangwayGate
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+--- !u!4 &1905435571 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -7741751767776049611, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+  m_PrefabInstance: {fileID: 1905435570}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1905435572 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+  m_PrefabInstance: {fileID: 1905435570}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1905435573 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7555270911627641361, guid: cdee2f6994c188b79a8f1022131b7461, type: 3}
+  m_PrefabInstance: {fileID: 1905435570}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1907803936
 GameObject:
   m_ObjectHideFlags: 0
@@ -50470,6 +50579,7 @@ GameObject:
   - component: {fileID: 2039100522}
   - component: {fileID: 2039100521}
   - component: {fileID: 2039100523}
+  - component: {fileID: 2039100524}
   m_Layer: 0
   m_Name: Systems_Presentation
   m_TagString: Untagged
@@ -50950,6 +51060,25 @@ MonoBehaviour:
   - {fileID: 1579611961}
   - {fileID: 871369112}
   - {fileID: 1684717324}
+--- !u!114 &2039100524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2039100507}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16e19009ab9f09746ba16569036e19a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ShipMayham.Runtime::ShipMayham.PrototypeGangwayView
+  Session: {fileID: 1755269988}
+  View: {fileID: 2039100509}
+  Gate: {fileID: 482829181}
+  LeafLeft: {fileID: 1905435573}
+  LeafRight: {fileID: 1905435571}
+  OpenDegrees: 105
+  DegreesPerSecond: 260
 --- !u!1 &2039771278
 GameObject:
   m_ObjectHideFlags: 0
