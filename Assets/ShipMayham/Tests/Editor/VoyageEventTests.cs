@@ -24,7 +24,9 @@ namespace ShipMayham.Tests
                 new Vector2(-1.9f, -1.5f), new Vector2(1.9f, -1.5f), new Vector2(-1.9f, .6f), new Vector2(1.9f, .6f),
                 new Vector2(-1.9f, 2.7f), new Vector2(1.9f, 2.7f), new Vector2(-1.9f, 4.8f), new Vector2(1.9f, 4.8f)
             });
-            sim.Join(Host);
+            // These event-contract tests use the baseline four-person cadence.
+            // NavigationPhaseTests separately verifies smaller-crew pressure.
+            for (ulong id = Host; id < Host + 4; id++) sim.Join(id, "event-" + id);
             UseStation(0);
             UseStation(1);
             sim.HelmAction(Host);
@@ -139,6 +141,7 @@ namespace ShipMayham.Tests
 
             var restored = new VoyageSimulation(sim.Stations, sim.Seats);
             restored.ImportMigrationData(sim.ExportMigrationData());
+            for (ulong id = Host; id < Host + 4; id++) restored.Join(id, "event-" + id);
 
             Assert.AreEqual(sim.Event, restored.Event);
             for (int card = 0; card < 8; card++)
@@ -245,6 +248,7 @@ namespace ShipMayham.Tests
         private VoyageEventKind FirstCard(RouteProfile route, uint seed)
         {
             var voyage = new VoyageSimulation(sim.Stations, sim.Seats, eventSeed: seed);
+            for (ulong id = Host; id < Host + 4; id++) voyage.Join(id);
             voyage.State.Phase = VoyagePhase.Sailing;
             voyage.State.Route = route;
             voyage.State.Boarded = sim.State.Boarded;
@@ -284,6 +288,7 @@ namespace ShipMayham.Tests
         [Test] public void MissingStationsExcludeImpossibleTasks()
         {
             var limited = new VoyageSimulation(System.Array.Empty<StationDefinition>(), sim.Seats);
+            for (ulong id = Host; id < Host + 4; id++) limited.Join(id);
             limited.State.Phase = VoyagePhase.Sailing;
             limited.State.Boarded = 1;
             limited.Passengers[0] = new PassengerState { Active = true, Satisfaction = 100 };

@@ -75,6 +75,13 @@ namespace ShipMayham
                         Place(90 + shoal.x * .75f, 235 - shoal.y * .9f, "ROCK", HudKit.Warning, true, 11);
                 }
                 var opportunity = session.Opportunity.Value;
+                var journey = session.Journey.Value;
+                if (journey.Course != PassageCourse.Direct)
+                    for (int gate = journey.Checkpoints; gate < 2; gate++)
+                    {
+                        Vector2 point = VoyageSimulation.CourseGate(journey.Course, gate);
+                        Place(90 + point.x * .75f, 235 - point.y * .9f, "GATE " + (gate + 1), HudKit.Good, true, 13);
+                    }
                 if (opportunity.ChestAvailable)
                     Place(90 + opportunity.ChestPosition.x * .75f, 235 - opportunity.ChestPosition.y * .9f, "CHEST", HudKit.Coin, true, 11);
                 if (encounter.Pirate == PiratePhase.Warning || encounter.Pirate == PiratePhase.Attacking)

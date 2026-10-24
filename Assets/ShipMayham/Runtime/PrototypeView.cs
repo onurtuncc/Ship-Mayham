@@ -615,6 +615,11 @@ namespace ShipMayham
                     Vector3.Lerp(PassengerVisuals[i].position, destination, blend);
                 PassengerVisuals[i].rotation = ship.rotation * passengerVisualRotations[i] *
                     (p.Motion == PassengerMotion.Airborne ? Quaternion.Euler(0, 0, Time.time * 360) : Quaternion.identity);
+                if (p.Motion == PassengerMotion.OnDeck && (p.Routine == PassengerRoutine.Strolling || p.Routine == PassengerRoutine.Returning || p.Routine == PassengerRoutine.Working))
+                {
+                    Vector3 direction = new Vector3(p.RoutineTarget.x - p.Position.x, 0, p.RoutineTarget.y - p.Position.z);
+                    if (direction.sqrMagnitude > .01f) PassengerVisuals[i].rotation = ship.rotation * Quaternion.LookRotation(direction) * passengerVisualRotations[i];
+                }
                 if (passengerBuoys[i] != null) passengerBuoys[i].gameObject.SetActive(p.Motion == PassengerMotion.Rescuing);
                 bool focused = Target.IsPassenger(i);
                 bool rescuing = p.Motion == PassengerMotion.Rescuing;
@@ -708,7 +713,7 @@ namespace ShipMayham
             if (salvageVisuals[slot] != null) salvageVisuals[slot].gameObject.SetActive(salvage);
             if (repairKitVisuals[slot] != null) repairKitVisuals[slot].gameObject.SetActive(repairKit);
             if (luggageItemVisuals[slot] != null) luggageItemVisuals[slot].gameObject.SetActive(luggage);
-            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && item != ServiceItem.Extinguisher && !luggage && !repairKit && !salvage && !craneCrate);
+            if (serviceItemVisuals[slot] != null) serviceItemVisuals[slot].gameObject.SetActive(item != ServiceItem.Ammo && item != ServiceItem.Extinguisher && item != ServiceItem.TemporaryPlug && !luggage && !repairKit && !salvage && !craneCrate);
             if (item == ServiceItem.None) return;
             Color color = item == ServiceItem.Ammo ? new Color(.12f, .14f, .18f) : item == ServiceItem.Drink ? DrinkColor : item == ServiceItem.Cargo ? new Color(.5f, .28f, .1f) : FoodColor;
             if (luggage) color = VoyageSimulation.LuggageColor(item);

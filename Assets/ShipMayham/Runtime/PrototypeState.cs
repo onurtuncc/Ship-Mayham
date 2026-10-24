@@ -42,6 +42,9 @@ namespace ShipMayham
         public int CraneStock, CraneReady;
         public float CraneSwayTime;
         public int EngineLevel, CapacityLevel, ComfortLevel;
+        public ShipEquipment Equipment;
+        public int OwnedEquipment;
+        public bool OwnedPennant, PennantVisible;
         /// <summary>Server clock in milliseconds when this state was produced; ignored by equality so it never forces a send.</summary>
         public uint TimeMs;
         public int Reputation, LastReputation;
@@ -63,6 +66,7 @@ namespace ShipMayham
             s.SerializeValue(ref CraneHook); s.SerializeValue(ref CraneHolding);
             s.SerializeValue(ref CraneStock); s.SerializeValue(ref CraneReady); s.SerializeValue(ref CraneSwayTime);
             s.SerializeValue(ref EngineLevel); s.SerializeValue(ref CapacityLevel); s.SerializeValue(ref ComfortLevel);
+            s.SerializeValue(ref Equipment); s.SerializeValue(ref OwnedEquipment); s.SerializeValue(ref OwnedPennant); s.SerializeValue(ref PennantVisible);
             s.SerializeValue(ref TimeMs);
             s.SerializeValue(ref Reputation); s.SerializeValue(ref LastReputation);
             s.SerializeValue(ref LastTickets); s.SerializeValue(ref LastServices); s.SerializeValue(ref LastTips);
@@ -83,6 +87,7 @@ namespace ShipMayham
         public ulong ClientId;
         public Vector2 Position;
         public ServiceItem Carrying;
+        public byte ServiceUnits;
         public float JumpHeight, VerticalSpeed;
         /// <summary>Walking velocity, so a predicting client can reconcile to the exact server state.</summary>
         public Vector2 Velocity;
@@ -94,6 +99,7 @@ namespace ShipMayham
         {
             s.SerializeValue(ref Active); s.SerializeValue(ref AtHelm); s.SerializeValue(ref ClientId);
             s.SerializeValue(ref Position); s.SerializeValue(ref Carrying);
+            s.SerializeValue(ref ServiceUnits);
             s.SerializeValue(ref AtCannon);
             s.SerializeValue(ref OnShore);
             s.SerializeValue(ref AtCrane);
@@ -103,7 +109,7 @@ namespace ShipMayham
         public bool Equals(CrewState other) => Active == other.Active && AtHelm == other.AtHelm &&
             ClientId == other.ClientId && Position.Equals(other.Position) && Carrying == other.Carrying && AtCannon == other.AtCannon &&
             JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane &&
-            Velocity.Equals(other.Velocity) && InputAck == other.InputAck;
+            Velocity.Equals(other.Velocity) && InputAck == other.InputAck && ServiceUnits == other.ServiceUnits;
     }
 
     [Serializable]

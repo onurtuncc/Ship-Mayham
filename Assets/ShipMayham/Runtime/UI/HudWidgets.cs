@@ -73,7 +73,7 @@ namespace ShipMayham
             var line = HudKit.Node(Root, "Line");
             HudKit.Size(line, height: 38);
             HudKit.Row(line, 8);
-            var dot = HudKit.Dot(line, "Icon", tint, 20);
+            var dot = caption == "FOOD" ? HudKit.Box(line, "Icon", tint) : HudKit.Dot(line, "Icon", tint, 20);
             HudKit.Size(dot, 20, 20);
             value = HudKit.Label(line, "Value", 32, HudKit.Ink, TextAnchor.MiddleLeft, FontStyle.Bold);
             delta = HudKit.Label(line, "Delta", 20, HudKit.Good, TextAnchor.MiddleLeft, FontStyle.Bold);

@@ -14,22 +14,28 @@ namespace ShipMayham
         public int ComfortLevel;
         public int DockJobsCompleted;
         public ShipLivery Livery;
+        public ShipEquipment Equipment;
+        public int OwnedEquipment;
+        public bool OwnedPennant, PennantVisible;
 
         public static CareerProgress Capture(VoyageState state) => new CareerProgress
         {
-            Version = 1,
+            Version = 2,
             Wallet = Mathf.Max(0, state.Wallet),
             Reputation = Mathf.Max(0, state.Reputation),
             EngineLevel = Mathf.Clamp(state.EngineLevel, 0, 2),
             CapacityLevel = Mathf.Clamp(state.CapacityLevel, 0, 2),
             ComfortLevel = Mathf.Clamp(state.ComfortLevel, 0, 1),
             DockJobsCompleted = Mathf.Max(0, state.DockJobsCompleted),
-            Livery = state.Livery <= ShipLivery.Sunset ? state.Livery : ShipLivery.Classic
+            Livery = state.Livery <= ShipLivery.Sunset ? state.Livery : ShipLivery.Classic,
+            Equipment = state.Equipment <= ShipEquipment.Workshop ? state.Equipment : ShipEquipment.Standard,
+            OwnedEquipment = state.OwnedEquipment & 6,
+            OwnedPennant = state.OwnedPennant, PennantVisible = state.OwnedPennant && state.PennantVisible
         };
 
         public void Apply(ref VoyageState state)
         {
-            if (Version != 1) return;
+            if (Version != 1 && Version != 2) return;
             state.Wallet = Mathf.Max(0, Wallet);
             state.Reputation = Mathf.Max(0, Reputation);
             state.EngineLevel = Mathf.Clamp(EngineLevel, 0, 2);
@@ -38,6 +44,9 @@ namespace ShipMayham
             state.DockJobsCompleted = Mathf.Max(0, DockJobsCompleted);
             state.Livery = Livery <= ShipLivery.Sunset && state.Reputation >= VoyageSimulation.LiveryReputation(Livery)
                 ? Livery : ShipLivery.Classic;
+            state.OwnedEquipment = Version == 2 ? OwnedEquipment & 6 : 0;
+            state.Equipment = Equipment <= ShipEquipment.Workshop && (state.OwnedEquipment & (1 << (int)Equipment)) != 0 ? Equipment : ShipEquipment.Standard;
+            state.OwnedPennant = Version == 2 && OwnedPennant; state.PennantVisible = state.OwnedPennant && PennantVisible;
         }
     }
 
@@ -73,7 +82,7 @@ namespace ShipMayham
             try
             {
                 progress = JsonUtility.FromJson<CareerProgress>(json);
-                return progress.Version == 1;
+                return progress.Version == 1 || progress.Version == 2;
             }
             catch (ArgumentException)
             {

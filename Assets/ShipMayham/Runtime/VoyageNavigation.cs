@@ -17,7 +17,9 @@ namespace ShipMayham
             s.SerializeValue(ref Warning); s.SerializeValue(ref WaveHeading); s.SerializeValue(ref WaveActive);
             s.SerializeValue(ref Impacts); s.SerializeValue(ref WavesAvoided); s.SerializeValue(ref WavesHit);
         }
-        public bool Equals(NavigationState other) => ValueType.Equals(this, other);
+        public bool Equals(NavigationState other) => Seed == other.Seed && ImpactCooldown.Equals(other.ImpactCooldown) &&
+            WaveIn.Equals(other.WaveIn) && Warning.Equals(other.Warning) && WaveHeading.Equals(other.WaveHeading) &&
+            Impacts == other.Impacts && WavesAvoided == other.WavesAvoided && WavesHit == other.WavesHit && WaveActive == other.WaveActive;
     }
 
     public sealed partial class VoyageSimulation

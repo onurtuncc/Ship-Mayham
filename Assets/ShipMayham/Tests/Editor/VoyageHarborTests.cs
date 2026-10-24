@@ -231,6 +231,7 @@ namespace ShipMayham.Tests
         }
         [Test] public void StormContractAcceleratesHazardsAndRewardsSafeArrival()
         {
+            sim.Join(12); sim.Join(13); // Compare route modifiers at baseline crew pressure.
             sim.State.Reputation = 5;
             Harbor(HarborAction.GoAshore);
             sim.SelectRoute(Client, RouteProfile.StormPassage);

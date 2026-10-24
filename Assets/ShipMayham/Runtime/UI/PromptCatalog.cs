@@ -65,7 +65,7 @@ namespace ShipMayham
         private static InteractionPrompt ForRepairBench(in VoyageState voyage, in CrewState crew)
         {
             if (crew.Carrying == ServiceItem.RepairKit)
-                return InteractionPrompt.Target("Repair bench", "Deliver patch kit", $"Bench {voyage.ReadyRepairKits}/{VoyageSimulation.RepairKitBufferCapacity} kits ready");
+                return InteractionPrompt.Target("Repair bench", "Deliver patch kit", $"Bench {voyage.ReadyRepairKits}/{VoyageSimulation.RepairBufferLimit(voyage)} kits ready");
             if (voyage.Leak == 0)
                 return InteractionPrompt.Target("Repair bench", "Hull watertight", "Bring patch kits here to prepare quick fixes", key: HudControl.None, tone: PromptTone.Info);
             if (voyage.ReadyRepairKits > 0)

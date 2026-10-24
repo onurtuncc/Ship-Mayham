@@ -17,7 +17,9 @@ namespace ShipMayham
             s.SerializeValue(ref PlugRemaining); s.SerializeValue(ref PlugsAvailable); s.SerializeValue(ref PlugsUsed);
             s.SerializeValue(ref ChestReward); s.SerializeValue(ref WorkedFares);
         }
-        public bool Equals(VoyageOpportunityState other) => ValueType.Equals(this, other);
+        public bool Equals(VoyageOpportunityState other) => ChestAvailable == other.ChestAvailable && ChestClaimed == other.ChestClaimed &&
+            ChestPosition.Equals(other.ChestPosition) && PlugRemaining.Equals(other.PlugRemaining) && PlugsAvailable == other.PlugsAvailable &&
+            PlugsUsed == other.PlugsUsed && ChestReward == other.ChestReward && WorkedFares == other.WorkedFares;
     }
     public sealed partial class VoyageSimulation
     {

@@ -17,7 +17,8 @@ namespace ShipMayham
             s.SerializeValue(ref Spill); s.SerializeValue(ref SpillPosition); s.SerializeValue(ref CleanSteps);
             s.SerializeValue(ref Cleaned); s.SerializeValue(ref NextSpill);
         }
-        public bool Equals(DeckConditionState other) => ValueType.Equals(this, other);
+        public bool Equals(DeckConditionState other) => Spill == other.Spill && SpillPosition.Equals(other.SpillPosition) &&
+            CleanSteps == other.CleanSteps && Cleaned == other.Cleaned && NextSpill.Equals(other.NextSpill);
     }
     public sealed partial class VoyageSimulation
     {

@@ -18,7 +18,9 @@ namespace ShipMayham
             s.SerializeValue(ref Isolated); s.SerializeValue(ref ValveAdjusted); s.SerializeValue(ref ExtinguisherCharges);
             s.SerializeValue(ref SelectedValve); s.SerializeValue(ref FiresPutOut); s.SerializeValue(ref WrongValves);
         }
-        public bool Equals(ShipEmergencyState other) => ValueType.Equals(this, other);
+        public bool Equals(ShipEmergencyState other) => Fire == other.Fire && Warning.Equals(other.Warning) && Heat.Equals(other.Heat) &&
+            Isolated == other.Isolated && ValveAdjusted == other.ValveAdjusted && ExtinguisherCharges == other.ExtinguisherCharges &&
+            SelectedValve == other.SelectedValve && FiresPutOut == other.FiresPutOut && WrongValves == other.WrongValves;
     }
     public sealed partial class VoyageSimulation
     {
