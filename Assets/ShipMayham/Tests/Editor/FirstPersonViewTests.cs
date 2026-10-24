@@ -53,6 +53,7 @@ namespace ShipMayham.Tests
         public IEnumerator CameraTracksLocalCrewAndCarriedItemsUseReplicatedType()
         {
             yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;   // these tests are not about the gangway walk
             foreach (var frame in StartScene()) yield return frame;
             var hud = Object.FindAnyObjectByType<PrototypeHud>();
             var view = hud.View;
@@ -110,6 +111,7 @@ namespace ShipMayham.Tests
         public IEnumerator InteractionSelectsNearbyStationInFrontNotBehind()
         {
             yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;   // these tests are not about the gangway walk
             foreach (var frame in StartScene()) yield return frame;
             var hud = Object.FindAnyObjectByType<PrototypeHud>();
             hud.Session.Simulation.Crew[0].Position = new Vector2(-4, 1.5f);
@@ -126,6 +128,7 @@ namespace ShipMayham.Tests
         public IEnumerator JumpRpcLiftsCameraAndCrewThenLandsOnMovingShip()
         {
             yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;   // these tests are not about the gangway walk
             foreach (var frame in StartScene()) yield return frame;
             var hud = Object.FindAnyObjectByType<PrototypeHud>();
             var sim = hud.Session.Simulation;

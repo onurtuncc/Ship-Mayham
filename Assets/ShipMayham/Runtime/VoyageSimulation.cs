@@ -246,7 +246,7 @@ namespace ShipMayham
         private bool Walkable(Vector2 p, int ignorePassenger = -1)
         {
             foreach (var station in Stations) if ((p - station.Position).sqrMagnitude < StationClearance * StationClearance) return false;
-            for (int i = 0; i < Seats.Length; i++) if ((p - Seats[i]).sqrMagnitude < SeatClearance * SeatClearance) return false;
+            for (int i = 0; i < Mathf.Min(Seats.Length, OpenSeats); i++) if ((p - Seats[i]).sqrMagnitude < SeatClearance * SeatClearance) return false;
             for (int i = 0; i < MaxPassengers; i++)
                 if (i != ignorePassenger && Passengers[i].Active && Passengers[i].Motion == PassengerMotion.OnDeck &&
                     (p - new Vector2(Passengers[i].Position.x, Passengers[i].Position.z)).sqrMagnitude < PassengerClearance * PassengerClearance) return false;
@@ -281,6 +281,7 @@ namespace ShipMayham
                     {
                         if (CrewAshore > 0) return "Wait for all crew to board before preparing a new voyage.";
                         if (State.DockJobActive) return "Finish or cancel the cargo relay before preparing a new voyage.";
+                        if (AnyPassengerLeaving) return "Wait until the passengers have left the ship.";
                         ResetVoyage(); return "Back at the departure port. Board new passengers.";
                     }
                     if (State.Phase != VoyagePhase.Boarding) return "Manifest is available at port.";
@@ -291,8 +292,8 @@ namespace ShipMayham
                     { Active = true, Satisfaction = 100, Request = p % 2 == 0 ? ServiceItem.Food : ServiceItem.Drink,
                         FarePaid = p != (State.Voyage - 1) % State.Boarded, CarrierSlot = -1,
                         Personality = (PassengerPersonality)(p % 3), RoamIn = 15 + p * 4,
-                        Position = new Vector3(Seats[p].x, .5f, Seats[p].y) };
-                    return "Passengers aboard. Take the helm; Space departs.";
+                        Position = BoardingStart(p), Motion = BoardingMotion, RecoveryRemaining = FlowTimeoutSeconds };
+                    return PassengersWalk ? "Passengers are coming aboard. Take the helm once everyone is seated." : "Passengers aboard. Take the helm; Space departs.";
                 case StationKind.Helm:
                     foreach (var crew in Crew) if (crew.Active && crew.AtHelm) return "Helm occupied.";
                     Crew[i].AtHelm = true;
@@ -356,6 +357,7 @@ namespace ShipMayham
             if (State.Phase == VoyagePhase.Boarding)
             {
                 if (State.Boarded == 0) return "Board passengers at the manifest first.";
+                if (AnyPassengerBoarding) return "Passengers are still boarding. Wait until everyone is seated.";
                 if (CrewAshore > 0) return "Cannot depart: crew are still ashore. Ask them to board at the gangway.";
                 if (State.DockJobActive) return "Finish or cancel the cargo relay before departure.";
                 State.Phase = VoyagePhase.Sailing;
@@ -517,8 +519,7 @@ namespace ShipMayham
             CancelCannonReload();
             if (Encounter.Pirate == PiratePhase.Warning || Encounter.Pirate == PiratePhase.Attacking) Encounter.Pirate = PiratePhase.Escaped;
             Encounter.PowerOut = false;
-            for (int p = 0; p < MaxPassengers; p++)
-                if (Passengers[p].Active && Passengers[p].Motion != PassengerMotion.Rescuing) ReturnPassengerToSeat(p);
+            BeginDisembarking();
             for (int i = 0; i < MaxCrew; i++) { Crew[i].AtHelm = false; Crew[i].AtCannon = false; ReturnItem(i); }
         }
 

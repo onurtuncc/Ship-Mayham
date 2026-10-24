@@ -22,6 +22,7 @@ namespace ShipMayham.Tests
         public IEnumerator AuthoredCombatSceneSupportsRpcOwnershipSnapshotsAndPresentation()
         {
             yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;   // these tests are not about the gangway walk
             var load = EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/ShipMayham/Scenes/ShipPrototype.unity", new LoadSceneParameters(LoadSceneMode.Single));
             while (!load.isDone) yield return null;
             var hud = Object.FindAnyObjectByType<PrototypeHud>();

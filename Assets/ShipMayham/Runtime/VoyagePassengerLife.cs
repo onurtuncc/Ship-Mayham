@@ -77,7 +77,7 @@ namespace ShipMayham
         {
             if (Mathf.Abs(point.x) > DeckBounds.x || Mathf.Abs(point.y) > DeckBounds.y) return false;
             foreach (var station in Stations) if (Vector2.Distance(point, station.Position) < .8f) return false;
-            for (int seat = 0; seat < Seats.Length; seat++)
+            for (int seat = 0; seat < Mathf.Min(Seats.Length, OpenSeats); seat++)
                 if (seat != SeatOf(index) && Vector2.Distance(point, Seats[seat]) < .65f) return false;
             for (int i = 0; i < MaxPassengers; i++)
             {

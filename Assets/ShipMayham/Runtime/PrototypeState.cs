@@ -12,7 +12,7 @@ namespace ShipMayham
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     /// <summary>Landing (lying after a throw), Dizzy, Standing (just put down) and Returning (walking to a seat) are the transitions between being handled and sitting again.</summary>
-    public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing, Landing, Dizzy, Standing, Returning }
+    public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing, Landing, Dizzy, Standing, Returning, Boarding, Leaving }
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
     public enum PassengerPersonality : byte { Patient, Impatient, Nervous }

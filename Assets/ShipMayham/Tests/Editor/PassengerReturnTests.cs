@@ -102,6 +102,7 @@ namespace ShipMayham.Tests
         [Test]
         public void PutDownPassengerStandsAShortWhileThenWalksToTheNearestFreeSeat()
         {
+            sim.State.CapacityLevel = 2;              // all eight seats are unlocked
             Lift(0);
             PutDownAt(new Vector2(1.9f, 3.1f));       // beside the free seats on the right-hand side
             Assert.AreEqual(PassengerMotion.Standing, sim.Passengers[0].Motion);
@@ -127,6 +128,7 @@ namespace ShipMayham.Tests
         [Test]
         public void TwoPassengersNeverClaimTheSameSeat()
         {
+            sim.State.CapacityLevel = 2;
             Lift(0);
             PutDownAt(new Vector2(1.9f, 3.1f));
             Lift(1);
@@ -138,8 +140,35 @@ namespace ShipMayham.Tests
         }
 
         [Test]
+        public void ClosedSeatsCanNeverBeClaimed()
+        {
+            Assert.AreEqual(4, sim.OpenSeats);
+            Lift(0);
+            PutDownAt(new Vector2(1.9f, 3.1f));       // right next to the folded-away seats 5 and 6
+            Assert.AreEqual(0, sim.SeatOf(0), "only the passenger's own seat is free among the four open ones");
+            Advance(VoyageSimulation.StandingSeconds + VoyageSimulation.ReturnTimeoutSeconds + .2f);
+            Assert.AreEqual(sim.Seats[0], Flat(sim.Passengers[0]));
+        }
+
+        [Test]
+        public void ClosedSeatsDoNotBlockTheCrewAndOpenOnesDo()
+        {
+            float Walk(int capacityLevel)
+            {
+                sim.State.CapacityLevel = capacityLevel;
+                sim.Crew[0].Position = sim.Seats[5] + new Vector2(-1.1f, 0);
+                sim.Crew[0].Velocity = Vector2.zero;
+                for (int i = 0; i < 30; i++) { sim.SetInput(Host, Vector2.right); sim.Tick(.02f); }
+                return sim.Crew[0].Position.x - sim.Seats[5].x;
+            }
+            Assert.Greater(Walk(0), .3f, "walks straight over the spot of a closed seat");
+            Assert.Less(Walk(2), -.4f, "the unlocked seat is a real obstacle");
+        }
+
+        [Test]
         public void ClaimedSeatIsReleasedForTheNextVoyage()
         {
+            sim.State.CapacityLevel = 2;
             Lift(0);
             PutDownAt(new Vector2(1.9f, 3.1f));
             Assert.AreNotEqual(0, sim.Passengers[0].SeatClaim);

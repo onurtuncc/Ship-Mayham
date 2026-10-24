@@ -479,7 +479,7 @@ namespace ShipMayham
         private Quaternion PassengerFacing(int index, in PassengerState p, Quaternion current)
         {
             Quaternion desired = current;
-            if (p.Motion == PassengerMotion.Returning)
+            if (p.Motion == PassengerMotion.Returning || p.Motion == PassengerMotion.Boarding || p.Motion == PassengerMotion.Leaving)
             {
                 var flat = new Vector3(p.Velocity.x, 0, p.Velocity.z);
                 if (flat.sqrMagnitude > .01f) desired = Quaternion.LookRotation(flat, Vector3.up);

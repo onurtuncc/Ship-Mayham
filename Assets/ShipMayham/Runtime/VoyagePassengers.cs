@@ -120,12 +120,17 @@ namespace ShipMayham
         public static bool CanBeLifted(PassengerMotion motion) =>
             motion == PassengerMotion.OnDeck || motion == PassengerMotion.Standing || motion == PassengerMotion.Dizzy || motion == PassengerMotion.Returning;
 
+        /// <summary>Seats that exist right now: the rest are folded away until the capacity upgrade unlocks them.</summary>
+        public int OpenSeats => ShipProgression.UnlockedSeats(State.CapacityLevel);
+
+        public bool IsSeatOpen(int seat) => seat >= 0 && seat < OpenSeats;
+
         /// <summary>Seats nobody else claims. A passenger's own seat is always free for them.</summary>
         private int NearestFreeSeat(int passenger, Vector2 from)
         {
             int best = SeatOf(passenger);
             float bestDistance = float.MaxValue;
-            for (int seat = 0; seat < Seats.Length; seat++)
+            for (int seat = 0; seat < Mathf.Min(Seats.Length, OpenSeats); seat++)
             {
                 bool taken = false;
                 for (int other = 0; other < MaxPassengers && !taken; other++)
@@ -162,22 +167,13 @@ namespace ShipMayham
         private void TickReturn(int passenger, float dt)
         {
             ref var p = ref Passengers[passenger];
-            Vector2 position = new Vector2(p.Position.x, p.Position.z), goal = Seats[SeatOf(passenger)];
-            float distance = Vector2.Distance(position, goal);
+            Vector2 position = new Vector2(p.Position.x, p.Position.z), seat = Seats[SeatOf(passenger)];
+            Vector2 goal = AisleGoalIn(position, seat);
             p.RecoveryRemaining -= dt;
-            if (distance <= SeatArrivalDistance || p.RecoveryRemaining <= 0) { ReturnPassengerToSeat(passenger); return; }
-            Vector2 direction = (goal - position) / distance;
-            float step = Mathf.Min(distance, PassengerWalkSpeed * dt);
-            foreach (float angle in SteerAngles)
-            {
-                Vector2 heading = Quaternion.Euler(0, 0, angle) * direction;
-                Vector2 candidate = position + heading * step;
-                if (BlockedByStation(candidate)) continue;
-                p.Position = new Vector3(candidate.x, .5f, candidate.y);
-                p.Velocity = new Vector3(heading.x, 0, heading.y) * PassengerWalkSpeed;
-                return;
-            }
-            p.Velocity = Vector3.zero;
+            if (p.RecoveryRemaining <= 0) { ReturnPassengerToSeat(passenger); return; }
+            bool atSeat = goal == seat;
+            if (WalkToward(passenger, goal, PassengerWalkSpeed, dt, atSeat ? SeatArrivalDistance : .1f) && atSeat)
+                ReturnPassengerToSeat(passenger);
         }
 
         private static readonly float[] SteerAngles = { 0, 50, -50, 100, -100 };
@@ -257,6 +253,8 @@ namespace ShipMayham
                     if (p.RecoveryRemaining <= 0) BeginReturn(i);
                 }
                 else if (p.Motion == PassengerMotion.Returning) TickReturn(i, dt);
+                else if (p.Motion == PassengerMotion.Boarding) TickBoarding(i, dt);
+                else if (p.Motion == PassengerMotion.Leaving) TickLeaving(i, dt);
                 else if (p.Motion == PassengerMotion.Rescuing)
                 {
                     p.RecoveryRemaining = Mathf.Max(0, p.RecoveryRemaining - dt);

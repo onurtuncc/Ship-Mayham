@@ -150,7 +150,8 @@ namespace ShipMayham
                 EnsureStatic();
                 float s = VoyageSimulation.StationClearance, q = VoyageSimulation.SeatClearance, r = VoyageSimulation.PassengerClearance;
                 for (int i = 0; i < stations.Length; i++) if ((p - stations[i]).sqrMagnitude < s * s) return false;
-                for (int i = 0; i < seats.Length; i++) if ((p - seats[i]).sqrMagnitude < q * q) return false;
+                int openSeats = ShipProgression.UnlockedSeats(session.Voyage.Value.CapacityLevel);
+                for (int i = 0; i < Mathf.Min(seats.Length, openSeats); i++) if ((p - seats[i]).sqrMagnitude < q * q) return false;
                 var passengers = session.Passengers;
                 for (int i = 0; i < passengers.Count; i++)
                 {

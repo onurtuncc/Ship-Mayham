@@ -23,6 +23,7 @@ namespace ShipMayham.Tests
             bool hadKey = PlayerPrefs.HasKey(key); int original = PlayerPrefs.GetInt(key, 0);
             PlayerPrefs.SetInt(key, 0);
             yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;   // these tests are not about the gangway walk
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/ShipMayham/Scenes/ShipPrototype.unity", new LoadSceneParameters(LoadSceneMode.Single));
             var hud = UnityEngine.Object.FindAnyObjectByType<PrototypeHud>(); hud.ConnectSolo();
             float deadline = Time.realtimeSinceStartup + 5;

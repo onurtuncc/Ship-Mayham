@@ -21,6 +21,7 @@ namespace ShipMayham.Tests
         [UnityTest] public IEnumerator ScriptedRpcMovementHasOneInputOwnerInTheRealScene()
         {
             yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;   // these tests are not about the gangway walk
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/ShipMayham/Scenes/ShipPrototype.unity",
                 new LoadSceneParameters(LoadSceneMode.Single));
             var hud = Object.FindAnyObjectByType<PrototypeHud>();

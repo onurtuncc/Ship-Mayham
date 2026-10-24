@@ -30,7 +30,9 @@ namespace ShipMayham
                 case PassengerMotion.Landing: return PassengerPose.Lying;
                 case PassengerMotion.Dizzy: return PassengerPose.Dizzy;
                 case PassengerMotion.Standing: return PassengerPose.Standing;
-                case PassengerMotion.Returning: return PassengerPose.Walking;
+                case PassengerMotion.Returning:
+                case PassengerMotion.Boarding:
+                case PassengerMotion.Leaving: return PassengerPose.Walking;
                 case PassengerMotion.OnDeck: break;
                 default: return PassengerPose.Panicked;
             }
@@ -83,6 +85,8 @@ namespace ShipMayham
             if (p.Motion == PassengerMotion.Dizzy) return "Everything is spinning...";
             if (p.Motion == PassengerMotion.Standing) return "Was that necessary?";
             if (p.Motion == PassengerMotion.Returning) return "Heading back to my seat";
+            if (p.Motion == PassengerMotion.Boarding) return "Permission to come aboard!";
+            if (p.Motion == PassengerMotion.Leaving) return "Thanks for the ride!";
             if (p.ReactionRemaining > 0)
             {
                 switch (p.Reaction)

@@ -76,6 +76,7 @@ namespace ShipMayham.Tests
         [UnityTest] public IEnumerator TownSceneRpcShowsPickupAndRemovesDeliveredSalvage()
         {
             yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;   // these tests are not about the gangway walk
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/ShipMayham/Scenes/ShipPrototype.unity", new LoadSceneParameters(LoadSceneMode.Single));
             var hud = UnityEngine.Object.FindAnyObjectByType<PrototypeHud>(); hud.ConnectSolo();
             float end = Time.realtimeSinceStartup + 5; while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < end) yield return null;
