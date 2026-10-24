@@ -60,6 +60,11 @@ namespace ShipMayham
             string text = !active ? string.Empty : n.WaveActive
                 ? $"WAVE IN {n.Warning:0.0}s — face {n.WaveHeading:0}° to ride it!"
                 : nearby ? "SHOAL AHEAD — steer clear or slow below 1 m/s" : string.Empty;
+            var emergency = session.Emergency.Value;
+            if (active && emergency.Fire == FirePhase.Warning) text += $"\nSMOKE at POWER — fire in {emergency.Warning:0.0}s";
+            if (active && emergency.Fire == FirePhase.Burning) text += emergency.Isolated
+                ? "\nFIRE ISOLATED — get extinguisher: R at KITS; spray: E at fire"
+                : "\nFIRE — R at POWER isolates damage; R at KITS equips extinguisher";
             if (text != lastWarning) { warning.text = text; lastWarning = text; }
         }
         private void OnDestroy() { if (material != null) Destroy(material); }

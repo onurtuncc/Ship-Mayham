@@ -25,6 +25,22 @@ namespace ShipMayham
             {
                 FindStation(session, crew, eye, forward, ref best, ref target);
                 FindPassenger(session, crew, eye, forward, ref best, ref target);
+                if (session.Emergency.Value.Fire == FirePhase.Burning &&
+                    Vector2.Distance(crew.Position, VoyageSimulation.FirePoint) <= VoyageSimulation.InteractionRange)
+                {
+                    Vector3 fire = session.ShipRoot.TransformPoint(new Vector3(VoyageSimulation.FirePoint.x, 1.2f, VoyageSimulation.FirePoint.y));
+                    float angle = Vector3.Angle(forward, fire - eye);
+                    if (angle < best) { best = angle; target = InteractionTarget.DeckTask(DeckAction.Extinguish,
+                        InteractionPrompt.Target("Electrical fire", "Spray extinguisher", "R at KITS equips it. R at POWER isolates the circuit."), fire); }
+                }
+                var deck = session.Deck.Value;
+                if (deck.Spill && Vector2.Distance(crew.Position, deck.SpillPosition) <= VoyageSimulation.InteractionRange)
+                {
+                    Vector3 point = session.ShipRoot.TransformPoint(new Vector3(deck.SpillPosition.x, .55f, deck.SpillPosition.y));
+                    float angle = Vector3.Angle(forward, point - eye);
+                    if (angle < best) { best = angle; target = InteractionTarget.DeckTask(DeckAction.CleanSpill,
+                        InteractionPrompt.Target("Spilled drink", "Mop floor", $"Progress {deck.CleanSteps}/3. Empty hands required"), point); }
+                }
             }
             FindHarbor(session, crew, eye, forward, ref best, ref target);
             return target;
@@ -43,6 +59,15 @@ namespace ShipMayham
                 if (angle >= best) continue;
                 best = angle;
                 target = InteractionTarget.Station(i, PromptCatalog.ForStation(station.Kind, session.Voyage.Value, session.Encounter.Value, crew), anchor);
+                if (station.Kind == StationKind.RepairSupply)
+                    target = InteractionTarget.Station(i, InteractionPrompt.Target("Safety supplies", "Take / return patch kit",
+                        "R / D-pad down: take / return extinguisher"), anchor);
+                if (station.Kind == StationKind.Power && session.Emergency.Value.Fire == FirePhase.Burning)
+                    target = InteractionTarget.Station(i, InteractionPrompt.Target("Fire circuit", "Isolate fire damage",
+                        "Service counters stop until the fire is extinguished", key: HudControl.Special), anchor);
+                if (station.Kind == StationKind.Repair && session.Voyage.Value.Leak != 0)
+                    target = InteractionTarget.Station(i, InteractionPrompt.Target("Repair / valves", "Patch or apply selected valve",
+                        $"R: cycle A/B/C. Hot pipe: {(char)('A' + session.Navigation.Value.Seed % 3)}. Selected: {(char)('A' + session.Emergency.Value.SelectedValve)}"), anchor);
             }
         }
 

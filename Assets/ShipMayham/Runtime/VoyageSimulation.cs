@@ -35,6 +35,8 @@ namespace ShipMayham
             ResetEncounter();
             ResetEvents();
             ResetNavigation();
+            ResetDeck();
+            ResetEmergencies();
         }
 
         public int FindCrew(ulong clientId)
@@ -209,6 +211,8 @@ namespace ShipMayham
             TickCannonballs(dt, previousShip, previousPirate);
             TickEvents(dt);
             TickNavigation(dt);
+            TickDeck(dt);
+            TickEmergencies(dt);
             if (State.Elapsed >= nextLeak && State.Leak == 0)
             {
                 State.Leak = 1;
@@ -227,7 +231,7 @@ namespace ShipMayham
                     Passengers[i].RequestTimer = 0;
                 }
                 if (Passengers[i].Request != ServiceItem.None && Passengers[i].RequestTimer > 18)
-                    Passengers[i].Satisfaction = Mathf.Max(0, Passengers[i].Satisfaction - dt * (State.ComfortLevel > 0 ? .22f : .45f));
+                    Passengers[i].Satisfaction = Mathf.Max(0, Passengers[i].Satisfaction - dt * (State.ComfortLevel > 0 ? .22f : .45f) * PatienceFactor(Passengers[i].Personality));
             }
         }
 
@@ -278,6 +282,7 @@ namespace ShipMayham
                     for (int p = 0; p < State.Boarded; p++) Passengers[p] = new PassengerState
                     { Active = true, Satisfaction = 100, Request = p % 2 == 0 ? ServiceItem.Food : ServiceItem.Drink,
                         FarePaid = p != (State.Voyage - 1) % State.Boarded, CarrierSlot = -1,
+                        Personality = (PassengerPersonality)(p % 3), RoamIn = 15 + p * 4,
                         Position = new Vector3(Seats[p].x, .5f, Seats[p].y) };
                     return "Passengers aboard. Take the helm; Space departs.";
                 case StationKind.Helm:
@@ -295,6 +300,7 @@ namespace ShipMayham
                         if (!string.IsNullOrEmpty(cargoResult)) return cargoResult;
                     }
                     if (State.Leak == 0) return "Hull is watertight.";
+                    if (Emergency.ValveAdjusted && Crew[i].Carrying == ServiceItem.None) return ApplyLeakValve();
                     if (State.ReadyRepairKits > 0)
                     {
                         if (Crew[i].Carrying != ServiceItem.None) return "Free your hands before applying a quick patch.";
@@ -314,6 +320,7 @@ namespace ShipMayham
                 case StationKind.Cannon: return Crew[i].Carrying == ServiceItem.Ammo ? DeliverAmmo(i) : TakeCannon(i);
                 case StationKind.Ammo: return TakeOrReturnAmmo(i);
                 case StationKind.Power:
+                    if (Emergency.Fire == FirePhase.Burning) return "Fire circuit unsafe. R isolates it; get an extinguisher at KITS.";
                     if (!Encounter.PowerOut) return "Power is online.";
                     Encounter.PowerRepairSteps++;
                     Tally(i, TallyKind.Repairs);
@@ -376,6 +383,7 @@ namespace ShipMayham
         {
             if (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing) return "Service is closed.";
             ref PassengerState p = ref Passengers[passenger];
+            if (p.Routine != PassengerRoutine.Seated) { p.Routine = PassengerRoutine.Seated; p.RoamIn = 15; }
             if (!p.Active || p.Request == ServiceItem.None) return "No order here.";
             if (p.Motion != PassengerMotion.OnDeck) return "Wait until the passenger is back on deck.";
             if (Crew[crew].Carrying != p.Request) return $"Passenger wants {p.Request}.";
@@ -506,6 +514,8 @@ namespace ShipMayham
             ResetEncounter();
             ResetEvents();
             ResetNavigation();
+            ResetDeck();
+            ResetEmergencies();
             for (int i = 0; i < MaxCrew; i++)
             {
                 Crew[i].AtHelm = false;

@@ -51,10 +51,11 @@ namespace ShipMayham
                 var animator = Animators[i];
                 if (animator == null || !animator.isActiveAndEnabled || i >= session.Passengers.Count) continue;
                 if (!phased[i]) { phased[i] = true; animator.Play(0, 0, Random.value); }
-                if (Time.time < oneShotUntil[i]) continue;
                 var passenger = session.Passengers[i];
+                if (Time.time < oneShotUntil[i] && passenger.Routine == PassengerRoutine.Seated && passenger.Motion == PassengerMotion.OnDeck) continue;
                 var cue = PassengerPresentation.CueFor(passenger, session.ActiveEvent.Value, session.Voyage.Value, i);
                 var pose = PassengerPresentation.PoseFor(passenger, cue);
+                if (!animator.HasState(0, Animator.StringToHash(pose.ToString()))) pose = PassengerPose.Seated;
                 if (pose == PassengerPose.Seated && passenger.Active && Time.time >= nextFlavour[i])
                 {
                     nextFlavour[i] = Time.time + Random.Range(12f, 30f);

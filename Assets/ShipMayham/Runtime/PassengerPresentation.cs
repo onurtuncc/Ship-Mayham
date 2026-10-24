@@ -2,7 +2,7 @@ namespace ShipMayham
 {
     public enum PassengerCue : byte { Relaxed, WaitingForService, Impatient, CheckingPockets, GuardingLuggage }
     /// <summary>Animator state a passenger body plays; names match the states of the generated passenger controller.</summary>
-    public enum PassengerPose : byte { Seated, Pleading, Fidgeting, Panicked, Delighted, Yelling, Disbelief, Laughing, Clapping, Drinking }
+    public enum PassengerPose : byte { Seated, Pleading, Fidgeting, Panicked, Delighted, Yelling, Disbelief, Laughing, Clapping, Drinking, Walking, Standing }
 
     public static class PassengerPresentation
     {
@@ -26,6 +26,8 @@ namespace ShipMayham
         {
             if (!p.Active) return PassengerPose.Seated;
             if (p.Motion != PassengerMotion.OnDeck) return PassengerPose.Panicked;
+            if (p.Routine == PassengerRoutine.Strolling || p.Routine == PassengerRoutine.Returning) return PassengerPose.Walking;
+            if (p.Routine == PassengerRoutine.Watching) return PassengerPose.Standing;
             if (p.ReactionRemaining > 0)
             {
                 switch (p.Reaction)

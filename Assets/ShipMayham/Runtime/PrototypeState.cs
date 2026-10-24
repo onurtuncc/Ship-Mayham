@@ -8,12 +8,14 @@ namespace ShipMayham
     public enum VoyagePhase : byte { Boarding, Sailing, Arrived, Failed }
     /// <summary>Online voyages start in the lobby; Voyage is the default so solo play and old states are unchanged.</summary>
     public enum SessionPhase : byte { Voyage, Lobby }
-    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate }
+    public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate, Extinguisher }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing }
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
+    public enum PassengerPersonality : byte { Patient, Impatient, Nervous }
+    public enum PassengerRoutine : byte { Seated, Strolling, Watching, Returning }
     public enum HarborAction : byte { GoAshore, BoardShip, BuyFood, BuyDrink, MaintainHull, HarborMaster, PaintShop, FishMarket, CraneLoadingPad, CraneControls }
     public enum RouteProfile : byte { CoastalFerry, MarketRun, StormPassage }
     public enum ShipLivery : byte { Classic, Seafoam, Sunset }
@@ -116,6 +118,10 @@ namespace ShipMayham
         public Vector3 Position, Velocity;
         public float RecoveryRemaining, ReactionRemaining;
         public PassengerReaction Reaction;
+        public PassengerPersonality Personality;
+        public PassengerRoutine Routine;
+        public Vector2 RoutineTarget;
+        public float RoutineTimer, RoamIn, CalmRemaining;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref Active); s.SerializeValue(ref Request);
@@ -123,6 +129,8 @@ namespace ShipMayham
             s.SerializeValue(ref TicketChecked); s.SerializeValue(ref FarePaid); s.SerializeValue(ref Motion); s.SerializeValue(ref CarrierSlot);
             s.SerializeValue(ref Position); s.SerializeValue(ref Velocity); s.SerializeValue(ref RecoveryRemaining);
             s.SerializeValue(ref Reaction); s.SerializeValue(ref ReactionRemaining);
+            s.SerializeValue(ref Personality); s.SerializeValue(ref Routine); s.SerializeValue(ref RoutineTarget);
+            s.SerializeValue(ref RoutineTimer); s.SerializeValue(ref RoamIn); s.SerializeValue(ref CalmRemaining);
         }
         public bool Equals(PassengerState other) => ValueType.Equals(this, other);
     }

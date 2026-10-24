@@ -19,6 +19,8 @@ namespace ShipMayham
         public readonly NetworkVariable<EncounterState> Encounter = new NetworkVariable<EncounterState>();
         public readonly NetworkVariable<VoyageEventState> ActiveEvent = new NetworkVariable<VoyageEventState>();
         public readonly NetworkVariable<NavigationState> Navigation = new NetworkVariable<NavigationState>();
+        public readonly NetworkVariable<DeckConditionState> Deck = new NetworkVariable<DeckConditionState>();
+        public readonly NetworkVariable<ShipEmergencyState> Emergency = new NetworkVariable<ShipEmergencyState>();
         public NetworkList<CrewState> Crew;
         public NetworkList<PassengerState> Passengers;
         /// <summary>Per-slot nickname and ready flag for the lobby screen and world labels.</summary>
@@ -161,6 +163,8 @@ namespace ShipMayham
             Encounter.Value = Simulation.Encounter;
             ActiveEvent.Value = Simulation.Event;
             Navigation.Value = Simulation.Navigation;
+            Deck.Value = Simulation.Deck;
+            Emergency.Value = Simulation.Emergency;
             for (int i = 0; i < VoyageSimulation.MaxCrew; i++)
                 if (Crew.Count <= i) Crew.Add(Simulation.Crew[i]); else if (!Crew[i].Equals(Simulation.Crew[i])) Crew[i] = Simulation.Crew[i];
             for (int i = 0; i < VoyageSimulation.MaxCrew; i++)
@@ -175,6 +179,16 @@ namespace ShipMayham
             }
             for (int i = 0; i < VoyageSimulation.MaxPassengers; i++)
                 if (Passengers.Count <= i) Passengers.Add(Simulation.Passengers[i]); else if (!Passengers[i].Equals(Simulation.Passengers[i])) Passengers[i] = Simulation.Passengers[i];
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void DeckCommandRpc(DeckAction action, int passenger = -1, RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.DeckCommand(sender, action, passenger);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]

@@ -70,6 +70,7 @@ namespace ShipMayham
             ref var target = ref Passengers[passenger];
             if (target.Motion != PassengerMotion.OnDeck) return "Passenger is being carried, flying or awaiting rescue.";
             if (Vector2.Distance(Crew[slot].Position, new Vector2(target.Position.x, target.Position.z)) > InteractionRange) return "Move closer to the passenger.";
+            target.Routine = PassengerRoutine.Seated; target.RoamIn = 15;
             if (action == PassengerAction.CheckTicket)
             {
                 string inspection = InspectPassengerForEvent(passenger);
@@ -110,6 +111,7 @@ namespace ShipMayham
             p.Position = new Vector3(Seats[passenger].x, .5f, Seats[passenger].y);
             p.Velocity = Vector3.zero;
             p.RecoveryRemaining = 0;
+            p.Routine = PassengerRoutine.Seated; p.RoamIn = 15 + passenger * 4;
         }
 
         private Vector3 SafePassengerPosition(int passenger, Vector2 desired)
@@ -135,6 +137,7 @@ namespace ShipMayham
                 if (!Passengers[i].Active) continue;
                 ref var p = ref Passengers[i];
                 p.ReactionRemaining = Mathf.Max(0, p.ReactionRemaining - dt);
+                TickPassengerLife(i, dt);
                 if (p.Motion == PassengerMotion.Carried)
                 {
                     if (p.CarrierSlot < 0 || p.CarrierSlot >= MaxCrew || !Crew[p.CarrierSlot].Active) ReturnPassengerToSeat(i);
