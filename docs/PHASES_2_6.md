@@ -157,3 +157,19 @@ Koltuk sahipliğinin dolaşma sonrasında da korunması için odaklı regresyon 
 
 4103f9e dahil son entegrasyon: `Logs/Merge-Workload.xml`, 548 test, 547 başarılı,
 0 başarısız, 1 isteğe bağlı capture atlandı; Unity süreç exit 0.
+
+Main aktarımı `a5364b3` ile tamamlandı. Main'deki GDD, PLAN, PROTOTYPE ve GDD_GAP_PLAN
+taslakları commit dışında geri getirildi; PLAN hem entegrasyon özetini hem eski taslağı korur.
+Taslakların içerikleri yedek stash ile karşılaştırıldı; yedek `b9efb322` korunur.
+
+- `Logs/Merge-Workload-Build.log`: normal PC render ayarlarıyla Windows development build, exit 0.
+- `Logs/VoyageSmoke-20261024-153653-eb65f9`: ilk koşuda üç istemci varışı doğruladı,
+  host toplu varış doğrulamasında başarısız oldu. Hangi alt koşulun bozulduğu bu eski çıktıda yoktur.
+- Host hata çıktısına koşulların değerleri eklendi; oyun kuralları değiştirilmedi.
+- `Logs/Merge-Smoke-Diagnostics-Build.log`: tanısal çıktı dahil build exit 0.
+- `Logs/VoyageSmoke-20261024-154108-133804`: host ve üç istemci exit 0 / SHIP_SMOKE_PASS;
+  varış Wallet=222, hazırlık Wallet=198 / Food=23 / Drink=24 / Hull shield=20.
+
+İlk koşudaki aralıklı host doğrulama hatasının kök nedeni henüz doğrulanmadı; tekrarın
+başarısı bu hatanın giderildiği anlamına gelmez. Gerçek dört insanlı oynanış ve Relay
+host migration bu entegrasyonda yeniden çalıştırılmadı.

@@ -265,7 +265,14 @@ namespace ShipMayham
             if (session.Voyage.Value.Phase != VoyagePhase.Arrived || session.Voyage.Value.Wallet <= 0 ||
                 !sawPowerOut || !sawBallFlight || !sawPiratesDefeated || !sawQuickPatch || session.Encounter.Value.PowerRepairSteps != 3 || session.Voyage.Value.LastBounty != 50 ||
                 Array.Exists(sawJump, seen => !seen) || !PassengerSettlementValid())
-            { Fail("Arrival/settlement failed"); yield break; }
+            {
+                Fail($"Arrival/settlement failed: phase={session.Voyage.Value.Phase}, wallet={session.Voyage.Value.Wallet}, " +
+                    $"powerSeen={sawPowerOut}, powerSteps={session.Encounter.Value.PowerRepairSteps}, ball={sawBallFlight}, " +
+                    $"pirates={sawPiratesDefeated}, patch={sawQuickPatch}, bounty={session.Voyage.Value.LastBounty}, " +
+                    $"jumps={string.Join(",", sawJump)}, passengerSettlement={PassengerSettlementValid()}, " +
+                    $"carried={sawCarriedPassenger}, rescue={sawRescue}");
+                yield break;
+            }
             int arrivalWallet = session.Voyage.Value.Wallet;
             Debug.Log("SHIP_SMOKE_VOYAGE HOST wallet=" + arrivalWallet + " bounty=" + session.Voyage.Value.LastBounty);
             while (!sawShore || session.Crew[3].OnShore || session.Voyage.Value.HullShield < 20) yield return null;
