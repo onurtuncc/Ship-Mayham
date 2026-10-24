@@ -7,7 +7,7 @@ namespace ShipMayham
         CoinsEarned, PassengerBoarded, ServiceDelivered, PassengerThanked, PassengerComplained, FareCollected, PassengerRescued,
         HullDamaged, LeakStarted, LeakFixed, VoyageStarted, VoyageArrived, VoyageFailed, ReputationGained, UpgradePurchased,
         DockJobDone, EventResolved, EventFailed, CannonFired, CannonballLanded, PirateHit, PirateDefeated, ItemPickedUp, ItemDelivered,
-        PassengerThrown, WaveWarning, WaveDodged, ShoalAhead
+        PassengerThrown, WaveWarning, WaveDodged, ShoalAhead, PassengerLanded
     }
 
     /// <summary>One cosmetic reaction to a replicated state change. Slot is a passenger or crew index when relevant.</summary>
@@ -109,6 +109,8 @@ namespace ShipMayham
                     output.Add(new FeedbackEvent(FeedbackKind.ServiceDelivered, i, (int)before.Request));
                 if (before.Motion == PassengerMotion.Carried && after.Motion == PassengerMotion.Airborne)
                     output.Add(new FeedbackEvent(FeedbackKind.PassengerThrown, i, before.Carrier));
+                if (before.Motion == PassengerMotion.Airborne && after.Motion == PassengerMotion.Landing)
+                    output.Add(new FeedbackEvent(FeedbackKind.PassengerLanded, i));
                 if (after.Reacting && (!before.Reacting || after.Reaction != before.Reaction))
                 {
                     if (after.Reaction == PassengerReaction.Thanks) output.Add(new FeedbackEvent(FeedbackKind.PassengerThanked, i));

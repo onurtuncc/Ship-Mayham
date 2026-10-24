@@ -51,7 +51,7 @@ namespace ShipMayham
             for (int i = 0; i < session.Passengers.Count; i++)
             {
                 var passenger = session.Passengers[i];
-                if (!passenger.Active || passenger.Motion != PassengerMotion.OnDeck) continue;
+                if (!passenger.Active || !VoyageSimulation.CanBeLifted(passenger.Motion)) continue;
                 Vector3 p = passenger.Position;
                 if (Vector2.Distance(crew.Position, new Vector2(p.x, p.z)) > VoyageSimulation.InteractionRange) continue;
                 Vector3 body = session.ShipRoot.TransformPoint(p + Vector3.up);

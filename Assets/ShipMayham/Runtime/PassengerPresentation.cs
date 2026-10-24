@@ -2,7 +2,7 @@ namespace ShipMayham
 {
     public enum PassengerCue : byte { Relaxed, WaitingForService, Impatient, CheckingPockets, GuardingLuggage }
     /// <summary>Animator state a passenger body plays; names match the states of the generated passenger controller.</summary>
-    public enum PassengerPose : byte { Seated, Pleading, Fidgeting, Panicked, Delighted, Yelling, Disbelief, Laughing, Clapping, Drinking }
+    public enum PassengerPose : byte { Seated, Pleading, Fidgeting, Panicked, Delighted, Yelling, Disbelief, Laughing, Clapping, Drinking, Lying, Dizzy, Standing, Walking }
 
     public static class PassengerPresentation
     {
@@ -25,7 +25,15 @@ namespace ShipMayham
         public static PassengerPose PoseFor(PassengerState p, PassengerCue cue)
         {
             if (!p.Active) return PassengerPose.Seated;
-            if (p.Motion != PassengerMotion.OnDeck) return PassengerPose.Panicked;
+            switch (p.Motion)
+            {
+                case PassengerMotion.Landing: return PassengerPose.Lying;
+                case PassengerMotion.Dizzy: return PassengerPose.Dizzy;
+                case PassengerMotion.Standing: return PassengerPose.Standing;
+                case PassengerMotion.Returning: return PassengerPose.Walking;
+                case PassengerMotion.OnDeck: break;
+                default: return PassengerPose.Panicked;
+            }
             if (p.ReactionRemaining > 0)
             {
                 switch (p.Reaction)
@@ -65,6 +73,10 @@ namespace ShipMayham
             if (p.Motion == PassengerMotion.Carried) return "Put me down!";
             if (p.Motion == PassengerMotion.Airborne) return "Wheee!";
             if (p.Motion == PassengerMotion.Rescuing) return $"HELP! Rescue in {p.RecoveryRemaining:0.0}s";
+            if (p.Motion == PassengerMotion.Landing) return "Ow...";
+            if (p.Motion == PassengerMotion.Dizzy) return "Everything is spinning...";
+            if (p.Motion == PassengerMotion.Standing) return "Was that necessary?";
+            if (p.Motion == PassengerMotion.Returning) return "Heading back to my seat";
             if (p.ReactionRemaining > 0)
             {
                 switch (p.Reaction)

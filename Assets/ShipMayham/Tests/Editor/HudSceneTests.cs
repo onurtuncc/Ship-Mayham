@@ -320,6 +320,27 @@ namespace ShipMayham.Tests
             yield return CaptureWorld(hud, controller, "Logs/WorldGangwayLow.png", new Vector3(-10.5f, .9f, -4.5f), new Vector3(-8.7f, .3f, -6f), 60);
             yield return CaptureWorld(hud, controller, "Logs/WorldResident.png", new Vector3(-21f, 1.7f, -9f), new Vector3(-24f, 1.3f, -12f), 50);
 
+            // Passenger handling poses: lying after a throw, dizzy, walking back.
+            sim.State.Phase = VoyagePhase.Boarding;
+            sim.State.Boarded = 4;
+            for (int p = 0; p < 4; p++) sim.Passengers[p] = new PassengerState { Active = true, Satisfaction = 100, CarrierSlot = -1, FarePaid = true, Position = new Vector3(sim.Seats[p].x, .5f, sim.Seats[p].y) };
+            sim.Crew[0].Position = new Vector2(3.5f, -5f);
+            // The captures look from another place than the game camera, so the body must animate even when the game camera cannot see it.
+            foreach (var passengerAnimator in hud.View.GetComponent<PrototypePassengerAnimator>().Animators) passengerAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            yield return new WaitForSeconds(.5f);
+            foreach (var (motion, file) in new[] { (PassengerMotion.Landing, "Lying"), (PassengerMotion.Dizzy, "Dizzy"), (PassengerMotion.Returning, "Walking") })
+            {
+                sim.Passengers[0].Motion = motion;
+                sim.Passengers[0].RecoveryRemaining = 30;
+                sim.Passengers[0].Position = new Vector3(motion == PassengerMotion.Returning ? -.5f : 0, .5f, -3f);
+                sim.Passengers[0].Velocity = motion == PassengerMotion.Returning ? new Vector3(-.5f, 0, 1) : Vector3.zero;
+                for (int frame = 0; frame < 40; frame++) yield return null;      // the animators need real frames, not just elapsed time
+                sim.Passengers[0].Position = new Vector3(motion == PassengerMotion.Returning ? -.5f : 0, .5f, -3f);
+                sim.Passengers[0].Position = new Vector3(motion == PassengerMotion.Returning ? -.5f : 0, .5f, -3f);
+                yield return CaptureWorld(hud, controller, "Logs/WorldPassenger" + file + ".png", ship.TransformPoint(new Vector3(2.2f, 1.9f, -6.2f)), ship.TransformPoint(new Vector3(0, .9f, -3f)), 55);
+            }
+            sim.Passengers[0].Motion = PassengerMotion.OnDeck;
+
             // Captain hazards: a shoal ahead with the rogue wave warning up.
             sim.State.Route = RouteProfile.StormPassage;
             sim.State.Phase = VoyagePhase.Sailing;

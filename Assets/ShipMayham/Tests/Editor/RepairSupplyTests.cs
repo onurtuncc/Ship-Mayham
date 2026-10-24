@@ -128,9 +128,9 @@ namespace ShipMayham.Tests
         }
         [Test] public void PreviousV8SnapshotIsRejected()
         {
-            byte[] old = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":12", "\"Version\":11"));
+            byte[] old = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":13", "\"Version\":12"));
             Assert.Throws<InvalidOperationException>(() => sim.ImportMigrationData(old));
-            Assert.AreEqual(16, PrototypeHud.NetworkProtocolVersion);
+            Assert.AreEqual(17, PrototypeHud.NetworkProtocolVersion);
         }
         [TestCase(VoyagePhase.Arrived)] [TestCase(VoyagePhase.Failed)]
         public void ClosedVoyageDoesNotMoveOrConsumeSupplies(VoyagePhase phase)

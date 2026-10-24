@@ -140,16 +140,18 @@ namespace ShipMayham.Tests
             Assert.Greater(sim.Passengers[0].Position.y, 1.1f);
             Assert.Greater(sim.Passengers[0].Position.x, sim.Crew[0].Position.x + .9f);
         }
-        [Test] public void PutDownRetainsPassengerAndServiceUsesNewPosition()
+        [Test] public void PutDownPassengerStaysWhereTheyWereLeftUntilTheyStandUp()
         {
             Near(0); Command(0, PassengerAction.CarryOrDrop);
             sim.Crew[0].Position = new Vector2(0, -5);
             Command(-1, PassengerAction.CarryOrDrop);
-            Assert.AreEqual(PassengerMotion.OnDeck, sim.Passengers[0].Motion);
+            Assert.AreEqual(PassengerMotion.Standing, sim.Passengers[0].Motion);
             Assert.AreEqual(-1, sim.Passengers[0].CarrierSlot);
             Assert.AreNotEqual(new Vector3(sim.Seats[0].x, .5f, sim.Seats[0].y), sim.Passengers[0].Position);
+            Advance(VoyageSimulation.StandingSeconds + VoyageSimulation.ReturnTimeoutSeconds + .2f);
+            Assert.AreEqual(PassengerMotion.OnDeck, sim.Passengers[0].Motion);
             Use(2); Use(sim.Stations.Length);
-            Assert.AreEqual(1, sim.State.Served);
+            Assert.AreEqual(1, sim.State.Served, "served once they sit down again");
             Assert.AreEqual(PassengerReaction.Thanks, sim.Passengers[0].Reaction);
         }
         [Test] public void ThrowInsideDeckLandsWithoutRescueCost()
@@ -159,9 +161,11 @@ namespace ShipMayham.Tests
             Command(-1, PassengerAction.Throw);
             Assert.AreEqual(PassengerMotion.Airborne, sim.Passengers[0].Motion);
             Advance(1);
-            Assert.AreEqual(PassengerMotion.OnDeck, sim.Passengers[0].Motion);
+            Assert.AreEqual(PassengerMotion.Landing, sim.Passengers[0].Motion, "lies on the deck first");
             Assert.AreEqual(0, sim.State.RescueCount);
             Assert.That(sim.Passengers[0].Position.y, Is.EqualTo(.5f));
+            Advance(VoyageSimulation.LandingSeconds + VoyageSimulation.DizzySeconds + VoyageSimulation.ReturnTimeoutSeconds);
+            Assert.AreEqual(PassengerMotion.OnDeck, sim.Passengers[0].Motion);
         }
         [Test] public void OverboardRescueIsTimedCostsOnceAndRestoresOriginalSeat()
         {
@@ -171,7 +175,9 @@ namespace ShipMayham.Tests
             Assert.AreEqual(75, sim.Passengers[0].Satisfaction);
             Advance(4);
             Assert.AreEqual(PassengerMotion.Rescuing, sim.Passengers[0].Motion);
-            Advance(5);
+            Advance(4.5f);
+            Assert.AreEqual(PassengerMotion.Dizzy, sim.Passengers[0].Motion, "hauled aboard, not teleported");
+            Advance(VoyageSimulation.DizzySeconds + VoyageSimulation.ReturnTimeoutSeconds);
             Assert.AreEqual(PassengerMotion.OnDeck, sim.Passengers[0].Motion);
             Assert.AreEqual(new Vector3(sim.Seats[0].x,.5f,sim.Seats[0].y), sim.Passengers[0].Position);
             Assert.AreEqual(1, sim.State.RescueCount);

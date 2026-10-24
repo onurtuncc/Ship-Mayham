@@ -1,6 +1,6 @@
 # Movement netcode
 
-Network protocol version **16** (16 adds the replicated `HazardState` for shoals and rogue waves, snapshot 12; 15 adds the per-crew voyage tally list for the awards, snapshot 11; 14 adds `SignalRpc`/`SignalBroadcastRpc` for pings and emotes; 13 adds `UnstuckRpc`; 12 adds `BuyUpgradeRpc` for the purser; 11 added the session phase and the per-slot nickname/ready list for the lobby) (`PrototypeHud.NetworkProtocolVersion`). The host runs the authoritative `VoyageSimulation`; clients only present state.
+Network protocol version **17** (17 adds the passenger handling states Landing, Dizzy, Standing and Returning and `PassengerState.SeatClaim`, snapshot 13; 16 adds the replicated `HazardState` for shoals and rogue waves, snapshot 12; 15 adds the per-crew voyage tally list for the awards, snapshot 11; 14 adds `SignalRpc`/`SignalBroadcastRpc` for pings and emotes; 13 adds `UnstuckRpc`; 12 adds `BuyUpgradeRpc` for the purser; 11 added the session phase and the per-slot nickname/ready list for the lobby) (`PrototypeHud.NetworkProtocolVersion`). The host runs the authoritative `VoyageSimulation`; clients only present state.
 
 ## Data flow
 

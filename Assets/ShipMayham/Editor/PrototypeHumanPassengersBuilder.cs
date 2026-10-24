@@ -55,7 +55,13 @@ namespace ShipMayham.Editor
         private static AnimatorController EnsurePassengerController() => EnsureAnimatorController(PassengerControllerPath,
             ("Seated", "SittingIdle"), ("Pleading", "Waving"), ("Fidgeting", "Talking"), ("Panicked", "Terrified"),
             ("Delighted", "CheeringWhileSitting"), ("Yelling", "SittingYell"), ("Disbelief", "SittingDisbelief"), ("Laughing", "SittingLaughing"),
-            ("Clapping", "SittingClap"), ("Drinking", "SittingDrinking"));
+            ("Clapping", "SittingClap"), ("Drinking", SeatedSipClip()),
+            ("Lying", "FallingFlatImpact"), ("Dizzy", "DizzyIdle"), ("Standing", "Idle"), ("Walking", "Walking"));
+
+        // The old SittingDrinking clip stands the passenger up and walks them 2.8 m, so only an in-place seated sip may play.
+        // Until that clip is authored the drink is a plain seated pose; the cup and the coin popup still sell it.
+        private static string SeatedSipClip() =>
+            File.Exists(AnimationsPath + "Mixamo_SittingSip.fbx") ? "SittingSip" : "SittingIdle";
 
         // State names double as the strings the runtime animators cross-fade to; the first state is the default.
         private static AnimatorController EnsureAnimatorController(string controllerPath, params (string state, string clip)[] map)
