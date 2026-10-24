@@ -4,6 +4,9 @@ Bu doküman `Assets/ShipMayham/Art/Generated/Models/` altındaki FBX varlıklar�
 
 ## Stil kuralları
 
+> **Güncel yön (24 Ekim):** Oyunun art dili [art.md](art.md) ile yeniden yazıldı: Sea of Thieves x Dear Passengers, el boyaması (painterly) dokular, hacimli ve hafif bombeli organik formlar, kontrol elemanları (vana, kol, gösterge, buton) normalden büyük, sıcak-kaotik iç mekan ışığı, turkuaz tropikal dış mekan. Aşağıdaki kurallar ilk tur (Dear Passengers tonu) içindir. **Hâlâ geçerli:** tombul oranlar, yuvarlatılmış kenarlar, ortak palet, bütçeler, pivot/eksen sözleşmeleri. **Eskidi:** 'malzemeler düz renklidir, doku yoktur' ve 'sert kenar yoktur' ifadeleri; hedef el boyaması doku ve bombeli formdur. Bu dokular henüz üretilmedi: mevcut FBX'ler hâlâ düz renklidir ve yeni dile göre yeniden yapılacak/dokulandırılacak varlıklar listesi kullanıcıyla belirlenecek. Yeni üretimlerde `art.md` §2 anahtar kelimeleri ve §4 şablonları kullanılır; yerel LLM boru hattının sistem prompt'u (`Tools/BlenderAssets/llm/gen_asset.py`) yeni dile göre güncellendi.
+
+
 - **Yuvarlatılmış formlar:** Tüm kutular ve silindirler kenarlarından bevel'lıdır (`assetlib.Builder.box/cyl`); sert kenar yoktur. Bevel boyutu en küçük kenara oranlıdır.
 - **Yumuşak gölgeleme:** Yüzeyler yumuşak, yalnızca 40°'den keskin kırılmalar sert kenardır (FBX `mesh_smooth_type=EDGE`).
 - **Tombul oranlar:** İnce parçalar kalınlaştırılır; karakterler iri kafalı, kısa kalın uzuvlu "fasulye" gövdelidir (`Tools/BlenderAssets/charlib.py`).
@@ -37,7 +40,7 @@ Tools/BlenderAssets/build_asset.sh Character_Crew3 ./out/Crew3   # Character_Cre
 - Birim metredir; FBX `apply_unit_scale` ve `bake_space_transform` ile Unity eksenlerine çevrilir (`+Z` ileri, `+Y` yukarı).
 - Pivot taban merkezidir (en alçak nokta y=0, x/z ortalı). Etkileşim anchor'ları sahnede ayrıca kalır; bkz. [PROTOTYPE.md](PROTOTYPE.md) "Sahne ve model değiştirme sözleşmesi". Dosya adlarını ve boyutlarını değiştirme: sahne oluşturucu (`PrototypeGeneratedPropsBuilder`) onlara ada göre bağlanır.
 - Karakterler Unity'de `+Z`'ye bakar; gemi başı `+Z`'dir. `DeckBench` oturma yüzü `+Z`'ye, `ShipWheel` oyuncunun durduğu `-Z` tarafına bakar.
-- Malzemeler düz renklidir (doku yok); malzeme adları paylaşılır (`Wood`, `Wood_Dark`, `Brass`, `Red`…). Blender'dan gelen renk doğrusal uzaydadır ve Unity'de doğru okunur; parlaklık (smoothness) Unity malzemesinde ayarlanır.
+- Malzemeler şimdilik düz renklidir (doku yok; art.md hedefi el boyaması doku, henüz uygulanmadı); malzeme adları paylaşılır (`Wood`, `Wood_Dark`, `Brass`, `Red`…). Blender'dan gelen renk doğrusal uzaydadır ve Unity'de doğru okunur; parlaklık (smoothness) Unity malzemesinde ayarlanır.
 
 ## Deniz
 
