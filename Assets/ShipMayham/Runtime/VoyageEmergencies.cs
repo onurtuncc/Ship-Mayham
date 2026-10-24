@@ -26,7 +26,7 @@ namespace ShipMayham
     {
         public ShipEmergencyState Emergency;
         public static readonly Vector2 FirePoint = new Vector2(3.8f, 1);
-        public int LeakingValve => (int)(Navigation.Seed % 3);
+        public int LeakingValve => (int)(Hazards.Seed % 3);
         private void ResetEmergencies() => Emergency = new ShipEmergencyState { ExtinguisherCharges = 4 };
         private void TickEmergencies(float dt)
         {

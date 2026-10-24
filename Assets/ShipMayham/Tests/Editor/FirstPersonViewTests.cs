@@ -34,7 +34,7 @@ namespace ShipMayham.Tests
             while (!load.isDone) yield return null;
             var hud = Object.FindAnyObjectByType<PrototypeHud>();
             Assert.IsNotNull(hud);
-            hud.Connect(true);
+            hud.Connect(true, "127.0.0.1", 0);
             float deadline = Time.realtimeSinceStartup + 5;
             while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.IsTrue(hud.Session.IsSpawned);

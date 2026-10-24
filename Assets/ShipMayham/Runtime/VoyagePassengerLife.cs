@@ -42,7 +42,7 @@ namespace ShipMayham
             p.CalmRemaining = Mathf.Max(0, p.CalmRemaining - dt);
             if (State.Phase != VoyagePhase.Sailing || p.Motion != PassengerMotion.OnDeck) return;
             if (p.WorkRemaining > 0) { TickPassengerWork(index, dt); return; }
-            bool danger = Navigation.WaveActive || Encounter.Pirate == PiratePhase.Attacking;
+            bool danger = Hazards.Wave == WavePhase.Warning || Encounter.Pirate == PiratePhase.Attacking;
             if (p.Personality == PassengerPersonality.Nervous && danger && p.CalmRemaining <= 0)
                 p.Satisfaction = Mathf.Max(0, p.Satisfaction - dt * .2f);
             if (Event.Phase == VoyageEventPhase.Active && Event.TargetPassenger == index) return;

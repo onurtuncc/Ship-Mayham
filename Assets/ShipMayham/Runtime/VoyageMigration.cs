@@ -8,12 +8,12 @@ namespace ShipMayham
     [Serializable]
     internal sealed class VoyageMigrationSnapshot
     {
-        public int Version = 16;
+        public int Version = 17;
         public VoyageJourneyState Journey;
         public VoyageOpportunityState Opportunity;
         public ShipEmergencyState Emergency;
         public DeckConditionState Deck;
-        public NavigationState Navigation;
+        public HazardState Hazards;
         public VoyageState State;
         public EncounterState Encounter;
         public VoyageEventState Event;
@@ -71,7 +71,7 @@ namespace ShipMayham
                 State = State,
                 Encounter = Encounter,
                 Event = Event,
-                Navigation = Navigation,
+                Hazards = Hazards,
                 Deck = Deck,
                 Emergency = Emergency,
                 Opportunity = Opportunity,
@@ -97,14 +97,14 @@ namespace ShipMayham
         {
             if (data == null || data.Length == 0) throw new ArgumentException("Migration data is empty.", nameof(data));
             VoyageMigrationSnapshot snapshot = JsonUtility.FromJson<VoyageMigrationSnapshot>(Encoding.UTF8.GetString(data));
-            if (snapshot == null || snapshot.Version != 16 || snapshot.Crew?.Length != MaxCrew ||
+            if (snapshot == null || snapshot.Version != 17 || snapshot.Crew?.Length != MaxCrew ||
                 snapshot.Passengers?.Length != MaxPassengers || snapshot.CrewPlayerIds?.Length != MaxCrew)
                 throw new InvalidOperationException("Unsupported or incomplete voyage migration snapshot.");
 
             State = snapshot.State;
             Encounter = snapshot.Encounter;
             Event = snapshot.Event;
-            Navigation = snapshot.Navigation;
+            Hazards = snapshot.Hazards;
             Deck = snapshot.Deck;
             Emergency = snapshot.Emergency;
             Opportunity = snapshot.Opportunity;
@@ -127,6 +127,7 @@ namespace ShipMayham
             scheduledPowerFault = snapshot.ScheduledPowerFault;
             eventRandomState = snapshot.EventRandomState == 0 ? 1u : snapshot.EventRandomState;
             remainingEvents = snapshot.RemainingEvents;
+            RebuildHazardsAfterImport();
             if (snapshot.PassengerCarryYaw?.Length == MaxCrew)
                 Array.Copy(snapshot.PassengerCarryYaw, passengerCarryYaw, MaxCrew);
 

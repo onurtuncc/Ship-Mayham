@@ -18,7 +18,7 @@ namespace ShipMayham
         public readonly NetworkVariable<VoyageState> Voyage = new NetworkVariable<VoyageState>();
         public readonly NetworkVariable<EncounterState> Encounter = new NetworkVariable<EncounterState>();
         public readonly NetworkVariable<VoyageEventState> ActiveEvent = new NetworkVariable<VoyageEventState>();
-        public readonly NetworkVariable<NavigationState> Navigation = new NetworkVariable<NavigationState>();
+        public readonly NetworkVariable<HazardState> Hazards = new NetworkVariable<HazardState>();
         public readonly NetworkVariable<DeckConditionState> Deck = new NetworkVariable<DeckConditionState>();
         public readonly NetworkVariable<ShipEmergencyState> Emergency = new NetworkVariable<ShipEmergencyState>();
         public readonly NetworkVariable<VoyageOpportunityState> Opportunity = new NetworkVariable<VoyageOpportunityState>();
@@ -164,7 +164,7 @@ namespace ShipMayham
             Voyage.Value = Simulation.State;
             Encounter.Value = Simulation.Encounter;
             ActiveEvent.Value = Simulation.Event;
-            Navigation.Value = Simulation.Navigation;
+            Hazards.Value = Simulation.Hazards;
             Deck.Value = Simulation.Deck;
             Emergency.Value = Simulation.Emergency;
             Opportunity.Value = Simulation.Opportunity;

@@ -2,15 +2,16 @@
 
 Dal: codex/gdd-phases-2-6. Başlangıç commit'i: 441fef9.
 Bu numaralar eski GDD fazları veya PLAN.md içindeki tarihsel dilim numaraları değildir.
-1. madde (onboarding) kapsam dışında tutuldu. Main'e merge yapılmadı.
+1. madde (onboarding) kapsam dışında tutuldu. Main'e birleştirme hazırlığı sırasında güncel main commitleriyle uzlaştırıldı.
 
 ## 2 — Kaptan tehlikeleri ve ekip temposu
 
-Üç Shoal, sefer tohumu üzerinden belirlenir; limanlar ve merkez koridor açık kalır.
-1 m/s üzerindeki geçişler Hull hasarı ve hız kaybı oluşturur; çarpışma cooldown'ı 4 saniyedir.
-Yakındaki Shoal'lar minimap'te ve yakınlık uyarısında gösterilir.
-Storm Passage'ta beş saniye önceden yönü bildirilen Rogue wave gelir.
-Gemiyi bildirilen yöne 30 derece içinde çevirmek hasarı önler.
+Main'deki HazardLogic/VoyageHazards tek kayalık/dalga otoritesidir; ikinci hasar ve çizim sistemi kaldırıldı.
+Coastal/Market/Storm güzergâhlarında 3/4/6 Shoal bulunur. Temas gemiyi dışarı iter, hızını düşürür
+ve cooldown'lı Hull hasarı verir; yavaşlamak hasarı azaltır fakat tamamen kaldırmaz.
+Main'deki minimap, yönlü uyarılar, ses ve görsel geri bildirim korunur.
+Market Run ve Storm Passage Rogue wave üretir; beş saniyelik uyarıda gemiyi dalga yönüne
+50 derece içinde çevirmek hasarı önler. İlk planlanan dalga aralığı rotaya göre 50/30 saniyedir.
 
 Bağlı Crew sayısı 4/3/2/1 olduğunda Workload scale sırasıyla 1/.8/.6/.45'tir.
 Event araları, dalga sıklığı ve Pirates atış aralığı ölçeklenir.
@@ -74,7 +75,7 @@ Safe güzergâh ilk Shoal'dan önce batıya sapar; 128 farklı tohumla düz Gate
 Bunlar aynı iki Port arasındaki farklı güzergâhlardır; yeni Port veya harita değildir.
 
 Career progress v2, ekipman/Pennant sahipliğini saklar ve v1 kayıtların Wallet'ını koruyarak okur.
-Migration snapshot 16 ve ağ protokolü 20 tüm yeni durumları taşır.
+Migration snapshot 17 ve ağ protokolü 21 tüm yeni durumları taşır.
 Diğer geliştirme dallarıyla birleştirilirken şema sürümleri birlikte uzlaştırılmalı/artırılmalıdır.
 
 ## Mimari, model değişimi ve kabul sınırları
@@ -117,4 +118,4 @@ Dört süreçli kontrol, her yeni kararın uzak Player tarafından denenmesi vey
 
 Unity'nin build sırasında kendiliğinden yazdığı genel render/servis ayarları ve materyal metadata'sı bu dala dahil edilmedi.
 Üretilen DefaultVolumeProfile kopyaları silinmedi; Logs/GeneratedBuildAssets altında geri alınabilir biçimde saklandı.
-Geliştirme dalı ayrı çalışma kopyasında kalır; main'e merge veya uzak depoya push yapılmadı.
+Önceki doğrulamalar, main ile uzlaştırmadan önceki dalı kapsar. Birleşim sonuçları aşağıda ayrıca kaydedilir; uzak depoya push yapılmaz.

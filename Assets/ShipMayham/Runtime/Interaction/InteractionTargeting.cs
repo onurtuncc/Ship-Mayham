@@ -82,7 +82,7 @@ namespace ShipMayham
                         "Service counters stop until the fire is extinguished", key: HudControl.Special), anchor);
                 if (station.Kind == StationKind.Repair && session.Voyage.Value.Leak != 0)
                     target = InteractionTarget.Station(i, InteractionPrompt.Target("Repair / valves", "Patch or apply selected valve",
-                        $"R: cycle A/B/C. Hot pipe: {(char)('A' + session.Navigation.Value.Seed % 3)}. Selected: {(char)('A' + session.Emergency.Value.SelectedValve)}"), anchor);
+                        $"R: cycle A/B/C. Hot pipe: {(char)('A' + session.Hazards.Value.Seed % 3)}. Selected: {(char)('A' + session.Emergency.Value.SelectedValve)}"), anchor);
             }
         }
 

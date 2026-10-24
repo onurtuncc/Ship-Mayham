@@ -3,12 +3,10 @@ using UnityEngine.UI;
 
 namespace ShipMayham
 {
-    /// <summary>Presentation of host-owned navigation hazards. Created by the existing first-person view.</summary>
+    /// <summary>Presentation of passage gates and onboard safety status; HazardView owns captain hazards. Created by the existing first-person view.</summary>
     public sealed class PrototypeNavigationView : MonoBehaviour
     {
         public PrototypeView View;
-        private readonly Transform[] rocks = new Transform[VoyageSimulation.ShoalCount];
-        private Transform wave;
         private Material material;
         private Text warning;
         private readonly Transform[] gates = new Transform[2];
@@ -21,8 +19,6 @@ namespace ShipMayham
             var shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) { Debug.LogWarning("Navigation visuals need the URP Lit shader."); return; }
             material = new Material(shader) { color = new Color(.28f, .35f, .3f) };
-            for (int i = 0; i < rocks.Length; i++) rocks[i] = Create("Navigation_Shoal_" + (i + 1), PrimitiveType.Sphere, new Vector3(18, 3, 18));
-            wave = Create("Navigation_RogueWave", PrimitiveType.Cube, new Vector3(45, 2, 3));
             for (int i = 0; i < gates.Length; i++) gates[i] = Create("Passage_Gate_" + (i + 1), PrimitiveType.Cylinder, new Vector3(30, .08f, 30));
             var canvasRoot = new GameObject("Navigation_Status", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
             canvasRoot.transform.SetParent(transform, false);
@@ -46,17 +42,7 @@ namespace ShipMayham
             if (View == null || View.Session == null || material == null) return;
             var session = View.Session;
             bool active = session.IsSpawned && !session.InLobby && session.Voyage.Value.Phase == VoyagePhase.Sailing;
-            var n = session.Navigation.Value; var s = session.Voyage.Value;
             scaler.referenceResolution = new Vector2(1920, 1080) / GameSettings.UiScale;
-            bool nearby = false;
-            for (int i = 0; i < rocks.Length; i++)
-            {
-                rocks[i].gameObject.SetActive(active);
-                Vector2 p = VoyageSimulation.ShoalPosition(n.Seed, i);
-                rocks[i].position = new Vector3(p.x, -1, p.y);
-                nearby |= Vector2.Distance(s.Position, p) < 30;
-            }
-            wave.gameObject.SetActive(active && n.WaveActive);
             var journey = session.Journey.Value;
             for (int i = 0; i < gates.Length; i++)
             {
@@ -64,19 +50,12 @@ namespace ShipMayham
                 Vector2 point = VoyageSimulation.CourseGate(journey.Course, i);
                 gates[i].position = new Vector3(point.x, -.65f, point.y);
             }
-            if (n.WaveActive)
-            {
-                Quaternion rotation = Quaternion.Euler(0, n.WaveHeading, 0);
-                wave.SetPositionAndRotation(new Vector3(s.Position.x, 0, s.Position.y) + rotation * Vector3.forward * (8 + n.Warning * 6), rotation);
-            }
             var emergency = session.Emergency.Value;
-            int signature = System.HashCode.Combine(active, nearby, n.WaveActive, (int)(n.Warning * 10), n.WaveHeading, emergency.Fire, (int)(emergency.Warning * 10), emergency.Isolated);
+            int signature = System.HashCode.Combine(active, emergency.Fire, (int)(emergency.Warning * 10), emergency.Isolated);
             signature = signature * 31 + Mathf.CeilToInt(session.Opportunity.Value.PlugRemaining) * 7 + (int)journey.Course * 3 + journey.Checkpoints;
             if (signature == warningSignature) return;
             warningSignature = signature;
-            string text = !active ? string.Empty : n.WaveActive
-                ? $"WAVE IN {n.Warning:0.0}s — face {n.WaveHeading:0}° to ride it!"
-                : nearby ? "SHOAL AHEAD — steer clear or slow below 1 m/s" : string.Empty;
+            string text = string.Empty;
             if (active && emergency.Fire == FirePhase.Warning) text += $"\nSMOKE at POWER — fire in {emergency.Warning:0.0}s";
             if (active && emergency.Fire == FirePhase.Burning) text += emergency.Isolated
                 ? "\nFIRE ISOLATED — get extinguisher: R at KITS; spray: E at fire"

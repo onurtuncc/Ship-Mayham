@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ShipMayham
 {
     /// <summary>First-time tips. The enum order is the priority order.</summary>
-    public enum TipId : byte { Welcome, TakeHelm, Harbor, Leak, Pirates, Docking, ServeOrders, CheckTickets, Signals }
+    public enum TipId : byte { Welcome, TakeHelm, Harbor, Leak, Pirates, Docking, ServeOrders, CheckTickets, Signals, Hazard }
 
     /// <summary>What the tip logic needs to know about the local crew member's situation.</summary>
     public struct TipContext
@@ -16,7 +16,7 @@ namespace ShipMayham
         public bool AtHelm, AtCannon, OnShore, Carrying;
         public bool OpenOrders;
         public bool LookingAtPassenger;
-        public bool Leak, PiratesNear;
+        public bool Leak, PiratesNear, HazardWarning;
     }
 
     /// <summary>Pure rules of the onboarding tips: when each applies, what it says and how its key hints are written.</summary>
@@ -25,13 +25,20 @@ namespace ShipMayham
         public const float DockingHintMeters = 60f;
 
         /// <summary>Urgent tips may interrupt a calmer one that is on screen.</summary>
-        public static bool IsUrgent(TipId id) => id == TipId.Leak || id == TipId.Pirates;
+        public static bool IsUrgent(TipId id) => id == TipId.Leak || id == TipId.Pirates || id == TipId.Hazard;
+
+        /// <summary>Priority order. The enum keeps the stored bit of each tip stable, so new tips are appended there and slotted in here.</summary>
+        public static readonly TipId[] Order =
+        {
+            TipId.Welcome, TipId.TakeHelm, TipId.Harbor, TipId.Leak, TipId.Pirates, TipId.Hazard,
+            TipId.Docking, TipId.ServeOrders, TipId.CheckTickets, TipId.Signals
+        };
 
         /// <summary>The highest-priority tip that applies now and has not been seen yet, or null.</summary>
         public static TipId? Pick(in TipContext c, int seenMask)
         {
             if (!c.InVoyage) return null;
-            foreach (TipId id in System.Enum.GetValues(typeof(TipId)))
+            foreach (TipId id in Order)
                 if ((seenMask & (1 << (int)id)) == 0 && Applies(id, c)) return id;
             return null;
         }
@@ -47,6 +54,7 @@ namespace ShipMayham
                 case TipId.Harbor: return c.OnShore && (c.Phase == VoyagePhase.Boarding || c.Phase == VoyagePhase.Arrived);
                 case TipId.Leak: return c.Leak && c.Phase == VoyagePhase.Sailing && aboard;
                 case TipId.Pirates: return c.PiratesNear && c.Phase == VoyagePhase.Sailing && aboard && !c.AtCannon;
+                case TipId.Hazard: return c.HazardWarning && c.Phase == VoyagePhase.Sailing && aboard;
                 case TipId.Docking: return c.Phase == VoyagePhase.Sailing && c.AtHelm && c.DistanceToPort < DockingHintMeters;
                 case TipId.ServeOrders: return boardingOrSailing && c.Boarded > 0 && aboard && c.OpenOrders && !c.Carrying && !c.AtHelm && !c.AtCannon;
                 case TipId.CheckTickets: return boardingOrSailing && aboard && c.LookingAtPassenger && !c.Carrying;
@@ -65,6 +73,7 @@ namespace ShipMayham
                 case TipId.Harbor: return "Welcome ashore! The stalls sell food, drinks and hull shields. The port office offers routes and jobs (press Esc to use the mouse).";
                 case TipId.Leak: return "Leak! Patch it at the repair bench with {Interact}, four times. A quick-patch kit makes it instant.";
                 case TipId.Pirates: return "Pirates! Man the cannon with {Interact} and fire with {Fire}. Carry cannonballs from the magazine to the cannon.";
+                case TipId.Hazard: return "Hazard! Steer around the rocks of a shoal. Before a rogue wave hits, turn the ship's bow toward it.";
                 case TipId.Docking: return "Almost there. Slow below 1 m/s and press {Jump} at the helm within 12 m of the pier to dock.";
                 case TipId.ServeOrders: return "Passengers show what they want above their heads. Take it from its counter with {Interact}, then hand it over while looking at them.";
                 case TipId.CheckTickets: return "{Check} checks a passenger's ticket (press again to collect an unpaid fare). {Carry} lifts them.";

@@ -26,7 +26,7 @@ namespace ShipMayham
         {
             if (index < 0 || index > 1) throw new ArgumentOutOfRangeException(nameof(index));
             // Turn west before the first shoal, and stay west until the last shoal is behind us.
-            return course == PassageCourse.Safe ? new Vector2(-50, index == 0 ? 30 : 175) :
+            return course == PassageCourse.Safe ? new Vector2(-70, index == 0 ? 20 : 200) :
                 new Vector2(20, index == 0 ? 70 : 150);
         }
         private void ResetJourney() => Journey = default;

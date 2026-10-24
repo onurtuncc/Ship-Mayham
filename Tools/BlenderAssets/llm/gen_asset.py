@@ -23,14 +23,14 @@ MCP = "http://127.0.0.1:9191/"
 OUT = r"D:\blender\out"
 
 STYLE = """You are a 3D modeler working in Blender 5.x through the execute_blender_code tool.
-Build ONE game-ready asset for a stylized, low-poly, cartoon pirate co-op ship game (Unity, URP).
+Build ONE game-ready asset for a first-person chaotic co-op ship game in the art style of Sea of Thieves x Dear Passengers (see docs/art.md): stylized, painterly hand-painted look, chunky exaggerated proportions, warm cozy-chaotic mood (Unity, URP).
 Workflow rules:
 - Write ONE complete self-contained script per call. The driver wipes the scene before every run, so rebuild the whole asset from scratch each call; never rely on earlier calls. After a Python error, fix that exact line and resend the whole script.
 - Do NOT use bpy.ops that depend on UI context (join, origin_set, select_all, mode_set, transform_apply, cursor stuff). Build with the data API: bpy.data.meshes.new + bmesh (bmesh.ops.create_cube / create_cone / create_cylinder(cap_ends=True, radius1=, radius2=, depth=, segments=) / create_uvsphere / create_icosphere, bmesh.ops.bevel), then bm.to_mesh(me), bm.free(). Position parts by translating vertices (bmesh.ops.translate / rotate) or object.location, and parent parts to one root Empty or join through a single bmesh.
 - bmesh faces take BMVert objects, not indices (bm.verts.ensure_lookup_table()). Scene unit length is 'METERS'. Link objects with bpy.context.scene.collection.objects.link(obj). Materials: bpy.data.materials.new(name); mat.use_nodes=True; set nodes['Principled BSDF'] Base Color / Roughness; me.materials.append(mat).
 - If unsure about an API name, call search_api_docs or get_python_api_docs once instead of guessing.
 Asset rules:
-- Meters, real-world scale. Flat saturated hand-painted look, one simple material per color part (roughness 0.7-0.9) with clear names. Under 3000 triangles.
+- Meters, real-world scale. Chunky and friendly: slightly bulging, organic, never razor-sharp 90 degree boxes (bevel generously); interactive parts (valves, levers, buttons, gauges, handles) are clearly oversized and readable. Hand-painted palette: worn painted wood in 2-3 neighbouring tones (a darker base and lighter worn/edge planks), brushed brass and copper accents, saturated but warm colors; one simple material per color part (roughness 0.7-0.9) with clear names. Under 3000 triangles.
 - Object origin at the bottom center of the asset (build the geometry so its lowest point is at z=0 and it is centered on x=0,y=0), +Y forward, Z up. Name the root object exactly as asked.
 - BUILD ONLY WITH THE TESTED HELPER LIBRARY (do not write your own bmesh/primitive code; it caused floating and exploded parts). Start every script with exactly:
   import sys, importlib; sys.path.insert(0, 'D:/blender'); import llm_helpers; importlib.reload(llm_helpers); from llm_helpers import *
@@ -173,6 +173,7 @@ async def one(session, tools, name, desc, idx, outdir, instructions, feedback=""
                 args["code"] = WIPE + args["code"]
             r = await session.call_tool(c["function"]["name"], args)
             txt = "\n".join(i.text for i in r.content if i.type == "text")[:6000]
+            LAST_OK[0] = '"status": "error"' not in txt
             log.write(f"<- {txt}\n")
             msgs.append({"role": "tool", "tool_call_id": c["id"], "content": txt})
     png = os.path.join(outdir, f"v{idx}.png")
@@ -224,6 +225,9 @@ async def one(session, tools, name, desc, idx, outdir, instructions, feedback=""
     fbx = os.path.join(outdir, f"v{idx}.fbx").replace("\\", "/")
     res = await session.call_tool("execute_blender_code", {"code": FINALIZE.replace("__NAME__", name).replace("__FBX__", fbx)})
     log.write("finalize: " + text_of(res, 1500) + "\n")
+    if not LAST_OK[0]:
+        log.write("FAILED: the last model script errored; v%d is not a valid result\n" % idx)
+        open(os.path.join(outdir, f"v{idx}.FAILED"), "w").close()
     await session.call_tool("execute_blender_code", {"code": f"import bpy; bpy.ops.wm.save_as_mainfile(filepath=r'{blend}', copy=True)"})
     log.close()
     return png

@@ -70,15 +70,19 @@ namespace ShipMayham.Tests
         {
             var points = new[] { Vector2.zero, VoyageSimulation.CourseGate(PassageCourse.Safe, 0),
                 VoyageSimulation.CourseGate(PassageCourse.Safe, 1), VoyageSimulation.Destination };
+            var shoals = new Shoal[HazardLogic.MaxShoals];
             for (uint seed = 1; seed <= 128; seed++)
+            {
+                int count = HazardLogic.Generate(seed, RouteProfile.StormPassage, shoals);
                 for (int leg = 1; leg < points.Length; leg++)
                     for (int step = 0; step <= 100; step++)
                     {
                         Vector2 point = Vector2.Lerp(points[leg - 1], points[leg], step / 100f);
-                        for (int shoal = 0; shoal < VoyageSimulation.ShoalCount; shoal++)
-                            Assert.Greater(Vector2.Distance(point, VoyageSimulation.ShoalPosition(seed, shoal)),
-                                VoyageSimulation.ShoalRadius + 2, "Safe passage must not lead directly through a shoal.");
+                        for (int shoal = 0; shoal < count; shoal++)
+                            Assert.Greater(Vector2.Distance(point, shoals[shoal].Center),
+                                shoals[shoal].Radius + HazardLogic.ShipRadius + 2, "Safe passage must not lead directly through a shoal.");
                     }
+            }
         }
         [Test] public void CareerV1StillLoadsAndV2KeepsPurchasedChoices()
         {

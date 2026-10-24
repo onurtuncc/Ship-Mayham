@@ -7,7 +7,7 @@ namespace ShipMayham
         CoinsEarned, PassengerBoarded, ServiceDelivered, PassengerThanked, PassengerComplained, FareCollected, PassengerRescued,
         HullDamaged, LeakStarted, LeakFixed, VoyageStarted, VoyageArrived, VoyageFailed, ReputationGained, UpgradePurchased,
         DockJobDone, EventResolved, EventFailed, CannonFired, CannonballLanded, PirateHit, PirateDefeated, ItemPickedUp, ItemDelivered,
-        PassengerThrown
+        PassengerThrown, WaveWarning, WaveDodged, ShoalAhead
     }
 
     /// <summary>One cosmetic reaction to a replicated state change. Slot is a passenger or crew index when relevant.</summary>
@@ -33,6 +33,8 @@ namespace ShipMayham
         public int EventSerial;
         public PiratePhase Pirate;
         public bool CrewBallActive, PirateBallActive;
+        public bool WaveWarning, ShoalNear;
+        public int WavesDodged;
         public PassengerSnapshot[] Passengers;
         public ServiceItem[] Carrying;
         public bool[] CrewActive;
@@ -77,6 +79,12 @@ namespace ShipMayham
 
             float lost = (previous.Health + previous.HullShield) - (current.Health + current.HullShield);
             if (lost > .5f && current.Phase == previous.Phase) output.Add(new FeedbackEvent(FeedbackKind.HullDamaged, -1, (int)lost));
+            if (current.Phase == VoyagePhase.Sailing && previous.Phase == VoyagePhase.Sailing)
+            {
+                if (current.WaveWarning && !previous.WaveWarning) output.Add(new FeedbackEvent(FeedbackKind.WaveWarning));
+                if (current.WavesDodged > previous.WavesDodged) output.Add(new FeedbackEvent(FeedbackKind.WaveDodged));
+                if (current.ShoalNear && !previous.ShoalNear) output.Add(new FeedbackEvent(FeedbackKind.ShoalAhead));
+            }
             if (current.Leak > previous.Leak) output.Add(new FeedbackEvent(FeedbackKind.LeakStarted));
             else if (current.Leak == 0 && previous.Leak > 0) output.Add(new FeedbackEvent(FeedbackKind.LeakFixed));
 

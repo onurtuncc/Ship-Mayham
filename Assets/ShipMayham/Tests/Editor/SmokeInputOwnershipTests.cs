@@ -10,6 +10,14 @@ namespace ShipMayham.Tests
 {
     public sealed class SmokeInputOwnershipTests
     {
+        [Test] public void CompatibilityVoyageSeedLeavesTheDirectLaneClear()
+        {
+            var shoals = new Shoal[HazardLogic.MaxShoals];
+            int count = HazardLogic.Generate(PrototypeSmokeCheck.CaptainSmokeSeed, RouteProfile.CoastalFerry, shoals);
+            Assert.AreEqual(3, count);
+            for (int i = 0; i < count; i++)
+                Assert.Greater(Mathf.Abs(shoals[i].Center.x), shoals[i].Radius + HazardLogic.ShipRadius + 3);
+        }
         [UnityTest] public IEnumerator ScriptedRpcMovementHasOneInputOwnerInTheRealScene()
         {
             yield return new EnterPlayMode();

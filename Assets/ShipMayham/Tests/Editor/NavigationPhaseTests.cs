@@ -21,50 +21,26 @@ namespace ShipMayham.Tests
             sim.State.Phase = VoyagePhase.Sailing;
             return sim;
         }
-        [Test] public void LayoutIsSeededAndClearOfPortsAndCentreCorridor()
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                var p = VoyageSimulation.ShoalPosition(42, i);
-                Assert.AreEqual(p, VoyageSimulation.ShoalPosition(42, i));
-                Assert.Greater(Mathf.Abs(p.x), VoyageSimulation.ShoalRadius);
-                Assert.That(p.y, Is.InRange(40, 180));
-            }
-        }
-        [Test] public void FastImpactSlowsAndDamagesOnlyOnceDuringCooldown()
-        {
-            var sim = Create(); sim.State.Position = VoyageSimulation.ShoalPosition(sim.Navigation.Seed, 0); sim.State.Speed = 4;
-            sim.Tick(.02f);
-            Assert.AreEqual(1, sim.Navigation.Impacts); Assert.Less(sim.State.Health, 100);
-            float health = sim.State.Health;
-            sim.Tick(.02f); Assert.AreEqual(health, sim.State.Health);
-        }
-        [Test] public void SlowShipDoesNotTakeShoalDamage()
-        {
-            var sim = Create(); sim.State.Position = VoyageSimulation.ShoalPosition(sim.Navigation.Seed, 0); sim.State.Speed = .8f;
-            sim.Tick(.02f); Assert.AreEqual(100, sim.State.Health);
-        }
-        [Test] public void WaveWarnsThenRewardsFacingAndPenalizesBroadside()
-        {
-            var sim = Create(); sim.State.Route = RouteProfile.StormPassage; sim.Navigation.WaveIn = 0;
-            sim.Tick(.02f); Assert.IsTrue(sim.Navigation.WaveActive); Assert.AreEqual(100, sim.State.Health);
-            sim.State.Heading = sim.Navigation.WaveHeading; sim.Navigation.Warning = .01f; sim.Tick(.02f);
-            Assert.AreEqual(1, sim.Navigation.WavesAvoided);
-            sim.Navigation.WaveActive = true; sim.Navigation.Warning = .01f; sim.State.Heading += 90; sim.Tick(.02f);
-            Assert.AreEqual(1, sim.Navigation.WavesHit); Assert.AreEqual(88, sim.State.Health);
-        }
+
         [Test] public void PressureCountsConnectedCrewWithoutChangingPassengersOrWallet()
         {
             var sim = Create(); Assert.AreEqual(.45f, sim.CrewPressure);
-            sim.Join(11); sim.Join(12); sim.Join(13); Assert.AreEqual(1, sim.CrewPressure);
+            sim.Join(11); Assert.AreEqual(.6f, sim.CrewPressure);
+            sim.Join(12); Assert.AreEqual(.8f, sim.CrewPressure);
+            sim.Join(13); Assert.AreEqual(1, sim.CrewPressure);
             sim.SuspendConnection(13); Assert.AreEqual(.8f, sim.CrewPressure);
             Assert.AreEqual(0, sim.State.Wallet); Assert.AreEqual(0, sim.State.Boarded);
         }
-        [Test] public void MigrationKeepsWarningAndSeedWithoutReroll()
+        [Test] public void FewerCrewDelayWavesWithoutExtendingAnActiveWarning()
         {
-            var sim = Create(); sim.Navigation.WaveActive = true; sim.Navigation.Warning = 2.7f; sim.Navigation.WaveHeading = 120;
-            var restored = Create(); restored.ImportMigrationData(sim.ExportMigrationData());
-            Assert.IsTrue(sim.Navigation.Equals(restored.Navigation));
+            var solo = Create(); solo.State.Route = RouteProfile.StormPassage; solo.Tick(.02f);
+            var full = Create(); full.Join(11); full.Join(12); full.Join(13);
+            full.State.Route = RouteProfile.StormPassage; full.Tick(.02f);
+            solo.Tick(.1f); full.Tick(.1f);
+            Assert.Greater(solo.Hazards.NextWaveAt, full.Hazards.NextWaveAt);
+            solo.Hazards.NextWaveAt = solo.State.Elapsed; solo.Tick(.02f);
+            float remaining = solo.Hazards.WaveRemaining;
+            solo.Tick(.1f); Assert.AreEqual(remaining - .1f, solo.Hazards.WaveRemaining, .001f);
         }
     }
 }

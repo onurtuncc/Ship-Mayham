@@ -32,9 +32,10 @@ namespace ShipMayham
             HarborEnabled = harborEnabled;
             State = new VoyageState { Health = 100, Voyage = 1, FoodStock = 16, DrinkStock = 16, RepairKitStock = VoyageRepairKits };
             eventRandomState = eventSeed == 0 ? 1u : eventSeed;
+            hazardSessionSeed = eventRandomState;
+            ResetHazards();
             ResetEncounter();
             ResetEvents();
-            ResetNavigation();
             ResetDeck();
             ResetEmergencies();
             ResetOpportunities();
@@ -210,10 +211,10 @@ namespace ShipMayham
             // Prototype sailing area: visible map bounds, no possibility of sailing away forever.
             State.Position.x = Mathf.Clamp(State.Position.x, -90, 90);
             State.Position.y = Mathf.Clamp(State.Position.y, -20, 250);
+            TickHazards(dt);
             TickEncounter(dt);
             TickCannonballs(dt, previousShip, previousPirate);
             TickEvents(dt);
-            TickNavigation(dt);
             TickDeck(dt);
             TickEmergencies(dt);
             TickOpportunities(dt);
@@ -484,6 +485,7 @@ namespace ShipMayham
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Phase = success ? VoyagePhase.Arrived : VoyagePhase.Failed;
             Encounter.CrewBall.Active = Encounter.PirateBall.Active = false;
+            EndHazards();
             State.Speed = 0;
             // A fixed berth aligns the gangway with the destination pier.
             if (success && HarborEnabled) { State.Position = Destination; State.Heading = 0; }
@@ -530,9 +532,9 @@ namespace ShipMayham
             Array.Clear(Passengers, 0, Passengers.Length);
             ResetTallies();
             nextLeak = 25;
+            ResetHazards();
             ResetEncounter();
             ResetEvents();
-            ResetNavigation();
             ResetDeck();
             ResetEmergencies();
             ResetOpportunities();
