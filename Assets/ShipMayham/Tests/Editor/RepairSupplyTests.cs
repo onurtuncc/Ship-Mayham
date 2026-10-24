@@ -128,8 +128,9 @@ namespace ShipMayham.Tests
         }
         [Test] public void PreviousV8SnapshotIsRejected()
         {
-            byte[] old = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":18", "\"Version\":10"));
+            byte[] old = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":19", "\"Version\":10"));
             Assert.That(Encoding.UTF8.GetString(old), Does.Contain("\"Version\":10"));
+
             Assert.Throws<InvalidOperationException>(() => sim.ImportMigrationData(old));
             Assert.AreEqual(22, PrototypeHud.NetworkProtocolVersion);
 

@@ -25,6 +25,7 @@ namespace ShipMayham.Tests
                 new[] { new Vector2(-1.9f,-1.5f), new Vector2(1.9f,-1.5f), new Vector2(-1.9f,.6f), new Vector2(1.9f,.6f),
                     new Vector2(-1.9f,2.7f), new Vector2(1.9f,2.7f), new Vector2(-1.9f,4.8f), new Vector2(1.9f,4.8f) });
             sim.Join(Captain); sim.Join(Gunner); sim.Join(Supplier);
+            sim.Join(904);                                  // a full crew keeps the base pirate timetable these tests rely on
         }
         private void Advance(float seconds)
         {

@@ -233,6 +233,7 @@ namespace ShipMayham.Tests
         {
             sim.Join(12); sim.Join(13); // Compare route modifiers at baseline crew pressure.
             sim.State.Reputation = 5;
+            sim.Join(901); sim.Join(902);                   // a full crew keeps the base event timetable
             Harbor(HarborAction.GoAshore);
             sim.SelectRoute(Client, RouteProfile.StormPassage);
             Harbor(HarborAction.BoardShip);

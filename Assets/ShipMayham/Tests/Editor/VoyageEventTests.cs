@@ -27,6 +27,7 @@ namespace ShipMayham.Tests
             // These event-contract tests use the baseline four-person cadence.
             // NavigationPhaseTests separately verifies smaller-crew pressure.
             for (ulong id = Host; id < Host + 4; id++) sim.Join(id, "event-" + id);
+
             UseStation(0);
             UseStation(1);
             sim.HelmAction(Host);
@@ -252,6 +253,7 @@ namespace ShipMayham.Tests
             voyage.State.Phase = VoyagePhase.Sailing;
             voyage.State.Route = route;
             voyage.State.Boarded = sim.State.Boarded;
+            for (ulong id = 910; id < 914; id++) voyage.Join(id);        // a full crew keeps the base timetable
             System.Array.Copy(sim.Passengers, voyage.Passengers, sim.Passengers.Length);
             for (int i = 0; i < 365; i++) voyage.Tick(.05f);
             return voyage.Event.Kind;
@@ -289,6 +291,7 @@ namespace ShipMayham.Tests
         {
             var limited = new VoyageSimulation(System.Array.Empty<StationDefinition>(), sim.Seats);
             for (ulong id = Host; id < Host + 4; id++) limited.Join(id);
+
             limited.State.Phase = VoyagePhase.Sailing;
             limited.State.Boarded = 1;
             limited.Passengers[0] = new PassengerState { Active = true, Satisfaction = 100 };

@@ -8,7 +8,7 @@ namespace ShipMayham
     [Serializable]
     internal sealed class VoyageMigrationSnapshot
     {
-        public int Version = 18;
+        public int Version = 19;
         public VoyageJourneyState Journey;
         public VoyageOpportunityState Opportunity;
         public ShipEmergencyState Emergency;
@@ -27,6 +27,8 @@ namespace ShipMayham
         public float[] HelmClock;
         public float Clock;
         public float NextLeak;
+        public float PirateAt, PowerFaultAt;
+        public bool WorkloadReady;
         public bool ScheduledPowerFault;
         public uint EventRandomState, RemainingEvents;
         public float[] PassengerCarryYaw;
@@ -86,6 +88,9 @@ namespace ShipMayham
                 HelmClock = (float[])helmClock.Clone(),
                 Clock = clock,
                 NextLeak = nextLeak,
+                PirateAt = pirateAt,
+                PowerFaultAt = powerFaultAt,
+                WorkloadReady = workloadReady,
                 ScheduledPowerFault = scheduledPowerFault,
                 EventRandomState = eventRandomState,
                 RemainingEvents = remainingEvents,
@@ -98,8 +103,7 @@ namespace ShipMayham
         {
             if (data == null || data.Length == 0) throw new ArgumentException("Migration data is empty.", nameof(data));
             VoyageMigrationSnapshot snapshot = JsonUtility.FromJson<VoyageMigrationSnapshot>(Encoding.UTF8.GetString(data));
-            if (snapshot == null || snapshot.Version != 18 || snapshot.Crew?.Length != MaxCrew ||
-
+            if (snapshot == null || snapshot.Version != 19 || snapshot.Crew?.Length != MaxCrew ||
                 snapshot.Passengers?.Length != MaxPassengers || snapshot.CrewPlayerIds?.Length != MaxCrew)
                 throw new InvalidOperationException("Unsupported or incomplete voyage migration snapshot.");
 
@@ -126,6 +130,9 @@ namespace ShipMayham
             for (int i = 0; i < MaxCrew; i++) if (Crew[i].Active) Crew[i].ClientId = ulong.MaxValue;
             clock = snapshot.Clock;
             nextLeak = snapshot.NextLeak;
+            pirateAt = snapshot.PirateAt > 0 ? snapshot.PirateAt : BasePirateArrival;
+            powerFaultAt = snapshot.PowerFaultAt > 0 ? snapshot.PowerFaultAt : BasePowerFault;
+            workloadReady = snapshot.WorkloadReady;
             scheduledPowerFault = snapshot.ScheduledPowerFault;
             eventRandomState = snapshot.EventRandomState == 0 ? 1u : snapshot.EventRandomState;
             remainingEvents = snapshot.RemainingEvents;

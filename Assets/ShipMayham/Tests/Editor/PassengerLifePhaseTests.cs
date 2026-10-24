@@ -64,6 +64,18 @@ namespace ShipMayham.Tests
             Assert.AreEqual(PassengerRoutine.Seated, sim.Passengers[0].Routine);
             Assert.AreEqual(sim.Seats[0].x, sim.Passengers[0].Position.x);
         }
+        [Test] public void RoamingReturnsToTheClaimedSeatRatherThanTheOriginalSeat()
+        {
+            var sim = Board();
+            sim.Passengers[0].SeatClaim = 5; // Seat four is free in this four-passenger voyage.
+            sim.Passengers[0].Position = new Vector3(-.35f, .5f, 2.7f);
+            sim.Passengers[0].Routine = PassengerRoutine.Watching;
+            sim.Passengers[0].RoutineTimer = .01f;
+            for (int i = 0; i < 600; i++) sim.Tick(.02f);
+            Assert.AreEqual(PassengerRoutine.Seated, sim.Passengers[0].Routine);
+            Assert.AreEqual(sim.Seats[4].x, sim.Passengers[0].Position.x);
+            Assert.AreEqual(sim.Seats[4].y, sim.Passengers[0].Position.z);
+        }
         [Test] public void WorkingPassengerWalksToTheJobRatherThanSlidingSeated()
         {
             var passenger = new PassengerState { Active = true, Motion = PassengerMotion.OnDeck,

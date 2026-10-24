@@ -60,7 +60,7 @@ namespace ShipMayham
 
         public RectTransform Root { get; }
 
-        public ResourcePill(Transform parent, string name, string caption, Color tint)
+        public ResourcePill(Transform parent, string name, string caption, Color tint, IconShape shape = IconShape.Circle)
         {
             var bg = HudKit.Box(parent, name, HudKit.Panel);
             Root = bg.rectTransform;
@@ -73,7 +73,8 @@ namespace ShipMayham
             var line = HudKit.Node(Root, "Line");
             HudKit.Size(line, height: 38);
             HudKit.Row(line, 8);
-            var dot = caption == "FOOD" ? HudKit.Box(line, "Icon", tint) : HudKit.Dot(line, "Icon", tint, 20);
+            var dot = IconShapes.Create(line, "Icon", tint, 20, shape);
+
             HudKit.Size(dot, 20, 20);
             value = HudKit.Label(line, "Value", 32, HudKit.Ink, TextAnchor.MiddleLeft, FontStyle.Bold);
             delta = HudKit.Label(line, "Delta", 20, HudKit.Good, TextAnchor.MiddleLeft, FontStyle.Bold);
@@ -112,7 +113,7 @@ namespace ShipMayham
     /// <summary>Stack of coloured warnings/tasks with a title and one or two lines of detail.</summary>
     public sealed class AlertList
     {
-        private struct Row { public GameObject Root; public Image Bar; public Text Title, Body; public string TitleValue, BodyValue; }
+        private struct Row { public GameObject Root; public Image Bar, Icon; public Text Title, Body; public string TitleValue, BodyValue; }
         private readonly Row[] rows;
         private int count;
 
@@ -127,6 +128,11 @@ namespace ShipMayham
             {
                 var bg = HudKit.Box(Root, "Alert" + i, HudKit.Panel);
                 HudKit.Column(bg.rectTransform, 2, new RectOffset(26, 16, 10, 12), false);
+                var icon = IconShapes.Create(bg.transform, "Icon", HudKit.Info, 18, IconShape.Circle);
+                icon.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+                icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(1, 1);
+                icon.rectTransform.pivot = new Vector2(1, 1);
+                icon.rectTransform.anchoredPosition = new Vector2(-14, -13);
                 var bar = HudKit.Box(bg.transform, "Bar", HudKit.Info);
                 bar.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
                 bar.rectTransform.anchorMin = new Vector2(0, 0); bar.rectTransform.anchorMax = new Vector2(0, 1);
@@ -136,7 +142,7 @@ namespace ShipMayham
                 var text = HudKit.Label(bg.transform, "Body", 19, HudKit.TextMuted);
                 text.horizontalOverflow = HorizontalWrapMode.Wrap;
                 HudKit.Size(bg, width: 400);
-                rows[i] = new Row { Root = bg.gameObject, Bar = bar, Title = title, Body = text };
+                rows[i] = new Row { Root = bg.gameObject, Bar = bar, Icon = icon, Title = title, Body = text };
                 bg.gameObject.SetActive(false);
             }
         }
@@ -149,6 +155,8 @@ namespace ShipMayham
             ref Row row = ref rows[count++];
             HudKit.SetActive(row.Root, true);
             row.Bar.color = color;
+            row.Icon.color = color;
+            row.Icon.sprite = IconShapes.Sprite(IconShapes.ForSeverity(color));
             if (row.TitleValue != title) { row.TitleValue = title; row.Title.text = title; row.Title.color = color; }
             if (row.BodyValue != body)
             {

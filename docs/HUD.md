@@ -62,6 +62,13 @@ rate-limits each crew member to one per second (`SignalLimiter`), cleans the lab
 and emote bubbles above the sender's head; `PrototypeFeedback` plays the gesture (wave, bow, point, angry) and a short cue.
 Signals never change the voyage.
 
+## Shapes instead of colour
+
+Colour is never the only cue. The resource pills carry a shape (coins round, reputation a diamond, food a square, drinks a triangle) next to
+their caption, and every alert card repeats its severity as a shape on the right edge: red danger a triangle, amber warning a diamond,
+green good a square, blue information a circle (`IconShapes`, drawn as small generated sprites). Food and drinks are also told apart by
+words on the passenger labels, station labels, prompts and the carry pill. There is no colour-blind mode to switch on: the shapes are always shown.
+
 ## Passenger handling
 
 Lifting a passenger takes them out of their seat, so they have to get back to one. A thrown passenger flails in the air, lies on the

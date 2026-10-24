@@ -75,7 +75,7 @@ Safe güzergâh ilk Shoal'dan önce batıya sapar; 128 farklı tohumla düz Gate
 Bunlar aynı iki Port arasındaki farklı güzergâhlardır; yeni Port veya harita değildir.
 
 Career progress v2, ekipman/Pennant sahipliğini saklar ve v1 kayıtların Wallet'ını koruyarak okur.
-Migration snapshot 18 ve ağ protokolü 22 tüm yeni durumları taşır.
+Migration snapshot 19 ve ağ protokolü 22 tüm yeni durumları taşır.
 Diğer geliştirme dallarıyla birleştirilirken şema sürümleri birlikte uzlaştırılmalı/artırılmalıdır.
 
 ## Mimari, model değişimi ve kabul sınırları
@@ -148,3 +148,12 @@ Kullanıcı, main'de devam eden diğer değişikliklerin commit dışında korun
 
 f73ab7f entegrasyonu: Unity 6000.4.6f1 EditMode tam paket `Logs/Merge-Final.xml`:
 522 test, 521 başarılı, 0 başarısız, 1 isteğe bağlı capture atlandı; süreç exit 0.
+
+Sonrasında main'in `4103f9e` iş yükü/ikon commit'i de dahil edildi. Korsan ve olay
+gecikmelerini artık bu ortak `Workload` sistemi hesaplar; önceki sürekli sayaç ölçeği
+kaldırılarak çifte yavaşlatma önlendi. `CrewPressure` aynı ölçeği kullanır; bağlantısı
+askıdaki üyeler aktif iş yüküne sayılmaz. Göç şeması bu ek zamanlamalarla 19 oldu.
+Koltuk sahipliğinin dolaşma sonrasında da korunması için odaklı regresyon testi eklendi.
+
+4103f9e dahil son entegrasyon: `Logs/Merge-Workload.xml`, 548 test, 547 başarılı,
+0 başarısız, 1 isteğe bağlı capture atlandı; Unity süreç exit 0.

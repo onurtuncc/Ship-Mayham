@@ -34,6 +34,7 @@ namespace ShipMayham
             eventRandomState = eventSeed == 0 ? 1u : eventSeed;
             hazardSessionSeed = eventRandomState;
             ResetHazards();
+            ResetWorkload();
             ResetEncounter();
             ResetEvents();
             ResetDeck();
@@ -211,6 +212,7 @@ namespace ShipMayham
             // Prototype sailing area: visible map bounds, no possibility of sailing away forever.
             State.Position.x = Mathf.Clamp(State.Position.x, -90, 90);
             State.Position.y = Mathf.Clamp(State.Position.y, -20, 250);
+            if (!workloadReady) BeginWorkload();
             TickHazards(dt);
             TickEncounter(dt);
             TickCannonballs(dt, previousShip, previousPirate);
@@ -533,6 +535,7 @@ namespace ShipMayham
             ResetTallies();
             nextLeak = 25;
             ResetHazards();
+            ResetWorkload();
             ResetEncounter();
             ResetEvents();
             ResetDeck();

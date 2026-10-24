@@ -4,7 +4,6 @@ namespace ShipMayham
     /// <summary>Animator state a passenger body plays; names match the states of the generated passenger controller.</summary>
     public enum PassengerPose : byte { Seated, Pleading, Fidgeting, Panicked, Delighted, Yelling, Disbelief, Laughing, Clapping, Drinking, Lying, Dizzy, Standing, Walking }
 
-
     public static class PassengerPresentation
     {
         public static PassengerCue CueFor(PassengerState p, VoyageEventState e, VoyageState voyage, int index)
