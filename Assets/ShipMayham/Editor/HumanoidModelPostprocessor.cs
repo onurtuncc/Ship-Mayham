@@ -11,10 +11,10 @@ namespace ShipMayham.Editor
         private static readonly string[] LoopingClips = {
             "Idle", "Walking", "SittingIdle", "CheeringWhileSitting", "Talking", "Terrified", "Carrying", "ButtonPushing", "VictoryIdle",
             "HipHopDancing", "SambaDancing", "StandingClap", "RifleAimingIdle", "LookingAround", "SittingClap", "SittingLaughing",
-            "Running", "Drinking", "Angry", "SleepingIdle", "DizzyIdle", "CrouchIdle", "ClimbingLadder", "PullingARope", "Pushing", "RepairHammering"
+            "Running", "Drinking", "Angry", "SleepingIdle", "DizzyIdle", "CrouchIdle", "ClimbingLadder", "PullingARope", "Pushing", "RepairHammering", "SwimSurface", "TreadWater", "SwimPanic", "FishingIdle", "FishingReel", "Digging", "LockPicking"
         };
 
-        public override uint GetVersion() => 5;
+        public override uint GetVersion() => 6;
 
         private void OnPreprocessModel()
         {
