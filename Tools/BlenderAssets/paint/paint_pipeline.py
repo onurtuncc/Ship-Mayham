@@ -11,9 +11,22 @@ NAME, OUT = argv[0], argv[1]
 SIZE = int(argv[2]) if len(argv) > 2 else 1024
 SEED = float(argv[3]) if len(argv) > 3 else 1.0
 os.makedirs(OUT, exist_ok=True)
+if os.environ.get('PAINT_FBX'):
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.import_scene.fbx(filepath=os.environ['PAINT_FBX'])
 sc = bpy.context.scene
-ob = [o for o in bpy.data.objects if o.type == 'MESH' and o.name == NAME] or [o for o in bpy.data.objects if o.type == 'MESH']
-ob = ob[0]
+meshes = [o for o in bpy.data.objects if o.type == 'MESH']
+ob = [o for o in meshes if o.name == NAME] or meshes
+if len(ob) > 1 or (ob and ob[0] not in meshes):
+    for o in meshes: o.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]; bpy.ops.object.join()
+ob = bpy.context.view_layer.objects.active if len(meshes) > 1 else ob[0]
+if ob.parent: 
+    mw = ob.matrix_world.copy(); ob.parent = None; ob.matrix_world = mw
+import mathutils as _mu
+_pts = [ob.matrix_world @ _mu.Vector(c) for c in ob.bound_box]
+_dims = [max(p[i] for p in _pts) - min(p[i] for p in _pts) for i in range(3)]
+K = min(max(max(_dims), 0.6), 3.0)      # feature scale: 1.0 for a ~1 m prop, larger for big props so strokes keep the same apparent size
 bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.context.view_layer.objects.active = ob
 
 # --- UVs
@@ -28,6 +41,7 @@ import colorsys
 def paint_nodes(mat, base_rgb):
     h_, s_, v_ = colorsys.rgb_to_hsv(*[min(1, max(0, c)) ** (1 / 2.2) for c in base_rgb])
     wood = (0.02 < h_ < 0.14 and s_ > 0.35) or any(k in mat.name.lower() for k in ('wood', 'plank', 'trunk', 'handle', 'frame', 'brace', 'mast'))
+    if any(k in mat.name.lower() for k in ('skin', 'face', 'hand', 'head', 'cloth', 'shirt', 'sail', 'foam', 'leaf', 'stone', 'rock', 'cream', 'white', 'red', 'blue')): wood = False
     stroke_gain, patch_gain = (1.05, 0.42) if wood else (0.35, 0.75)
 
     """Replace the material surface with an emission of the painterly colour (baked later)."""
@@ -38,11 +52,11 @@ def paint_nodes(mat, base_rgb):
     coord = N('ShaderNodeTexCoord')
     # broad paint patches
     patch = N('ShaderNodeTexNoise'); patch.noise_dimensions = '4D'
-    patch.inputs['Scale'].default_value = 2.2; patch.inputs['Detail'].default_value = 3; patch.inputs['W'].default_value = SEED
+    patch.inputs['Scale'].default_value = 2.2 / K; patch.inputs['Detail'].default_value = 3; patch.inputs['W'].default_value = SEED
     # directional brush strokes: stretch noise along object X (long strokes) plus a second pass along Z
-    mp1 = N('ShaderNodeMapping'); mp1.inputs['Scale'].default_value = (3.0, 38.0, 38.0)
+    mp1 = N('ShaderNodeMapping'); mp1.inputs['Scale'].default_value = (3.0 / K, 38.0 / K, 38.0 / K)
     st1 = N('ShaderNodeTexNoise'); st1.inputs['Scale'].default_value = 5.0; st1.inputs['Detail'].default_value = 6; st1.inputs['Roughness'].default_value = 0.65
-    mp2 = N('ShaderNodeMapping'); mp2.inputs['Scale'].default_value = (38.0, 38.0, 3.0)
+    mp2 = N('ShaderNodeMapping'); mp2.inputs['Scale'].default_value = (38.0 / K, 38.0 / K, 3.0 / K)
     st2 = N('ShaderNodeTexNoise'); st2.inputs['Scale'].default_value = 5.0; st2.inputs['Detail'].default_value = 6; st2.inputs['Roughness'].default_value = 0.65
     L(coord.outputs['Object'], patch.inputs['Vector'])
     L(coord.outputs['Object'], mp1.inputs['Vector']); L(mp1.outputs['Vector'], st1.inputs['Vector'])
@@ -67,7 +81,7 @@ def paint_nodes(mat, base_rgb):
     L(gain.outputs[0], gain_c.inputs[0]); L(gain.outputs[0], gain_c.inputs[1]); L(gain.outputs[0], gain_c.inputs[2])
     L(base.outputs[0], painted.inputs[6]); L(gain_c.outputs[0], painted.inputs[7])
     # worn edges: Bevel normal vs true normal
-    bev = N('ShaderNodeBevel'); bev.inputs['Radius'].default_value = 0.05; bev.samples = 8
+    bev = N('ShaderNodeBevel'); bev.inputs['Radius'].default_value = 0.05 * K; bev.samples = 8
     geo = N('ShaderNodeNewGeometry')
     dot = N('ShaderNodeVectorMath'); dot.operation = 'DOT_PRODUCT'
     L(bev.outputs['Normal'], dot.inputs[0]); L(geo.outputs['Normal'], dot.inputs[1])
@@ -77,7 +91,7 @@ def paint_nodes(mat, base_rgb):
     wear_col = N('ShaderNodeRGB'); wear_col.outputs[0].default_value = (0.22, 0.13, 0.05, 1) if wood else (0.10, 0.10, 0.11, 1)    # warm worn highlight
     L(edge.outputs[0], worn.inputs[0]); L(painted.outputs[2], worn.inputs[6]); L(wear_col.outputs[0], worn.inputs[7])
     # crevices: AO darkening
-    ao = N('ShaderNodeAmbientOcclusion'); ao.inputs['Distance'].default_value = 0.25; ao.samples = 8
+    ao = N('ShaderNodeAmbientOcclusion'); ao.inputs['Distance'].default_value = 0.25 * K; ao.samples = 8
     L(worn.outputs[2], ao.inputs['Color'])
     ao_mix = N('ShaderNodeMix'); ao_mix.data_type = 'RGBA'; ao_mix.blend_type = 'MULTIPLY'; ao_mix.inputs[0].default_value = 1.0
     L(worn.outputs[2], ao_mix.inputs[6]); L(ao.outputs['AO'], ao_mix.inputs[7])
@@ -90,7 +104,7 @@ def paint_nodes(mat, base_rgb):
     sep = N('ShaderNodeSeparateXYZ'); L(coord.outputs['Object'], sep.inputs[0])
     dz = math_node('SUBTRACT', None, None); L(sep.outputs['Z'], dz.inputs[0])
     dz.inputs[1].default_value = 0.0
-    dirt_f = math_node('MULTIPLY', None, -2.2, True); L(dz.outputs[0], dirt_f.inputs[0])
+    dirt_f = math_node('MULTIPLY', None, -2.2 / K, True); L(dz.outputs[0], dirt_f.inputs[0])
     dirt_f2 = math_node('ADD', None, 0.0, True); L(dirt_f.outputs[0], dirt_f2.inputs[0])
     dirt = N('ShaderNodeMix'); dirt.data_type = 'RGBA'; dirt.blend_type = 'MULTIPLY'; dirt.inputs[7].default_value = (0.55, 0.50, 0.45, 1)
     L(dirt_f2.outputs[0], dirt.inputs[0]); L(ao_mix.outputs[2], dirt.inputs[6])

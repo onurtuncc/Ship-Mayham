@@ -121,6 +121,7 @@ namespace ShipMayham.Editor
                 {
                     Material source = palette[i];
                     if (source == null) throw new InvalidOperationException("Generated prop has a missing material: " + name);
+                    if (source.mainTexture != null) continue;   // hand-painted model (docs/art.md): keep its baked texture instead of flattening to a colour
                     Color color = source.HasProperty("_BaseColor") ? source.GetColor("_BaseColor") : source.color;
                     string materialName = "Generated_" + Regex.Replace(source.name, "[^A-Za-z0-9_-]", "_");
                     palette[i] = Material(materialName, color);
