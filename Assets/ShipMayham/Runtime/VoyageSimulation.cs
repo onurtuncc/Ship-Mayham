@@ -159,7 +159,7 @@ namespace ShipMayham
         public void Jump(ulong clientId)
         {
             int i = FindCrew(clientId);
-            if (i < 0 || Crew[i].AtHelm || Crew[i].AtCannon || Crew[i].AtCrane || Crew[i].JumpHeight > 0 || Crew[i].VerticalSpeed > 0) return;
+            if (i < 0 || Crew[i].Swimming || Crew[i].AtHelm || Crew[i].AtCannon || Crew[i].AtCrane || Crew[i].JumpHeight > 0 || Crew[i].VerticalSpeed > 0) return;
             Crew[i].VerticalSpeed = JumpSpeed;
         }
 
@@ -203,6 +203,7 @@ namespace ShipMayham
             }
             else steering.Reset();
             TickPassengers(dt);
+            TickSwimmers(dt);
             if (State.DockJobActive && State.DockJobType == DockJobKind.CraneLoading && HarborOpen) State.CraneSwayTime += dt;
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Elapsed += dt;
@@ -257,6 +258,7 @@ namespace ShipMayham
         {
             int i = FindCrew(clientId);
             if (i < 0) return "Crew not registered.";
+            if (Crew[i].Swimming) return "You are in the water. Swim to a ladder and climb out first.";
             if (Crew[i].OnShore) return "Board the ship before using ship stations.";
             if (clock < interactionReady[i]) return string.Empty;
             interactionReady[i] = clock + .35f;
@@ -359,6 +361,7 @@ namespace ShipMayham
                 if (State.Boarded == 0) return "Board passengers at the manifest first.";
                 if (AnyPassengerBoarding) return "Passengers are still boarding. Wait until everyone is seated.";
                 if (CrewAshore > 0) return "Cannot depart: crew are still ashore. Ask them to board at the gangway.";
+                if (SwimmersBlockDeparture) return "Cannot depart: someone is still swimming. Wait for them to climb a ladder.";
                 if (State.DockJobActive) return "Finish or cancel the cargo relay before departure.";
                 State.Phase = VoyagePhase.Sailing;
                 return "Under way! W accelerates. Serve passengers and watch the hull.";
@@ -438,6 +441,8 @@ namespace ShipMayham
             if (clock < unstuckReady[i]) return $"You can use this again in {Mathf.CeilToInt(unstuckReady[i] - clock)}s.";
             unstuckReady[i] = clock + UnstuckCooldown;
             ReleaseCrewResponsibilities(i);
+            Crew[i].Swimming = false;
+            overboardClock[i] = 0;
             Crew[i].Position = Crew[i].OnShore ? HarborPoint(HarborAction.BoardShip) : new Vector2(-1.5f + i, -6);
             Crew[i].Velocity = Vector2.zero;
             Crew[i].JumpHeight = Crew[i].VerticalSpeed = 0;
@@ -458,6 +463,7 @@ namespace ShipMayham
         /// <summary>Buys a ship upgrade from the purser: aboard, next to the Manifest desk, and only at port.</summary>
         public string BuyUpgrade(ulong clientId, StationKind kind)
         {
+            { int swimmer = FindCrew(clientId); if (swimmer >= 0 && Crew[swimmer].Swimming) return "Climb out of the water first."; }
             int i = FindCrew(clientId);
             if (i < 0) return "Crew not registered.";
             if (!IsUpgrade(kind)) return "Unknown upgrade.";
@@ -549,6 +555,8 @@ namespace ShipMayham
                 Crew[i].AtCannon = false;
                 Crew[i].AtCrane = false;
                 Crew[i].OnShore = false;
+                Crew[i].Swimming = false;
+                overboardClock[i] = 0;
                 Crew[i].Carrying = ServiceItem.None;
                 Crew[i].ServiceUnits = 0;
                 Crew[i].Position = new Vector2(-1.5f + i, -6);

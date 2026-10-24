@@ -19,7 +19,7 @@ namespace ShipMayham
         {
             if (slot < 0 || !HarborOpen) return false;
             var crew = Crew[slot];
-            if (crew.AtHelm || crew.AtCannon || crew.AtCrane) return false;
+            if (crew.AtHelm || crew.AtCannon || crew.AtCrane || crew.Swimming) return false;
             return crew.Carrying == ServiceItem.None && CarriedPassenger(slot) < 0;
         }
 

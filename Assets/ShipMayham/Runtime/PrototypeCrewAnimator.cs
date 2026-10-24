@@ -19,14 +19,14 @@ namespace ShipMayham
         private CrewPose[] current;
         private float[] speed, oneShotUntil, nextFlavor, facing;
         private Transform[] bodies;
-        private bool[] phased;
+        private bool[] phased, wasSwimming;
 
         private void Awake()
         {
             if (View == null) View = GetComponent<PrototypeView>();
             int n = Animators.Length;
             current = new CrewPose[n]; speed = new float[n];
-            oneShotUntil = new float[n]; nextFlavor = new float[n]; phased = new bool[n]; facing = new float[n]; bodies = new Transform[n];
+            oneShotUntil = new float[n]; nextFlavor = new float[n]; phased = new bool[n]; wasSwimming = new bool[n]; facing = new float[n]; bodies = new Transform[n];
             // Identical clips in lockstep look robotic: every body gets its own tempo, and its own phase once it first becomes active.
             for (int i = 0; i < n; i++)
             {
@@ -74,6 +74,9 @@ namespace ShipMayham
                 if (animator != null) FaceTravelDirection(i, animator, velocity, session.Crew.Count > i && session.Crew[i].AtHelm);
                 if (animator == null || !animator.isActiveAndEnabled || i >= session.Crew.Count) continue;
                 if (!phased[i]) { phased[i] = true; animator.Play(0, 0, Random.value); }
+                bool swimming = session.Crew[i].Swimming;
+                if (wasSwimming[i] && !swimming) PlayOneShot(i, CrewPose.ClimbOut, 1.5f);
+                wasSwimming[i] = swimming;
                 if (Time.time < oneShotUntil[i]) continue;
                 var pose = CrewPresentation.PoseFor(session.Crew[i], speed[i], phase, i);
                 if (pose == CrewPose.Idle && Time.time >= nextFlavor[i])

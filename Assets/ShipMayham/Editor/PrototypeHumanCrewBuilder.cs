@@ -31,7 +31,10 @@ namespace ShipMayham.Editor
             ("Idle", "Idle"), ("Walking", "Walking"), ("Carrying", "Carrying"), ("Jump", "Jump"), ("PickUp", "PickingUp"),
             ("Throw", "Throwing"), ("Interact", "ButtonPushing"), ("Dance", "HipHopDancing"), ("Dance2", "SambaDancing"),
             ("Victory", "VictoryIdle"), ("Defeated", "Defeated"), ("Salute", "Salute"), ("Clap", "StandingClap"), ("LookAround", "LookingAround"),
-            ("Wave", "Waving"), ("Bow", "QuickFormalBow"), ("Point", "Pointing"), ("Angry", "Angry"));
+            ("Wave", "Waving"), ("Bow", "QuickFormalBow"), ("Point", "Pointing"), ("Angry", "Angry"),
+            ("Swim", "SwimSurface"), ("Tread", "TreadWater"), ("ClimbOut", "ClimbOut"), ("FishingCast", "FishingCast"),
+            ("FishingIdle", "FishingIdle"), ("FishingReel", "FishingReel"), ("Digging", "Digging"), ("LockPicking", "LockPicking"),
+            ("DoorOpen", "DoorOpen"));
 
         /// <summary>Adds the signal gestures (wave, bow, point, angry) to the crew controller asset; the scene is not touched.</summary>
         [MenuItem("Ship Mayham/Upgrade Prototype (Crew Gestures)")]

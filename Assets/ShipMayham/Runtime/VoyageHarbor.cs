@@ -121,6 +121,7 @@ namespace ShipMayham
             int slot = FindCrew(clientId);
             if (slot < 0 || !HarborOpen || (int)action > (int)HarborAction.CraneControls) return "Harbor is closed.";
             ref var crew = ref Crew[slot];
+            if (crew.Swimming) return "You are in the water. Climb a ladder first.";
             if (crew.AtHelm || crew.AtCannon || crew.AtCrane) return "Release your station first.";
             if (crew.JumpHeight > 0 || crew.VerticalSpeed > 0) return "Land before interacting.";
             if (crew.OnShore == (action == HarborAction.GoAshore)) return "Use the gangway to change areas first.";

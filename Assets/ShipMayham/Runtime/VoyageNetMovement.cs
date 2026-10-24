@@ -49,7 +49,7 @@ namespace ShipMayham
 
         /// <summary>The speed factor used for walking, shared with the client predictor.</summary>
         public float WalkSpeedFactor(int i) =>
-            Crew[i].OnShore ? 1 : CarriedPassenger(i) >= 0 ? .7f : Crew[i].Carrying == ServiceItem.Ammo ? .8f : 1;
+            Crew[i].Swimming ? SwimSpeedFactor : Crew[i].OnShore ? 1 : CarriedPassenger(i) >= 0 ? .7f : Crew[i].Carrying == ServiceItem.Ammo ? .8f : 1;
 
         /// <summary>Executes every not-yet-seen command of a packet in order. Returns how many were executed.</summary>
         public int ApplyMoveCommands(ulong clientId, MoveCommandPacket packet)
@@ -96,8 +96,8 @@ namespace ShipMayham
             };
             // Teleports (boarding, going ashore, respawn) must not carry the old momentum into the new place.
             if ((state.Position - lastWalkPosition[i]).sqrMagnitude > .0004f) state.Velocity = Vector2.zero;
-            ILocomotionWorld world = Crew[i].OnShore ? ShoreWorldInstance : DeckWorldInstance;
-            CrewLocomotion.Step(ref state, input, jump, CrewKinematics.WalkSpeed * WalkSpeedFactor(i), dt, world);
+            ILocomotionWorld world = Crew[i].Swimming ? WaterWorld : Crew[i].OnShore ? ShoreWorldInstance : DeckWorldInstance;
+            CrewLocomotion.Step(ref state, input, jump && !Crew[i].Swimming, CrewKinematics.WalkSpeed * WalkSpeedFactor(i), dt, world);
             Crew[i].Position = state.Position; Crew[i].Velocity = state.Velocity;
             Crew[i].JumpHeight = state.JumpHeight; Crew[i].VerticalSpeed = state.VerticalSpeed;
             lastWalkPosition[i] = state.Position;

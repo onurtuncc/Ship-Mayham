@@ -21,6 +21,9 @@ namespace ShipMayham
 
             float best = MaxViewAngle;
             var target = InteractionTarget.None;
+            FindLadder(session, crew, eye, forward, ref best, ref target);
+            if (crew.Swimming)
+                return target.IsNone ? InteractionTarget.Context(PromptCatalog.ForSwimming(session.Voyage.Value.Phase == VoyagePhase.Sailing)) : target;
             if (!crew.OnShore)
             {
                 FindStation(session, crew, eye, forward, ref best, ref target);
@@ -83,6 +86,28 @@ namespace ShipMayham
                 if (station.Kind == StationKind.Repair && session.Voyage.Value.Leak != 0)
                     target = InteractionTarget.Station(i, InteractionPrompt.Target("Repair / valves", "Patch or apply selected valve",
                         $"R: cycle A/B/C. Hot pipe: {(char)('A' + session.Hazards.Value.Seed % 3)}. Selected: {(char)('A' + session.Emergency.Value.SelectedValve)}"), anchor);
+            }
+        }
+
+        /// <summary>The ladder within reach: its top for someone standing on the deck or quay, its bottom for a swimmer.</summary>
+        private static void FindLadder(PrototypeSession session, in CrewState crew, Vector3 eye, Vector3 forward, ref float best, ref InteractionTarget target)
+        {
+            if (crew.AtHelm || crew.AtCannon || crew.AtCrane) return;
+            var voyage = session.Voyage.Value;
+            for (int i = 0; i < VoyageSimulation.Ladders.Length; i++)
+            {
+                var ladder = VoyageSimulation.Ladders[i];
+                Vector2 reach = crew.Swimming ? ladder.Base : ladder.Top;
+                if (!crew.Swimming && ladder.OnQuay != crew.OnShore) continue;
+                if (Vector2.Distance(crew.Position, reach) > VoyageSimulation.LadderReach) continue;
+                Vector3 point = crew.Swimming
+                    ? session.ShipRoot.TransformPoint(new Vector3(ladder.Base.x, VoyageSimulation.SeaLevel + .9f, ladder.Base.y))
+                    : ladder.OnQuay ? VoyageSimulation.HarborOrigin(voyage) + new Vector3(ladder.Top.x, VoyageSimulation.ShoreHeight + .7f, ladder.Top.y)
+                    : session.ShipRoot.TransformPoint(new Vector3(ladder.Top.x, .5f + .7f, ladder.Top.y));
+                float angle = Vector3.Angle(forward, point - eye);
+                if (angle >= best) continue;
+                best = angle;
+                target = InteractionTarget.Ladder(i, PromptCatalog.ForLadder(ladder, crew, session.Harbor != null && session.Harbor.IsOpen), point);
             }
         }
 

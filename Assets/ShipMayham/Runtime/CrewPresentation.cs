@@ -4,7 +4,8 @@ namespace ShipMayham
     public enum CrewPose : byte
     {
         Idle, Walking, Carrying, Jump, PickUp, Throw, Interact, Dance, Dance2, Victory, Defeated, Salute, Clap, LookAround,
-        Wave, Bow, Point, Angry
+        Wave, Bow, Point, Angry,
+        Swim, Tread, ClimbOut, FishingCast, FishingIdle, FishingReel, Digging, LockPicking, DoorOpen
     }
 
     public static class CrewPresentation
@@ -20,6 +21,7 @@ namespace ShipMayham
         /// </summary>
         public static CrewPose PoseFor(CrewState crew, float visualSpeed, VoyagePhase phase = VoyagePhase.Boarding, int slot = 0)
         {
+            if (crew.Swimming) return visualSpeed > WalkSpeedThreshold ? CrewPose.Swim : CrewPose.Tread;
             if (phase == VoyagePhase.Failed) return CrewPose.Defeated;
             if (phase == VoyagePhase.Arrived) return slot % 2 == 0 ? CrewPose.Dance : CrewPose.Dance2;
             if (crew.JumpHeight > AirborneHeight) return CrewPose.Jump;

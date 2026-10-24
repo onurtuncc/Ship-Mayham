@@ -110,7 +110,7 @@ namespace ShipMayham
             int slot = FindCrew(clientId);
             if (slot < 0 || InLobby || (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing)) return "Deck tasks are closed.";
             var crew = Crew[slot];
-            if (crew.OnShore || crew.AtHelm || crew.AtCannon || crew.AtCrane || crew.JumpHeight > 0 || crew.VerticalSpeed > 0 ||
+            if (crew.Swimming || crew.OnShore || crew.AtHelm || crew.AtCannon || crew.AtCrane || crew.JumpHeight > 0 || crew.VerticalSpeed > 0 ||
                 crew.Carrying != ServiceItem.None || CarriedPassenger(slot) >= 0) return "Stand on deck with empty hands and release your station first.";
             Vector2 target;
             if (action == DeckAction.CleanSpill)

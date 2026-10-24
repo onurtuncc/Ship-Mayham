@@ -92,6 +92,19 @@ namespace ShipMayham
             return InteractionPrompt.Target("Gangway gate", action, toShore ? "Supplies and repairs are in town" : "Return to the deck", key: HudControl.None, tone: PromptTone.Info);
         }
 
+        public static InteractionPrompt ForLadder(in Ladder ladder, in CrewState crew, bool harborOpen)
+        {
+            if (crew.Swimming) return InteractionPrompt.Target(ladder.Name, "Climb up", "Pull yourself out of the water");
+            if (!harborOpen) return InteractionPrompt.Target(ladder.Name, "Climb down", "The ship is under way: nobody swims now", key: HudControl.None, tone: PromptTone.Blocked);
+            if (crew.Carrying != ServiceItem.None) return InteractionPrompt.Target(ladder.Name, "Climb down", "Put your item down first", key: HudControl.None, tone: PromptTone.Blocked);
+            return InteractionPrompt.Target(ladder.Name, "Dive in and swim", "Swim with the movement keys, climb out at any ladder");
+        }
+
+        /// <summary>What a swimmer sees when no ladder is near.</summary>
+        public static InteractionPrompt ForSwimming(bool atSea) =>
+            InteractionPrompt.Context(atSea ? "Overboard!" : "Swimming", new PromptHint(HudControl.Interact, "Climb a ladder"),
+                new PromptHint(HudControl.None, "Swim to the rope ladders"));
+
         public static InteractionPrompt ForHarbor(HarborAction action, in VoyageState voyage, in CrewState crew)
         {
             if (voyage.DockJobActive)

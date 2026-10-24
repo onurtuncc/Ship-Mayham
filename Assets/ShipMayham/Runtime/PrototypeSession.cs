@@ -411,6 +411,16 @@ namespace ShipMayham
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void LadderRpc(int ladder, RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.LadderCommand(sender, ladder);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void AimPassengerRpc(float yaw, RpcParams rpc = default)
         {
             if (GameplayOpen) Simulation.AimPassenger(rpc.Receive.SenderClientId, yaw);

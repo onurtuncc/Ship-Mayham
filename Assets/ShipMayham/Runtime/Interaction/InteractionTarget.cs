@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ShipMayham
 {
-    public enum InteractionKind : byte { None, Station, Passenger, Harbor, Salvage, DeckTask }
+    public enum InteractionKind : byte { None, Station, Passenger, Harbor, Salvage, DeckTask, Ladder }
 
     /// <summary>
     /// What the local crew member's crosshair is on, and the prompt that describes it. <see cref="Index"/> is the
@@ -30,6 +30,7 @@ namespace ShipMayham
         public static InteractionTarget Passenger(int index, InteractionPrompt prompt = default, Vector3 point = default) => new InteractionTarget(InteractionKind.Passenger, index, prompt, point);
         public static InteractionTarget Harbor(HarborAction action, InteractionPrompt prompt = default, Vector3 point = default) => new InteractionTarget(InteractionKind.Harbor, (int)action, prompt, point);
         public static InteractionTarget Salvage(int index, InteractionPrompt prompt = default, Vector3 point = default) => new InteractionTarget(InteractionKind.Salvage, index, prompt, point);
+        public static InteractionTarget Ladder(int index, InteractionPrompt prompt, Vector3 point) => new InteractionTarget(InteractionKind.Ladder, index, prompt, point);
         public static InteractionTarget DeckTask(DeckAction action, InteractionPrompt prompt, Vector3 point) => new InteractionTarget(InteractionKind.DeckTask, (int)action, prompt, point);
 
         public bool IsNone => Kind == InteractionKind.None;

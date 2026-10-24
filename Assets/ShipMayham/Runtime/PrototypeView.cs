@@ -167,6 +167,10 @@ namespace ShipMayham
         private bool[] crewWorldKnown;
         /// <summary>How fast the glide through the gangway gate dies away (per second) and the longest hop it smooths.</summary>
         private const float GateGlideRate = 4.5f, GateGlideMaxDistance = 8f;
+        /// <summary>How far the body root hangs below the water line while swimming (the water reaches the chest).</summary>
+        public float SwimBodyOffset = -.75f;
+        public float SwimEyeAboveWater = .4f;
+        private bool[] displayedSwim;
         private bool[] crewFromNet;
         private Vector3 shipNetVelocity; private float shipNetTurnRate;
         private bool shipFromNet;
@@ -234,6 +238,7 @@ namespace ShipMayham
             carryRotations = new Quaternion[CrewRoots.Length];
             displayedItems = new ServiceItem[CrewRoots.Length];
             displayedShore = new bool[CrewRoots.Length];
+            displayedSwim = new bool[CrewRoots.Length];
             crewActiveLastFrame = new bool[CrewRoots.Length];
             crewBlend = new Vector3[CrewRoots.Length]; crewLastRender = new Vector3[CrewRoots.Length];
             crewWorldLast = new Vector3[CrewRoots.Length]; crewGlide = new Vector3[CrewRoots.Length]; crewWorldKnown = new bool[CrewRoots.Length];
@@ -437,6 +442,8 @@ namespace ShipMayham
                     else if (Target.Kind == InteractionKind.DeckTask) Session.DeckCommandRpc((DeckAction)Target.Index);
                     else if (Target.Kind == InteractionKind.Salvage)
                         Session.PickUpSalvageRpc(Target.Index);
+                    else if (Target.Kind == InteractionKind.Ladder)
+                        Session.LadderRpc(Target.Index);
                     else if (Target.Kind == InteractionKind.Station && Session.Stations[Target.Index].Kind == StationKind.Manifest)
                     {
                         if (Session.Voyage.Value.Phase != VoyagePhase.Sailing) OpenPurser();
@@ -563,13 +570,13 @@ namespace ShipMayham
                 crewActiveLastFrame[i] = show;
                 if (!show) { crewWorldKnown[i] = false; continue; }
                 var crew = Session.Crew[i];
-                var target = new Vector3(crew.Position.x, (crew.OnShore ? VoyageSimulation.ShoreHeight : .5f) + crew.JumpHeight, crew.Position.y);
+                float groundHeight = crew.Swimming ? VoyageSimulation.SeaLevel + SwimBodyOffset : crew.OnShore ? VoyageSimulation.ShoreHeight : .5f;
+                var target = new Vector3(crew.Position.x, groundHeight + crew.JumpHeight, crew.Position.y);
                 // Smooth in the frame the crew member walks in (deck or quay), then place that frame; smoothing in world space made
                 // crew slide across the deck whenever the ship moved.
                 var motion = crewMotion[i];
                 if (displayedShore[i] != crew.OnShore || !crewActiveLastFrame[i]) motion.Snap(target, now);
                 Vector3 local3 = motion.Step(target, now, dt);
-                float groundHeight = crew.OnShore ? VoyageSimulation.ShoreHeight : .5f;
                 Vector3 netPosition = default;
                 bool fromNet = clientMotion != null && clientMotion.TryGetCrew(i, out netPosition, out crewNetVelocity[i]);
                 if (fromNet)
@@ -585,7 +592,7 @@ namespace ShipMayham
                 crewLastRender[i] = local3;
                 Vector3 world = crew.OnShore ? VoyageSimulation.HarborOrigin(state) + local3 : ship.TransformPoint(local3);
                 // Passing the gangway gate changes the area the crew member walks in; glide along the plank instead of jumping.
-                if (crewWorldKnown[i] && displayedShore[i] != crew.OnShore)
+                if (crewWorldKnown[i] && (displayedShore[i] != crew.OnShore || displayedSwim[i] != crew.Swimming))
                 {
                     Vector3 jump = crewWorldLast[i] - world;
                     crewGlide[i] = jump.magnitude <= GateGlideMaxDistance ? jump : Vector3.zero;
@@ -596,6 +603,7 @@ namespace ShipMayham
                 crewWorldKnown[i] = true;
                 CrewRoots[i].rotation = crew.OnShore ? Quaternion.identity : ship.rotation;
                 displayedShore[i] = crew.OnShore;
+                displayedSwim[i] = crew.Swimming;
                 bool me = local == i;
                 // Hide only the local body, never the root or another client's representation.
                 // The local body is hidden in first person, but visible when the helm uses the chase camera.
@@ -624,7 +632,10 @@ namespace ShipMayham
                 if (atCrane && !wasAtCrane) { lookYaw = 236; lookPitch = 60; }
                 if (!atCrane && wasAtCrane) lookPitch = 12;
                 wasAtCrane = atCrane;
-                Camera.transform.SetPositionAndRotation(CrewRoots[local].position + (atCrane ? CraneCameraOffset : ship.up * EyeHeight),
+                Vector3 eye = CrewRoots[local].position + (atCrane ? CraneCameraOffset : ship.up * EyeHeight);
+                // A swimmer's eyes sit just above the waves, wherever the body root is hanging.
+                if (Session.Crew[local].Swimming) eye = new Vector3(eye.x, VoyageSimulation.SeaLevel + SwimEyeAboveWater, eye.z);
+                Camera.transform.SetPositionAndRotation(eye,
                     (Session.Crew[local].OnShore ? Quaternion.identity : ship.rotation) * Quaternion.Euler(lookPitch, lookYaw, 0));
                 CarriedItems[local].SetPositionAndRotation(Camera.transform.TransformPoint(HeldItemOffset), Camera.transform.rotation);
                 FindTarget(Session.Crew[local]);

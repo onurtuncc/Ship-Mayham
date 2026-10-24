@@ -21,6 +21,9 @@ namespace ShipMayham.Editor
             var view = Object.FindAnyObjectByType<PrototypeView>();
             if (session == null || view == null || session.Harbor == null) throw new InvalidOperationException("A complete prototype scene is required.");
             ApplyGangwayGate(session, view);
+            ApplyLadders(session);
+            EnsureCrewController();
+            EnsurePassengerController();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
@@ -37,6 +40,38 @@ namespace ShipMayham.Editor
                 if (found != null) return found;
             }
             return null;
+        }
+
+        // Rope ladders hang from the ship's rails and the quay edge down into the water; the same positions drive the gameplay (VoyageSimulation.Ladders).
+        private static void ApplyLadders(PrototypeSession session)
+        {
+            var ship = session.ShipRoot;
+            for (int i = 0; i < VoyageSimulation.Ladders.Length; i++)
+            {
+                var ladder = VoyageSimulation.Ladders[i];
+                if (ladder.OnQuay)
+                {
+                    foreach (var port in session.Harbor.PortRoots)
+                    {
+                        Transform visuals = port.Find("Visuals");
+                        if (visuals == null || visuals.Find("RopeLadder_" + i) != null) continue;
+                        var holder = Root("RopeLadder_" + i, visuals);
+                        // Harbor-local: the quay edge is the east side of the pier area.
+                        holder.localPosition = new Vector3(ladder.Top.x + .85f, VoyageSimulation.ShoreHeight + .1f, ladder.Top.y);
+                        holder.localRotation = Quaternion.Euler(0, 90, 0);
+                        AddProp(holder, "RopeLadder", Vector3.zero, 1);
+                    }
+                    continue;
+                }
+                if (ship.Find("RopeLadder_" + i) != null) continue;
+                var shipHolder = Root("RopeLadder_" + i, ship);
+                // Hung just outside the rail on the side the ladder belongs to.
+                Vector2 outward = ladder.Base - ladder.Top;
+                outward.Normalize();
+                shipHolder.localPosition = new Vector3(ladder.Top.x + outward.x * .75f, 1.1f, ladder.Top.y + outward.y * .75f);
+                shipHolder.localRotation = Quaternion.Euler(0, Mathf.Abs(outward.x) > Mathf.Abs(outward.y) ? 90 : 0, 0);
+                AddProp(shipHolder, "RopeLadder", Vector3.zero, 1);
+            }
         }
 
         private static void ApplyGangwayGate(PrototypeSession session, PrototypeView view)

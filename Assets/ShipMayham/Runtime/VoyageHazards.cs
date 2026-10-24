@@ -117,6 +117,7 @@ namespace ShipMayham
             else
             {
                 Hazards.WavesHit++;
+                WashCrewOverboard();
                 DamageHull(HazardLogic.WaveDamage);
                 State.Speed *= HazardLogic.WaveSpeedFactor;
             }

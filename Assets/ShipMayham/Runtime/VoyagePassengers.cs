@@ -31,6 +31,7 @@ namespace ShipMayham
         {
             int slot = FindCrew(clientId);
             if (slot < 0 || !Finite(yaw)) return "Invalid passenger action.";
+            if (Crew[slot].Swimming) return "You are in the water.";
             if (Crew[slot].OnShore) return "Board the ship before interacting with passengers.";
             if (action != PassengerAction.CheckTicket && action != PassengerAction.CarryOrDrop && action != PassengerAction.Throw) return "Invalid passenger action.";
             if (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing) return "Prepare a new voyage first.";

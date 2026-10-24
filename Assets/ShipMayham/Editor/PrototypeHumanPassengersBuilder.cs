@@ -56,7 +56,8 @@ namespace ShipMayham.Editor
             ("Seated", "SittingIdle"), ("Pleading", "Waving"), ("Fidgeting", "Talking"), ("Panicked", "Terrified"),
             ("Delighted", "CheeringWhileSitting"), ("Yelling", "SittingYell"), ("Disbelief", "SittingDisbelief"), ("Laughing", "SittingLaughing"),
             ("Clapping", "SittingClap"), ("Drinking", SeatedSipClip()),
-            ("Lying", "FallingFlatImpact"), ("Dizzy", "DizzyIdle"), ("Standing", "Idle"), ("Walking", "Walking"));
+            ("Lying", "FallingFlatImpact"), ("Dizzy", "DizzyIdle"), ("Standing", "Idle"), ("Walking", "Walking"),
+            ("Swim", "SwimSurface"), ("Tread", "TreadWater"), ("SwimPanic", "SwimPanic"), ("GetUp", "GetUpFromFall"));
 
         // The old SittingDrinking clip stands the passenger up and walks them 2.8 m, so only an in-place seated sip may play.
         // Until that clip is authored the drink is a plain seated pose; the cup and the coin popup still sell it.

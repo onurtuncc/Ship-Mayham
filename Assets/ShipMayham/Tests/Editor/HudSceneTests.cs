@@ -346,6 +346,19 @@ namespace ShipMayham.Tests
             }
             sim.Passengers[0].Motion = PassengerMotion.OnDeck;
 
+            // Swimming: a crew member in the water beside the port ladder, seen from outside and through their own eyes.
+            sim.State.Phase = VoyagePhase.Boarding;
+            sim.Crew[0].Position = VoyageSimulation.Ladders[0].Top;
+            for (int frame = 0; frame < 20; frame++) yield return null;
+            Debug.Log("SWIMCAPTURE " + sim.LadderCommand(sim.Crew[0].ClientId, 0) + " / " + sim.Crew[0].Swimming);
+            sim.Crew[0].Position = VoyageSimulation.Ladders[0].Base + new Vector2(-1.4f, 0);
+            foreach (var crewAnimator in hud.View.GetComponent<PrototypeCrewAnimator>().Animators) if (crewAnimator != null) crewAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            for (int frame = 0; frame < 60; frame++) yield return null;
+            yield return CaptureWorld(hud, controller, "Logs/WorldSwimmerTread.png", ship.TransformPoint(new Vector3(-10f, 1.2f, -2f)), ship.TransformPoint(new Vector3(-7.9f, -1.1f, 3f)), 50);
+            yield return CaptureWorld(hud, controller, "Logs/WorldLadder.png", ship.TransformPoint(new Vector3(-9.5f, .5f, 8f)), ship.TransformPoint(new Vector3(-5.4f, -.4f, 3f)), 55);
+            yield return Capture(hud, controller, "Logs/HudSwim.png");
+            sim.Crew[0].Swimming = false;
+
             // The gangway gate, closed and open.
             sim.State.Phase = VoyagePhase.Boarding;
             sim.Crew[0].Position = new Vector2(-3.4f, -6f);

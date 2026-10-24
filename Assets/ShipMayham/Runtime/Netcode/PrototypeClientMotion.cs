@@ -73,9 +73,9 @@ namespace ShipMayham
             while (accumulator >= CrewLocomotion.StepSeconds)
             {
                 accumulator -= CrewLocomotion.StepSeconds;
-                float factor = crew.OnShore ? 1 : session.LocalCarriedPassengerIndex >= 0 ? .7f : crew.Carrying == ServiceItem.Ammo ? .8f : 1;
-                ILocomotionWorld world = crew.OnShore ? VoyageSimulation.ShoreWorld : (deckWorld ?? (deckWorld = new DeckWorld(session)));
-                var packet = core.StepFixed(latestInput, jumpLatched, factor, world);
+                float factor = crew.Swimming ? VoyageSimulation.SwimSpeedFactor : crew.OnShore ? 1 : session.LocalCarriedPassengerIndex >= 0 ? .7f : crew.Carrying == ServiceItem.Ammo ? .8f : 1;
+                ILocomotionWorld world = crew.Swimming ? VoyageSimulation.WaterWorld : crew.OnShore ? VoyageSimulation.ShoreWorld : (deckWorld ?? (deckWorld = new DeckWorld(session)));
+                var packet = core.StepFixed(latestInput, jumpLatched && !crew.Swimming, factor, world);
                 jumpLatched = false;
                 if (session.IsServer) session.ApplyLocalMoveCommands(packet);
                 else session.MoveCommandsRpc(packet);
