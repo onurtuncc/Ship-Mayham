@@ -30,7 +30,7 @@ Her dilim: kod, birim ve sahne testleri, doküman, commit. Ağı değiştirenler
 2. **Ping ve emote** (`Q`, çark, dünya işaretçisi, konuşma balonu, host yayını).
 3. **Uyarlanabilir müzik ve gevezelik** (procedural katmanlar, ses veriyolu ayrımı).
 4. **Sefer sonu ödülleri** (host sayaçları, rapor bölümü).
-5. **Onboarding tips** (olay bazlı kartlar, kayıt, Settings anahtarı).
+5. **Onboarding tips** (olay bazlı kartlar, kayıt, Settings anahtarı). Yapıldı: `TipLogic`/`TipStore`/`TipCard`, 9 ipucu, "Show all tips again" düğmesi. Ağ değişmedi.
 6. **Kaptan engelleri** (Shoal, Rogue wave, minimap).
 7. **Workload scale** (oyuncu sayısına göre ölçekleme) ve renkten bağımsız ikonlar.
 

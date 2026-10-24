@@ -62,10 +62,20 @@ rate-limits each crew member to one per second (`SignalLimiter`), cleans the lab
 and emote bubbles above the sender's head; `PrototypeFeedback` plays the gesture (wave, bow, point, angry) and a short cue.
 Signals never change the voyage.
 
+## Onboarding tips
+
+There is no tutorial level. `TipCard` (bottom-left, above the carry pill) shows one **tip** at a time the first time a situation
+comes up: welcome and board passengers, take the helm, the harbor, a leak, pirates, docking, serving orders, checking tickets and
+signals. `TipLogic` holds the pure rules (`Pick` returns the highest-priority unseen tip that applies; leak and pirate tips may
+interrupt a calmer one), the texts with `{Control}` placeholders that render as the key or button of the device in use, and
+`TipStore` remembers the seen tips on the device (a bit mask in PlayerPrefs). A tip is shown for 9 s, marked seen when it appears and
+never shown again; the Settings "Tips" toggle turns the card off and "Show all tips again" clears the memory. Tips are hidden while a
+menu, the purser panel, the controls overlay or the emote wheel is open. They only read the replicated state and never change the voyage.
+
 ## Settings and the in-game menu
 
 `GameSettings` (`Runtime/Settings`) holds the player's preferences on the device: master, music and effects volume,
-interface size (small, normal, large), camera shake (off, low, full), look speed, controller rumble and tips. Setters clamp,
+interface size (small, normal, large), camera shake (off, low, full), look speed, controller rumble and tips (the tips toggle; the seen tips live in `TipStore`). Setters clamp,
 save and raise `Changed`; storage failures only log a warning. `SettingsPanel` edits them and is shown on the main menu's
 Settings page and inside the in-game menu. `M` still mutes everything; the old on-screen sound button is gone.
 

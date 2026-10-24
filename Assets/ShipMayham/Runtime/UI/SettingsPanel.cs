@@ -33,6 +33,10 @@ namespace ShipMayham
             rumbleButton = ToggleRow("CONTROLLER RUMBLE", () => GameSettings.Rumble = !GameSettings.Rumble);
             tipsButton = ToggleRow("TIPS", () => GameSettings.Tips = !GameSettings.Tips);
 
+            var resetTips = HudKit.MakeButton(Root, "ResetTips", "SHOW ALL TIPS AGAIN", new Color(1, 1, 1, .12f), 20);
+            HudKit.Size(resetTips, height: 46);
+            resetTips.onClick.AddListener(TipStore.ResetAll);
+
             var reset = HudKit.MakeButton(Root, "Reset", "RESET TO DEFAULTS", new Color(1, 1, 1, .12f), 20);
             HudKit.Size(reset, height: 46);
             reset.onClick.AddListener(GameSettings.ResetToDefaults);

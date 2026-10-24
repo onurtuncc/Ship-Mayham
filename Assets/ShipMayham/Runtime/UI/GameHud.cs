@@ -38,6 +38,8 @@ namespace ShipMayham
         private readonly PauseMenu pause;
         private readonly SignalLayer signals;
         private readonly SignalWheel wheel;
+        private readonly TipCard tips;
+        private readonly System.Func<TipContext> tipContext;
 
         private int voyageSignature = int.MinValue, objectiveSignature = int.MinValue, alertSignature = int.MinValue, carrySignature = int.MinValue;
         private readonly ResourcePill[] pills;
@@ -191,10 +193,16 @@ namespace ShipMayham
             if (hud.Session != null) hud.Session.SignalReceived += signals.Add;
             purser = new PurserPanel(hud, screen);
             pause = new PauseMenu(hud, screen);
+            tips = new TipCard(screen);
+            tipContext = BuildTipContext;
             screen.gameObject.SetActive(false);
         }
 
-        public void SetVisible(bool visible) => HudKit.SetActive(root, visible);
+        public void SetVisible(bool visible)
+        {
+            HudKit.SetActive(root, visible);
+            if (!visible) tips.Reset();
+        }
 
         /// <summary>Stops listening to the session (the HUD is going away).</summary>
         public void Dispose()
@@ -241,7 +249,39 @@ namespace ShipMayham
             pause.Tick();
             signals.Tick(hud);
             wheel.Tick(view);
+            tips.Tick(Time.unscaledTime, tipContext, gamepad, view != null && (view.MenuOpen || view.PurserOpen || view.WheelOpen) || help.Visible);
             for (int i = 0; i < pills.Length; i++) pills[i].Tick(dt);
+        }
+
+        private TipContext BuildTipContext()
+        {
+            var session = hud.Session;
+            var s = session.Voyage.Value;
+            int local = session.LocalCrewIndex;
+            var context = new TipContext
+            {
+                InVoyage = local >= 0 && s.SessionPhase == SessionPhase.Voyage,
+                Phase = s.Phase,
+                Boarded = s.Boarded,
+                DistanceToPort = Vector2.Distance(s.Position, VoyageSimulation.Destination),
+                Leak = s.Leak != 0,
+            };
+            if (!context.InVoyage) return context;
+            var crew = session.Crew[local];
+            context.AtHelm = crew.AtHelm;
+            context.AtCannon = crew.AtCannon;
+            context.OnShore = crew.OnShore;
+            context.Carrying = crew.Carrying != ServiceItem.None || session.LocalCarriedPassengerIndex >= 0;
+            var pirate = session.Encounter.Value.Pirate;
+            context.PiratesNear = pirate == PiratePhase.Warning || pirate == PiratePhase.Attacking;
+            for (int i = 0; i < session.Passengers.Count; i++)
+            {
+                var passenger = session.Passengers[i];
+                if (passenger.Active && passenger.Request != ServiceItem.None) { context.OpenOrders = true; break; }
+            }
+            var target = hud.View != null ? hud.View.Target : default;
+            context.LookingAtPassenger = target.Kind == InteractionKind.Passenger;
+            return context;
         }
 
         private void TickVoyageCard(in VoyageState s)
