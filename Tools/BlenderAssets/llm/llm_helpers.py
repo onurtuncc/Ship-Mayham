@@ -78,3 +78,41 @@ def finish(name):
     ob = bpy.data.objects.new(name, me)
     bpy.context.scene.collection.objects.link(ob)
     return ob
+
+
+def new_part():
+    """Start a fresh mesh buffer so the next primitives go into another object (multi-object props)."""
+    global _BM
+    _BM = bmesh.new()
+
+def finish_part(name, pivot=(0, 0, 0), parent=None):
+    """Turn the current buffer into an object whose origin sits at `pivot` (world/parent-space), keep geometry in place, and start a new buffer."""
+    global _BM
+    bm = _BM
+    bmesh.ops.translate(bm, vec=-Vector(pivot), verts=bm.verts)
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+    for m in _MAT_LIST: me.materials.append(m)
+    ob = bpy.data.objects.new(name, me); ob.location = Vector(pivot)
+    bpy.context.scene.collection.objects.link(ob)
+    if parent is not None: ob.parent = parent
+    _BM = bmesh.new()
+    return ob
+
+def empty(name, loc=(0, 0, 0)):
+    ob = bpy.data.objects.new(name, None); ob.location = Vector(loc); bpy.context.scene.collection.objects.link(ob); return ob
+
+def ring(R, r, center, matnames, segs=16, tube=8, axis='Z'):
+    """Torus (lifebuoy/ring) around `axis`; segment i uses matnames[i % len(matnames)] (e.g. red/white swim ring)."""
+    g = bmesh.new()
+    verts = [[g.verts.new((((R + r * math.cos(2 * math.pi * j / tube)) * math.cos(2 * math.pi * i / segs)),
+                           ((R + r * math.cos(2 * math.pi * j / tube)) * math.sin(2 * math.pi * i / segs)),
+                           r * math.sin(2 * math.pi * j / tube))) for j in range(tube)] for i in range(segs)]
+    for i in range(segs):
+        for j in range(tube):
+            f = g.faces.new((verts[i][j], verts[i][(j + 1) % tube], verts[(i + 1) % segs][(j + 1) % tube], verts[(i + 1) % segs][j]))
+            f.material_index = _MAT_LIST.index(_MATS[matnames[i % len(matnames)]])
+    bmesh.ops.recalc_face_normals(g, faces=g.faces)
+    rot = {'Z': Matrix.Identity(4), 'X': Matrix.Rotation(math.radians(90), 4, 'Y'), 'Y': Matrix.Rotation(math.radians(-90), 4, 'X')}[axis]
+    bmesh.ops.transform(g, matrix=Matrix.Translation(center) @ rot, verts=g.verts)
+    me = bpy.data.meshes.new("_r"); g.to_mesh(me); g.free()
+    _BM.from_mesh(me); bpy.data.meshes.remove(me)

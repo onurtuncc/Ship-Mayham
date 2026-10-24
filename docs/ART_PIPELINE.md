@@ -152,3 +152,22 @@ Not (24 Ekim, düzeltme): FBX'i Blender'a geri alıp boyarken içe aktarma, ekse
 ### Yüzme ve kara aktivitesi klipleri (25 Ekim, elle yazılmış)
 
 Mixamo oturumu bu gece kapalı olduğu için 10 klip `Tools/BlenderAssets/anim/clipkit.py` ile (Mixamo iskeleti, iki kemikli IK ve kemik yönü çözücüsü) yazıldı: `Mixamo_SwimSurface` (36 kare, döngü, yatay serbest stil + bacak çırpma), `Mixamo_TreadWater` (48, döngü, dikey, kollar yanlarda, bacaklar yumurta çırpıcı), `Mixamo_SwimPanic` (24, döngü, dikey, kollar baş üstünde çırpınma), `Mixamo_ClimbOut` (52, döngüsüz; güverte su yüzeyinden ~45 cm yüksekte, kalça -185 cm'den ayakta duruşa), `Mixamo_FishingCast` (36, döngüsüz, baş üstü atış), `Mixamo_FishingIdle` (60, döngü), `Mixamo_FishingReel` (30, döngü, sağ el krank), `Mixamo_Digging` (48, döngü, ayaklar sabit, kalça -5 cm), `Mixamo_LockPicking` (40, döngü, `Mixamo_CrouchIdle` tabanlı çömelik, eller göğüs hizasında), `Mixamo_DoorOpen` (36, döngüsüz, iki el ileri iter). Tümü yerinde (yatay kök kayması yok). Aletler (olta, kürek, çekiç) klibin parçası değildir; `RightHand`/`LeftHand` soketlerine bağlanır. Ayrı Unity projesinde 10/10 Humanoid import ve döngü ayarı doğrulandı; gerçek karakter üzerinde oynatma ve yüzme sırasında kök/su yüksekliği ayarı doğrulanmadı.
+
+### Yüzme, geçit, balıkçılık, kazı ve kilit prop'ları (25 Ekim)
+
+13 yeni boyalı prop `Tools/BlenderAssets/paint/props_pack.py` (llm_helpers ile elle yazılmış, art.md: hacimli, sıcak) ile üretildi ve `paint_pipeline.py` / çok nesneli `paint_multi.py` ile boyandı (`build_props.sh <Ad>...`). Pivot: alt-orta, aksi belirtilmedikçe. Unity'de (ayrı projede) 13/13 import, materyal-doku ve hiyerarşi doğrulandı.
+
+| Varlık | Boyut (m, Unity ekseni) | Not |
+|---|---|---|
+| `RopeLadder` | 0,62 × 3,03 × 0,09 | **Pivot üst-orta**, 3 m aşağı sarkar; halat yanları, 10 basamak, üstte tutturma çubuğu |
+| `GangwayGate` | 2,45 × 2,17 × 0,22 | Kök boş nesne + çocuklar `Frame`, `LeafLeft`, `LeafRight`; kanat pivotları dış kenar menteşelerindedir (x = ±1,0, yerel Y etrafında döner), sağ kanatta pirinç kilit ve asma kilit |
+| `Floaties` | 0,88 × 0,2 × 0,88 | Kırmızı/beyaz bel simidi, pivot merkez; yolcunun kalçasına bağlanır |
+| `FishingRod` | 0,16 × 2,16 × 0,09 | Kök + çocuklar `Rod` (kamış, makara, misina) ve `Bobber` (pivot şamandıra merkezi, olta ucunun 0,8 m altında) |
+| `Fish_Small`, `Fish_Big`, `Fish_Boot` | 0,36 / 0,59 / 0,38 uzun | Burun +Y (Blender) yönünde; `Fish_Boot` espri avı |
+| `Shovel` | 0,29 × 1,21 × 0,07 | Pivot bıçak ucu |
+| `DigSpot`, `DigHole` | 0,8 × 0,3 × 0,82 / 0,96 × 0,15 × 0,95 | Kırmızı X'li höyük, koyu çukur |
+| `LockBox` | 0,57 × 0,45 × 0,46 | Büyük pirinç asma kilitli küçük sandık |
+| `SunkenCoin` | 0,32 × 0,06 × 0,32 | Yatay altın para, yuvarlak kenar, artı kabartma |
+| `Barrel_Float` | 0,57 × 0,69 × 0,58 | Demir çemberli, halat halkalı yüzer varil |
+
+Unity'ye statik FBX'lerde Blender +Y (ön) → Unity −Z ve X yansır; `GangwayGate` içindeki `LeafLeft`/`LeafRight` adları Blender yönüne göredir (Unity'de ham içe aktarmada LeafLeft x = +1,0). Gemi gibi 180° Y döndürülürse adlar sahnede doğru tarafa oturur.
