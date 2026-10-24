@@ -288,8 +288,12 @@ namespace ShipMayham
     public sealed class ReportPanel
     {
         private readonly GameObject root;
-        private readonly Text title, footer;
+        private readonly Text title, footer, highlightsCaption;
         private readonly StatRows rows;
+        private readonly Text[] awardTitles = new Text[Awards.MaxShown], awardDetails = new Text[Awards.MaxShown];
+        private readonly GameObject[] awardRoots = new GameObject[Awards.MaxShown];
+        private readonly CrewTally[] tallyBuffer = new CrewTally[VoyageSimulation.MaxCrew];
+        private readonly bool[] activeBuffer = new bool[VoyageSimulation.MaxCrew];
         private int signature = int.MinValue;
 
         public RectTransform Root { get; }
@@ -304,17 +308,41 @@ namespace ShipMayham
             title = HudKit.Label(Root, "Title", 30, HudKit.Good, TextAnchor.MiddleLeft, FontStyle.Bold);
             HudKit.Size(title, height: 44);
             rows = new StatRows(Root, 12);
+            highlightsCaption = HudKit.Label(Root, "HighlightsCaption", 16, HudKit.TextMuted, TextAnchor.LowerLeft, FontStyle.Bold);
+            highlightsCaption.text = "HIGHLIGHTS";
+            HudKit.Size(highlightsCaption, height: 34);
+            for (int i = 0; i < Awards.MaxShown; i++)
+            {
+                var node = HudKit.Node(Root, "Award" + i);
+                HudKit.Column(node, 0, new RectOffset(0, 0, 2, 4), false);
+                awardTitles[i] = HudKit.Label(node, "Title", 22, HudKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+                HudKit.Size(awardTitles[i], height: 28);
+                awardDetails[i] = HudKit.Label(node, "Detail", 18, HudKit.TextMuted);
+                awardDetails[i].horizontalOverflow = HorizontalWrapMode.Wrap;
+                HudKit.Size(awardDetails[i], height: 24);
+                awardRoots[i] = node.gameObject;
+                node.gameObject.SetActive(false);
+            }
             footer = HudKit.Label(Root, "Footer", 19, HudKit.TextMuted);
             footer.horizontalOverflow = HorizontalWrapMode.Wrap;
             card.gameObject.SetActive(false);
         }
 
-        public void Tick(in VoyageState s)
+        public void Tick(in VoyageState s, PrototypeSession session)
         {
             bool visible = s.Phase == VoyagePhase.Arrived || s.Phase == VoyagePhase.Failed;
             HudKit.SetActive(root, visible);
             if (!visible) return;
-            int sig = (int)s.Phase * 31 + s.LastNet;
+            int local = session.LocalCrewIndex;
+            int sig = (int)s.Phase * 31 + s.LastNet + local * 101;
+            for (int i = 0; i < tallyBuffer.Length; i++)
+            {
+                tallyBuffer[i] = i < session.Tallies.Count ? session.Tallies[i] : default;
+                activeBuffer[i] = i < session.Crew.Count && session.Crew[i].Active;
+                sig = sig * 31 + (activeBuffer[i] ? 1 : 0) + tallyBuffer[i].Throws * 3 + tallyBuffer[i].Orders * 5 + tallyBuffer[i].Repairs * 7 +
+                      tallyBuffer[i].Hits * 11 + tallyBuffer[i].Fares * 13 + tallyBuffer[i].Deliveries * 17 + tallyBuffer[i].HelmSeconds * 19;
+                if (i < session.Profiles.Count) sig = sig * 31 + session.Profiles[i].Name.GetHashCode();
+            }
             sig = sig * 31 + s.LastTickets + s.LastServices * 3 + s.LastTips * 5 + s.LastBounty * 7 + s.LastEventBonus * 11 + s.LastRouteBonus * 13 + s.LastCosts * 17;
             sig = sig * 31 + s.LastUnpaid + s.LastMissing * 3 + s.LastRescueCosts * 5 + s.LastReputation * 7;
             if (sig == signature) return;
@@ -337,7 +365,30 @@ namespace ShipMayham
             if (s.LastUnpaid != 0) rows.Add("Unpaid fares", s.LastUnpaid.ToString(), HudKit.Warning);
             if (s.LastMissing != 0) rows.Add("Passengers lost", s.LastMissing.ToString(), HudKit.Danger);
             rows.End();
-            footer.text = "Visit the manifest desk to prepare the next voyage.";
+            ShowAwards(session, local);
+            footer.text = "Visit the purser to prepare the next voyage.";
+        }
+
+        private void ShowAwards(PrototypeSession session, int local)
+        {
+            var awards = Awards.Compute(tallyBuffer, activeBuffer);
+            HudKit.SetActive(highlightsCaption.gameObject, awards.Count > 0);
+            for (int i = 0; i < awardRoots.Length; i++)
+            {
+                bool shown = i < awards.Count;
+                HudKit.SetActive(awardRoots[i], shown);
+                if (!shown) continue;
+                var award = awards[i];
+                var names = new System.Text.StringBuilder();
+                foreach (int slot in award.Slots)
+                {
+                    if (names.Length > 0) names.Append(" & ");
+                    string name = LobbyRules.DisplayName(slot < session.Profiles.Count ? session.Profiles[slot].Name.ToString() : null, slot);
+                    names.Append(slot == local ? name + " (you)" : name);
+                }
+                awardTitles[i].text = award.Title.ToUpperInvariant();
+                awardDetails[i].text = $"{names}: {award.Value} {award.Unit}";
+            }
         }
 
         private static string Coins(int amount) => (amount >= 0 ? "+" : string.Empty) + amount;

@@ -83,12 +83,13 @@ namespace ShipMayham
             else if (State.DockJobType != DockJobKind.CargoRelay || action != HarborAction.MaintainHull)
                 return "Deliver cargo at HULL, or return it to the FOOD pickup.";
             Crew[slot].Carrying = ServiceItem.None;
-            return RecordDockDelivery(State.DockJobType == DockJobKind.SalvageRun ? SalvageJobReward : State.DockJobType == DockJobKind.LuggageSort ? LuggageJobReward : DockJobReward);
+            return RecordDockDelivery(State.DockJobType == DockJobKind.SalvageRun ? SalvageJobReward : State.DockJobType == DockJobKind.LuggageSort ? LuggageJobReward : DockJobReward, slot);
         }
 
-        private string RecordDockDelivery(int reward)
+        private string RecordDockDelivery(int reward, int slot = -1)
         {
             State.DockJobProgress++;
+            Tally(slot, TallyKind.Deliveries);
             if (State.DockJobProgress < DockJobGoal) return $"Delivered: {State.DockJobProgress}/{DockJobGoal}.";
             State.DockJobActive = false;
             State.DockJobPortKey = CurrentPortKey;

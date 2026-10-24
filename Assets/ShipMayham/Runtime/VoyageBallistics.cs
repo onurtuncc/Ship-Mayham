@@ -56,6 +56,7 @@ namespace ShipMayham
                 {
                     Encounter.ShotTo = ball.Position;
                     Encounter.Hits++;
+                    Tally(crewBallOwner, TallyKind.Hits);
                     Encounter.PirateHealth = Mathf.Max(0, Encounter.PirateHealth - 34);
                     if (Encounter.PirateHealth == 0) { Encounter.Pirate = PiratePhase.Defeated; Encounter.Bounty = 50; }
                 }

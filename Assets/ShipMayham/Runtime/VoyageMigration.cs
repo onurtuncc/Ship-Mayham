@@ -8,7 +8,7 @@ namespace ShipMayham
     [Serializable]
     internal sealed class VoyageMigrationSnapshot
     {
-        public int Version = 10;
+        public int Version = 11;
         public VoyageState State;
         public EncounterState Encounter;
         public VoyageEventState Event;
@@ -17,6 +17,8 @@ namespace ShipMayham
         public string[] CrewPlayerIds;
         public string[] CrewNames;
         public bool[] CrewReady;
+        public CrewTally[] CrewTallies;
+        public float[] HelmClock;
         public float Clock;
         public float NextLeak;
         public bool ScheduledPowerFault;
@@ -69,6 +71,8 @@ namespace ShipMayham
                 CrewPlayerIds = (string[])crewPlayerIds.Clone(),
                 CrewNames = (string[])crewNames.Clone(),
                 CrewReady = (bool[])crewReady.Clone(),
+                CrewTallies = (CrewTally[])tallies.Clone(),
+                HelmClock = (float[])helmClock.Clone(),
                 Clock = clock,
                 NextLeak = nextLeak,
                 ScheduledPowerFault = scheduledPowerFault,
@@ -83,7 +87,7 @@ namespace ShipMayham
         {
             if (data == null || data.Length == 0) throw new ArgumentException("Migration data is empty.", nameof(data));
             VoyageMigrationSnapshot snapshot = JsonUtility.FromJson<VoyageMigrationSnapshot>(Encoding.UTF8.GetString(data));
-            if (snapshot == null || snapshot.Version != 10 || snapshot.Crew?.Length != MaxCrew ||
+            if (snapshot == null || snapshot.Version != 11 || snapshot.Crew?.Length != MaxCrew ||
                 snapshot.Passengers?.Length != MaxPassengers || snapshot.CrewPlayerIds?.Length != MaxCrew)
                 throw new InvalidOperationException("Unsupported or incomplete voyage migration snapshot.");
 
@@ -97,6 +101,9 @@ namespace ShipMayham
             Array.Clear(crewReady, 0, MaxCrew);
             if (snapshot.CrewNames?.Length == MaxCrew) Array.Copy(snapshot.CrewNames, crewNames, MaxCrew);
             if (snapshot.CrewReady?.Length == MaxCrew) Array.Copy(snapshot.CrewReady, crewReady, MaxCrew);
+            ResetTallies();
+            if (snapshot.CrewTallies?.Length == MaxCrew) Array.Copy(snapshot.CrewTallies, tallies, MaxCrew);
+            if (snapshot.HelmClock?.Length == MaxCrew) Array.Copy(snapshot.HelmClock, helmClock, MaxCrew);
             // NGO assigns new connection IDs after migration. Only the stable player IDs
             // may identify the restored slots until each participant reconnects.
             for (int i = 0; i < MaxCrew; i++) if (Crew[i].Active) Crew[i].ClientId = ulong.MaxValue;

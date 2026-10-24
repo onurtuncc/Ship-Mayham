@@ -158,6 +158,9 @@ namespace ShipMayham
             return "Reloading cannon...";
         }
 
+        // Who fired the round in flight, so a hit is credited to them (not part of the migrated state).
+        private int crewBallOwner = -1;
+
         public string FireCannon(ulong clientId, Vector2 aim)
         {
             if (!CanOperateCannon(clientId)) return "Use the cannon first.";
@@ -176,6 +179,7 @@ namespace ShipMayham
             Encounter.ShotFrom = origin;
             Encounter.ShotTo = origin + direction * CannonRange;
             Encounter.CrewBall = LaunchBall(origin, direction * CannonballSpeed);
+            crewBallOwner = FindCrew(clientId);
             return "Cannonball away! Lead moving targets; raise the barrel for distant shots.";
         }
     }

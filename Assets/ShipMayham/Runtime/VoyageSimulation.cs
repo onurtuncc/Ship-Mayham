@@ -105,6 +105,7 @@ namespace ShipMayham
             Crew[i] = default;
             crewPlayerIds[i] = null;
             ClearLobbySlot(i);
+            ClearTally(i);
             ResetCommandStream(i);
         }
 
@@ -181,6 +182,7 @@ namespace ShipMayham
                 moveBudget[i] = Mathf.Min(MoveBudgetCap, moveBudget[i] + dt * MoveBudgetRate);
                 Vector2 input = clock <= inputExpires[i] ? inputs[i] : Vector2.zero;
                 AdvanceCrew(i, input, dt, ref helmInput, ref helmManned);
+                if (Crew[i].AtHelm && State.Phase == VoyagePhase.Sailing) TickHelmTime(i, dt);
             }
             if (State.Phase == VoyagePhase.Sailing)
             {
@@ -287,7 +289,7 @@ namespace ShipMayham
                     if (Crew[i].Carrying == ServiceItem.RepairKit) return DeliverRepairKit(i);
                     if (State.Leak == 0)
                     {
-                        string cargoResult = ClearLooseCargo();
+                        string cargoResult = ClearLooseCargo(i);
                         if (!string.IsNullOrEmpty(cargoResult)) return cargoResult;
                     }
                     if (State.Leak == 0) return "Hull is watertight.";
@@ -296,11 +298,13 @@ namespace ShipMayham
                         if (Crew[i].Carrying != ServiceItem.None) return "Free your hands before applying a quick patch.";
                         State.ReadyRepairKits--;
                         State.RepairKitsUsed++;
+                        Tally(i, TallyKind.Repairs);
                         FinishLeakRepair();
                         State.Health = Mathf.Min(100, State.Health + QuickPatchHullRecovery);
                         return "Quick patch applied! One kit used; leak sealed and up to 8 hull restored.";
                     }
                     State.RepairSteps++;
+                    Tally(i, TallyKind.Repairs);
                     if (State.RepairSteps < 4) return $"Patching leak: {State.RepairSteps}/4";
                     FinishLeakRepair();
                     return "Leak patched.";
@@ -310,6 +314,7 @@ namespace ShipMayham
                 case StationKind.Power:
                     if (!Encounter.PowerOut) return "Power is online.";
                     Encounter.PowerRepairSteps++;
+                    Tally(i, TallyKind.Repairs);
                     PowerRepairedForEvent();
                     if (Encounter.PowerRepairSteps < 3) return $"Resetting breakers: {Encounter.PowerRepairSteps}/3";
                     Encounter.PowerOut = false;
@@ -377,6 +382,7 @@ namespace ShipMayham
             p.Satisfaction = Mathf.Min(100, p.Satisfaction + 15);
             Crew[crew].Carrying = ServiceItem.None;
             State.Served++;
+            Tally(crew, TallyKind.Orders);
             RecordServiceForEvent(passenger);
             React(passenger, PassengerReaction.Thanks);
             return "Order delivered! +8 service income, paid on arrival.";
@@ -493,6 +499,7 @@ namespace ShipMayham
                 RepairKitStock = VoyageRepairKits,
                 Reputation = old.Reputation, Livery = old.Livery, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted };
             Array.Clear(Passengers, 0, Passengers.Length);
+            ResetTallies();
             nextLeak = 25;
             ResetEncounter();
             ResetEvents();

@@ -41,6 +41,16 @@ informational (nothing to press) and a `PromptTone.Blocked` prompt is drawn in r
 To add a new interactable: extend `PromptCatalog` (or build an `InteractionPrompt` where the target is found) and
 add the case to `InteractionTargeting` and the input dispatch in `PrototypeView.Update`. Control glyphs live in `HudControls.Label`.
 
+## Voyage report highlights
+
+The report that stays up after a voyage ends now closes with up to four **awards** (`Awards.Compute`). The host counts what each
+crew member did this voyage (`CrewTally`: passengers thrown, orders served, repair steps, cannon hits, fares collected, dock
+deliveries, seconds at the helm while sailing) and replicates it (`PrototypeSession.Tallies`). An award needs a minimum amount
+(2 throws or hits or fares, 3 repairs, orders or deliveries, 60 s at the helm), goes to whoever has the most (a tie shares it)
+and is shown in priority order: Passenger Hurler, Sharpshooter, Fix-It Hero, Tray Master, Fare Collector, Dock Hand, Steady Hand.
+There is no ranking table, and a crew that did nothing special gets no highlights. Solo play shows the same highlights.
+Rescues are not counted because a rescue is not done by anyone: it happens by itself after a timer.
+
 ## Signals: pings and emotes
 
 Crews have no voice or text chat, so they signal. `Q` (gamepad D-pad up): a **tap** pings what the crosshair is on (a station,

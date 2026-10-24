@@ -219,7 +219,7 @@ namespace ShipMayham
             TickResources(dt, s);
             TickObjective(session, s, local);
             TickAlerts(session, s, local, gamepad);
-            report.Tick(s);
+            report.Tick(s, session);
             map.Tick(session, local);
             harbor.Tick(local, locked);
             TickSession();
@@ -304,13 +304,13 @@ namespace ShipMayham
                 else switch (s.Phase)
                 {
                     case VoyagePhase.Boarding:
-                        text = s.Boarded == 0 ? "Board passengers at the manifest desk" : atHelm ? "Everyone aboard? Depart from the helm" : "Take the helm when the crew is ready";
+                        text = s.Boarded == 0 ? "Talk to the purser to board passengers" : atHelm ? "Everyone aboard? Depart from the helm" : "Take the helm when the crew is ready";
                         break;
                     case VoyagePhase.Sailing:
                         text = dist < VoyageSimulation.DockRadius * 3 ? "Almost there: slow down and dock" : "Keep passengers happy on the way to port";
                         break;
                     default:
-                        text = "Visit the manifest desk to start the next voyage";
+                        text = "Talk to the purser to start the next voyage";
                         break;
                 }
                 objective.text = text;

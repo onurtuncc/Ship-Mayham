@@ -53,6 +53,7 @@ namespace ShipMayham
                     held.Velocity = Quaternion.Euler(0, passengerCarryYaw[slot], 0) * new Vector3(0, 5, 8);
                     held.Satisfaction = Mathf.Max(0, held.Satisfaction - 5);
                     React(carried, PassengerReaction.Complaint);
+                    Tally(slot, TallyKind.Throws);
                     return "Wheee! Overboard means a rescue fee and unhappy passengers.";
                 }
                 held.Motion = PassengerMotion.OnDeck;
@@ -83,6 +84,7 @@ namespace ShipMayham
                 if (target.FarePaid) return "Already paid. No duplicate charge." + inspection;
                 target.FarePaid = true;
                 State.CollectedFares++;
+                Tally(slot, TallyKind.Fares);
                 React(passenger, PassengerReaction.FareCollected);
                 return "Fare collected: +40 ticket income on successful arrival." + inspection;
             }

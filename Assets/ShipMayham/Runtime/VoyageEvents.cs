@@ -250,19 +250,21 @@ namespace ShipMayham
             if (Event.Progress >= Event.Goal) ResolveEvent();
         }
 
-        private string ClearLooseCargo()
+        private string ClearLooseCargo(int slot)
         {
             if (Event.Phase != VoyageEventPhase.Active) return null;
             if (Event.Kind == VoyageEventKind.EngineOverheat)
             {
                 if (State.Speed > 1) return "Engine too hot! Ask the captain to slow below 1 m/s.";
                 Event.Progress++;
+                Tally(slot, TallyKind.Repairs);
                 if (Event.Progress < Event.Goal) return $"Venting engine: {Event.Progress}/{Event.Goal}";
                 ResolveEvent();
                 return "Engine cooled! +15 event bonus on arrival.";
             }
             if (Event.Kind != VoyageEventKind.LooseCargo) return null;
             Event.Progress++;
+            Tally(slot, TallyKind.Repairs);
             if (Event.Progress < Event.Goal) return $"Securing loose cargo: {Event.Progress}/{Event.Goal}";
             ResolveEvent();
             return "Cargo secured! +15 event bonus on arrival.";

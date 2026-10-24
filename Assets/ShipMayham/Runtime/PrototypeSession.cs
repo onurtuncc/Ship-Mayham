@@ -22,6 +22,8 @@ namespace ShipMayham
         public NetworkList<PassengerState> Passengers;
         /// <summary>Per-slot nickname and ready flag for the lobby screen and world labels.</summary>
         public NetworkList<CrewProfile> Profiles;
+        /// <summary>What each crew slot did this voyage; the voyage report turns it into awards.</summary>
+        public NetworkList<CrewTally> Tallies;
         /// <summary>Set by the connection layer before the host spawns: an online voyage waits in the lobby until the host starts it.</summary>
         public bool LobbyBeforeVoyage { get; set; }
         public bool InLobby => IsSpawned && Voyage.Value.SessionPhase == SessionPhase.Lobby;
@@ -49,6 +51,7 @@ namespace ShipMayham
             Crew = new NetworkList<CrewState>();
             Passengers = new NetworkList<PassengerState>();
             Profiles = new NetworkList<CrewProfile>();
+            Tallies = new NetworkList<CrewTally>();
             NoticeUntil = Time.unscaledTime + 8;
         }
 
@@ -162,6 +165,11 @@ namespace ShipMayham
             {
                 var profile = CrewProfile.From(Simulation.CrewName(i), Simulation.CrewReady(i));
                 if (Profiles.Count <= i) Profiles.Add(profile); else if (!Profiles[i].Equals(profile)) Profiles[i] = profile;
+            }
+            for (int i = 0; i < VoyageSimulation.MaxCrew; i++)
+            {
+                var tally = Simulation.Tallies[i];
+                if (Tallies.Count <= i) Tallies.Add(tally); else if (!Tallies[i].Equals(tally)) Tallies[i] = tally;
             }
             for (int i = 0; i < VoyageSimulation.MaxPassengers; i++)
                 if (Passengers.Count <= i) Passengers.Add(Simulation.Passengers[i]); else if (!Passengers[i].Equals(Simulation.Passengers[i])) Passengers[i] = Simulation.Passengers[i];

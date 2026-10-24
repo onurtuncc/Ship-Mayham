@@ -85,7 +85,7 @@ namespace ShipMayham
                 if (State.CraneReady < CranePadCapacity) State.CraneReady++; else State.CraneStock++;
                 return "Missed the barge! Safety crew recovered the crate to the pad/market. Aim the swinging hook inside the ring.";
             }
-            string result = RecordDockDelivery(CraneJobReward);
+            string result = RecordDockDelivery(CraneJobReward, slot);
             if (!State.DockJobActive)
                 for (int i = 0; i < MaxCrew; i++) if (Crew[i].AtCrane) { Crew[i].AtCrane = false; inputs[i] = Vector2.zero; }
             return result;

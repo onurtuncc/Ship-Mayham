@@ -227,6 +227,16 @@ namespace ShipMayham.Tests
             yield return Capture(hud, controller, "Logs/HudHelp.png");
             controller.Game.ToggleHelp();
 
+            // The voyage report with highlights.
+            var reportSim = hud.Session.Simulation;
+            reportSim.Tallies[0] = new CrewTally { Throws = 3, Orders = 5, Repairs = 4, Hits = 2 };
+            reportSim.State.LastTickets = 160; reportSim.State.LastServices = 40; reportSim.State.LastTips = 12; reportSim.State.LastCosts = 18; reportSim.State.LastNet = 194;
+            reportSim.State.Phase = VoyagePhase.Arrived;
+            yield return new WaitForSeconds(.8f);
+            yield return Capture(hud, controller, "Logs/HudReport.png");
+            reportSim.State.Phase = VoyagePhase.Boarding;
+            yield return new WaitForSeconds(.3f);
+
             // The in-game menu and its settings.
             hud.View.OpenMenu();
             yield return new WaitForSecondsRealtime(.4f);

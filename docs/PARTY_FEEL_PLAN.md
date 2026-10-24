@@ -13,7 +13,7 @@ GDD'ye göre eksikler ve party oyunu iyileştirmeleri, kararlaştırılan sıra 
 | Müzik | Procedural ve uyarlanabilir: Harbor (sakin), Sailing (sabit), Tension (korsan, sızıntı, elektrik, aktif olay); zafer ve yenilgi vuruşları. Yumuşak geçiş. Lisanslı müzik veya ses dosyası yok. |
 | Gevezelik | Yolcu ve NPC'ler için kısa hece sesleri (procedural). |
 | Ses ayarı | Settings: Master / Music / SFX kaydırıcıları. `M` hepsini kısar. |
-| Awards | Host oyuncu başına sayar: fırlatılan yolcu, servis, tamir adımı, topçu isabeti, tahsil edilen fare, kurtarma, dock job teslimi, dümen süresi. Rapor 3–4 ödül gösterir; eşik en az 2 örnek, en yüksek kazanır, beraberlikte ikisi de alır. Solo'da kendi öne çıkanları. Sıralama tablosu yok. |
+| Awards | Host oyuncu başına sayar: fırlatılan yolcu, servis, tamir adımı, topçu isabeti, tahsil edilen fare, dock job teslimi, dümen süresi (kurtarma sayılmadı: sayaçla kendiliğinden oluyor, kimseye atfedilemez). Rapor 3–4 ödül gösterir; eşik en az 2 örnek, en yüksek kazanır, beraberlikte ikisi de alır. Solo'da kendi öne çıkanları. Sıralama tablosu yok. |
 | Tips | Sırasız, olay bazlı, her biri bir kez; cihazda saklı. Settings'te Tips anahtarı ve "Reset tips". Eğitim seferi yok. |
 | Kaptan engelleri | Shoal: tohuma göre sabit yerler, hıza oranlı hasar ve yavaşlama, yaklaşırken korna, minimapte 60 m içinde görünür. Rogue wave: 5 sn önceden yönüyle uyarı, dalgaya çevirmek hasarı önler. |
 | Workload scale | Ship event sıklığı ve Pirates baskısı: 4 oyuncu 1,0 / 3 oyuncu 0,8 / 2 oyuncu 0,6 / solo 0,45. Passenger sayısı ve ekonomi sabit. Değerler tahmindir, oyuncu testiyle ayarlanmalıdır. |
@@ -24,7 +24,7 @@ GDD'ye göre eksikler ve party oyunu iyileştirmeleri, kararlaştırılan sıra 
 
 ## Dilimler
 
-Her dilim: kod, birim ve sahne testleri, doküman, commit. Ağı değiştirenler protokol sürümünü artırır (dilim 1 `UnstuckRpc` ile 13'e çıkardı; 2 `SignalRpc` ile 14'e çıkardı; 4, 6 ve 7 de artıracak).
+Her dilim: kod, birim ve sahne testleri, doküman, commit. Ağı değiştirenler protokol sürümünü artırır (dilim 1 `UnstuckRpc` ile 13'e çıkardı; 2 `SignalRpc` ile 14'e, 4 tally listesiyle 15'e çıkardı; 6 ve 7 de artıracak).
 
 1. **Ayarlar ve oyun içi menü** (Settings store, kaydırıcılar, UI ölçeği, kamera sarsıntısı, fare hassasiyeti, titreşim, Esc menüsü, "I'm stuck"). Diğer dilimlerin bağımlılığıdır.
 2. **Ping ve emote** (`Q`, çark, dünya işaretçisi, konuşma balonu, host yayını).
