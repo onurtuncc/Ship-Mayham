@@ -51,6 +51,24 @@ def sphere(radius, center, matname, segments=12, squash=(1, 1, 1)):
     bmesh.ops.translate(g, vec=Vector(center), verts=g.verts)
     _finish_part(g, matname, 0.0)
 
+def halfcyl(radius, length, center, matname, segments=14, bevel=0.0, rot=(0, 0, 0)):
+    """Upper half of a cylinder lying along X (an arched/domed lid): flat underside at center z, arch up to center z + radius.
+    center = middle of the flat underside. rot = euler degrees about that center point (e.g. (-35,0,0) tilts a hinged lid open)."""
+    g = bmesh.new()
+    ring = []
+    for sx in (-length / 2, length / 2):
+        ring.append([g.verts.new((sx, radius * math.cos(math.pi * k / segments), radius * math.sin(math.pi * k / segments))) for k in range(segments + 1)])
+    a, b = ring
+    for k in range(segments):
+        g.faces.new((a[k], a[k + 1], b[k + 1], b[k]))
+    g.faces.new((a[0], b[0], b[-1], a[-1]))
+    g.faces.new(a)
+    g.faces.new(list(reversed(b)))
+    bmesh.ops.recalc_face_normals(g, faces=g.faces)
+    R = Matrix.Rotation(math.radians(rot[2]), 4, 'Z') @ Matrix.Rotation(math.radians(rot[1]), 4, 'Y') @ Matrix.Rotation(math.radians(rot[0]), 4, 'X')
+    bmesh.ops.transform(g, matrix=Matrix.Translation(center) @ R, verts=g.verts)
+    _finish_part(g, matname, bevel)
+
 def finish(name):
     """Create the single mesh object; call once at the end."""
     me = bpy.data.meshes.new(name)

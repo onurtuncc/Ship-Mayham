@@ -16,6 +16,7 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 REVIEW_ROUNDS = int(os.environ.get("REVIEW_ROUNDS", "0"))  # image review needs a vision model (mmproj)
+LAST_OK = [True]
 THINKING = os.environ.get("THINKING", "0") == "1"
 LLAMA ="http://127.0.0.1:8080/v1/chat/completions"
 MCP = "http://127.0.0.1:9191/"
@@ -38,6 +39,7 @@ Asset rules:
     box((sx,sy,sz), (x,y,z), matname, bevel=0.0, rot=(rx,ry,rz degrees))
     cyl(radius, length, (x,y,z), matname, axis='Z'|'X'|'Y', radius2=None, segments=12, bevel=0.0)   # radius2 = radius at the +axis end (cone/taper)
     sphere(radius, (x,y,z), matname, segments=12, squash=(1,1,1))
+    halfcyl(radius, length, (x,y,z), matname, segments=14, bevel=0.0, rot=(rx,ry,rz degrees))   # domed/arched lid: upper half of a cylinder along X; (x,y,z) is the middle of its FLAT underside; rot=(-35,0,0) opens a lid hinged at the back
     finish('ExactAssetName')                           -> creates the single mesh object; call once at the end
   Plan first: write named constants (W, D, H, leg_x ...) at the top and DERIVE every part's size and center from them with arithmetic so touching parts overlap by ~0.01-0.02 m. Never guess a position. Each part must be placed with its center such that it touches or overlaps its neighbour (e.g. a part resting on top of another has center z = top_z + half_height - 0.01).
 - Principled BSDF Base Color is LINEAR: use dark saturated values (e.g. wood (0.12,0.055,0.02)-(0.25,0.12,0.045), iron (0.03,0.03,0.035)); sRGB-looking values render washed-out and pale.
@@ -189,6 +191,7 @@ async def one(session, tools, name, desc, idx, outdir, instructions, feedback=""
                 args["code"] = WIPE + args["code"]
             res = await session.call_tool(c["function"]["name"], args)
             txt = text_of(res, 6000)
+            LAST_OK[0] = '"status": "error"' not in txt
             log.write(f"<- {txt}\n")
             msgs.append({"role": "tool", "tool_call_id": c["id"], "content": txt})
 
