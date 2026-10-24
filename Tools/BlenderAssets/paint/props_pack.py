@@ -163,10 +163,75 @@ def barrel_float():
     sphere(0.05, (0, 0, 0.66), 'Red', 8)
     finish('Barrel_Float')
 
+
+# ------------------------------------------------------------------ optional extras: water hazards, beach critters, collectibles
+def shark_fin():
+    palette(); mat('Shark', (0.06, 0.10, 0.15)); mat('SharkLight', (0.20, 0.27, 0.33)); mat('Foam', (0.75, 0.85, 0.9), 0.9)
+    n = 18
+    for i in range(n):                                   # swept dorsal fin built from slices: base is long, tip is short and leans back
+        f = i / (n - 1); h = 0.5 / n
+        length = 0.36 * (1 - f) ** 1.15 + 0.035; thick = 0.07 - 0.045 * f
+        box((thick, length, h * 1.9), (0, -0.34 * f ** 1.7 - 0.02 * (1 - f), h * i + h / 2), 'Shark', 0.004)
+    ring(0.30, 0.035, (0, -0.04, 0.03), ['Foam'], 16, 5)                                  # wake ring
+    finish('SharkFin')
+
+def jellyfish():
+    palette(); mat('Jelly', (0.55, 0.18, 0.40), 0.3); mat('JellyLight', (0.85, 0.45, 0.65), 0.3); mat('Tentacle', (0.40, 0.10, 0.30), 0.4)
+    sphere(0.22, (0, 0, 0.42), 'Jelly', 14, squash=(1, 1, 0.75))
+    ring(0.20, 0.03, (0, 0, 0.30), ['JellyLight'], 14, 5)
+    for k in range(8):
+        a = k * PI / 4; cyl(0.014, 0.34 + 0.06 * (k % 2), (0.12 * math.cos(a), 0.12 * math.sin(a), 0.14), 'Tentacle', 'Z', segments=6)
+    cyl(0.04, 0.22, (0, 0, 0.18), 'JellyLight', 'Z', radius2=0.02, segments=8)
+    finish('Jellyfish')
+
+def crab():
+    palette(); mat('Shell', (0.55, 0.10, 0.03), 0.5); mat('ShellLight', (0.80, 0.25, 0.08), 0.5); mat('Eye', (0.01, 0.01, 0.012))
+    sphere(0.17, (0, 0, 0.11), 'Shell', 12, squash=(1.45, 1.0, 0.55))
+    for sx in (-1, 1):
+        sphere(0.07, (sx * 0.30, 0.18, 0.12), 'ShellLight', 10, squash=(1.2, 1, 0.8)); box((0.05, 0.14, 0.05), (sx * 0.22, 0.10, 0.11), 'Shell', 0.01, rot=(0, 0, sx * 30))
+        box((0.10, 0.05, 0.04), (sx * 0.36, 0.25, 0.12), 'ShellLight', 0.01, rot=(0, 0, sx * -35))
+        cyl(0.012, 0.06, (sx * 0.07, 0.12, 0.25), 'Shell', 'Z', segments=6); sphere(0.028, (sx * 0.07, 0.12, 0.29), 'White', 8); sphere(0.014, (sx * 0.07, 0.14, 0.295), 'Eye', 6)
+        for k in range(3): box((0.16, 0.025, 0.025), (sx * 0.26, -0.04 - 0.07 * k, 0.07), 'Shell', 0.006, rot=(0, -25 * sx, sx * (-14 + 14 * k)))
+    finish('Crab')
+
+def starfish():
+    palette(); mat('Star', (0.70, 0.18, 0.05), 0.7); mat('StarLight', (0.90, 0.45, 0.15), 0.7)
+    sphere(0.07, (0, 0, 0.03), 'StarLight', 10, squash=(1, 1, 0.5))
+    for k in range(5):
+        a = k * 2 * PI / 5; cyl(0.04, 0.17, (0.10 * math.cos(a), 0.10 * math.sin(a), 0.025), 'Star', 'Y', radius2=0.014, segments=8) if False else None
+        box((0.15, 0.06, 0.04), (0.10 * math.cos(a), 0.10 * math.sin(a), 0.025), 'Star', 0.015, rot=(0, 0, math.degrees(a)))
+        box((0.07, 0.035, 0.03), (0.19 * math.cos(a), 0.19 * math.sin(a), 0.022), 'StarLight', 0.01, rot=(0, 0, math.degrees(a)))
+    finish('Starfish')
+
+def bucket():
+    palette()
+    cyl(0.17, 0.30, (0, 0, 0.15), 'Wood', 'Z', radius2=0.21, segments=14, bevel=0.008)
+    for z, r in ((0.06, 0.18), (0.24, 0.205)): cyl(r + 0.006, 0.035, (0, 0, z), 'Iron', 'Z', segments=14)
+    cyl(0.185, 0.02, (0, 0, 0.27), 'WoodDark', 'Z', segments=14)
+    for sx in (-1, 1): box((0.03, 0.03, 0.04), (sx * 0.215, 0, 0.30), 'Iron', 0.005)
+    ring(0.215, 0.012, (0, 0, 0.30), ['Iron'], 16, 4, 'Y')
+    finish('Bucket')
+
+def bottle():
+    palette(); mat('Glass', (0.05, 0.28, 0.22), 0.2); mat('Paper', (0.55, 0.45, 0.28), 0.9); mat('Cork', (0.35, 0.20, 0.08), 0.9)
+    cyl(0.07, 0.24, (0, 0, 0.14), 'Glass', 'Z', segments=12, bevel=0.01); sphere(0.07, (0, 0, 0.27), 'Glass', 10, squash=(1, 1, 0.8))
+    cyl(0.032, 0.14, (0, 0, 0.34), 'Glass', 'Z', segments=10, bevel=0.005); cyl(0.04, 0.03, (0, 0, 0.41), 'Cork', 'Z', segments=10)
+    cyl(0.02, 0.17, (0, 0, 0.14), 'Paper', 'Z', segments=8); box((0.02, 0.03, 0.05), (0, 0.0, 0.06), 'Red', 0.004)
+    finish('MessageBottle')
+
+def treasure_map():
+    palette(); mat('Paper', (0.60, 0.48, 0.28), 0.9); mat('PaperDark', (0.35, 0.24, 0.10), 0.9)
+    cyl(0.035, 0.36, (0, 0, 0.04), 'Paper', 'X', segments=12, bevel=0.004)
+    for sx in (-1, 1): cyl(0.045, 0.025, (sx * 0.19, 0, 0.04), 'WoodDark', 'X', segments=10); cyl(0.022, 0.03, (sx * 0.205, 0, 0.04), 'Brass', 'X', segments=8)
+    cyl(0.038, 0.05, (0.0, 0, 0.04), 'Red', 'X', segments=12)                                      # ribbon
+    box((0.20, 0.04, 0.012), (-0.02, 0.0, 0.082), 'PaperDark', 0.003); box((0.012, 0.012, 0.012), (0.05, 0, 0.092), 'Red', 0.003)
+    finish('TreasureMap')
+
 PROPS = {'RopeLadder': rope_ladder, 'GangwayGate': gate, 'Floaties': floaties, 'FishingRod': rod,
          'Fish_Small': lambda: fish(0.30, (0.10, 0.28, 0.55), (0.45, 0.60, 0.70), 'Fish_Small'),
          'Fish_Big': lambda: fish(0.50, (0.75, 0.22, 0.04), (0.85, 0.65, 0.35), 'Fish_Big'),
-         'Fish_Boot': boot, 'Shovel': shovel, 'DigSpot': dig_spot, 'DigHole': dig_hole, 'LockBox': lockbox, 'SunkenCoin': coin, 'Barrel_Float': barrel_float}
+         'Fish_Boot': boot, 'Shovel': shovel, 'DigSpot': dig_spot, 'DigHole': dig_hole, 'LockBox': lockbox, 'SunkenCoin': coin, 'Barrel_Float': barrel_float,
+         'SharkFin': shark_fin, 'Jellyfish': jellyfish, 'Crab': crab, 'Starfish': starfish, 'Bucket': bucket, 'MessageBottle': bottle, 'TreasureMap': treasure_map}
 PROPS[WHICH]()
 bpy.ops.wm.save_as_mainfile(filepath=OUT)
 print('BUILT', WHICH, [o.name for o in bpy.data.objects])
