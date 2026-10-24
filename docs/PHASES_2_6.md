@@ -119,3 +119,26 @@ Dört süreçli kontrol, her yeni kararın uzak Player tarafından denenmesi vey
 Unity'nin build sırasında kendiliğinden yazdığı genel render/servis ayarları ve materyal metadata'sı bu dala dahil edilmedi.
 Üretilen DefaultVolumeProfile kopyaları silinmedi; Logs/GeneratedBuildAssets altında geri alınabilir biçimde saklandı.
 Önceki doğrulamalar, main ile uzlaştırmadan önceki dalı kapsar. Birleşim sonuçları aşağıda ayrıca kaydedilir; uzak depoya push yapılmaz.
+
+## Main ile uzlaştırma — 24 Ekim 2026
+
+Main'in 3b69c49 commit'ine kadar olan çalışmaları bu dala birleştirildi.
+Main'in HazardLogic/VoyageHazards/HazardView uygulaması tek otorite olarak korundu;
+tekrar eden NavigationState, hasar döngüsü ve kayalık çizimi kaldırıldı.
+Güvenli fiziksel güzergâh yeni kayalık zarfının dışına taşındı ve 128 tohumla sınandı.
+Yeni sanat dosyaları, SittingSip klibi ve dokulu prop koruma kodu kayıpsız dahil edildi.
+
+- Logs/Merge-Isolated.xml: 501 test; 500 başarılı, 0 başarısız, 1 isteğe bağlı capture atlandı.
+- Logs/Merge-Build.log: Windows development build başarılı.
+- Logs/Merge-Latest-Art-Compile.log: son sanat/Editor değişikliklerinin derlemesi başarılı.
+- Logs/VoyageSmoke-20261024-150337-3d86e4: dört süreç exit 0 / SHIP_SMOKE_PASS.
+  Varış Wallet=227, hazırlık Wallet=203 / Food=23 / Drink=24 / Hull shield=20.
+
+Normal LAN varsayılanı 7777 olarak korundu. Tek-host testleri OS-assigned port (0),
+development smoke 19777 kullanır; paralel ajanların oturumları durdurulmaz.
+Düz-seyir uyumluluk seferi açık merkez hattı olan sabit Coastal seed 1 kullanır;
+tehlikeler kapatılmaz, çarpışma/dalga kuralları HazardTests'te farklı tohumlarla sınanır.
+
+Main'e aktarma öncesi main çalışma kopyasında başka modelin çakışan, commitlenmemiş
+oynanış/animasyon değişiklikleri görüldü. Bunlar stash'lenmedi, değiştirilmedi ve commitlenmedi.
+Main'e merge henüz yapılmadı; diğer çalışmanın commitlenmesi/koordinasyonu bekleniyor.

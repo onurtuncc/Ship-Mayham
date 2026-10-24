@@ -35,6 +35,9 @@ GDD genişletmesinin 2–6 numaralı işleri için `NavigationPhaseTests`, `Pass
 gerçek sahnede sınar. Smoke akışında `ConfigureScriptedInput` kullanın: yalnız `PrototypeView` kapatılırsa
 `PrototypeClientMotion` sıfır komut göndermeye devam eder ve held-input RPC hareketi uygulanmaz.
 
+Paralel doğrulamalarda tek-host testleri `hud.Connect(true, "127.0.0.1", 0)` ile boş port alır.
+Normal iki-parametreli Connect varsayılan 7777'yi korur; development smoke portu 19777'dir.
+
 - Sahneyi okuyan testler `PrototypeSceneFixture`'dan türer; sahneyi eklemeli açıp yalnızca kendi açtığını kapatır. Test sonunda açık sahne bırakılmamalıdır.
 - PlayMode testleri `yield return new EnterPlayMode()` ve `EditorSceneManager.LoadSceneAsyncInPlayMode` çağrılarını **test metodunun kendisinde** yapmalıdır. Yardımcı bir `IEnumerator` içinden yapılırsa sahne yüklenmez ve test `NullReferenceException` ile düşer.
 - Solo akış için kalıp: sahneyi yükle, `hud.ConnectSolo()`, `Session.IsSpawned` olana kadar bekle. Etkileşimler arasında 0,35 sn bekleme vardır; bekleme süreleri bundan rahat büyük olmalıdır (0,6 sn).
