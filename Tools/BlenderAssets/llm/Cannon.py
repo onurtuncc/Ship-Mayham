@@ -28,7 +28,7 @@ B_RADIUS_MUZZLE = 0.075
 B_LENGTH = 1.0
 B_CENTER_X = 0.0
 B_CENTER_Y = 0.1
-B_CENTER_Z = 0.42 # Barrel bottom is 0.42 - 0.1 = 0.32 (matches rail top)
+B_CENTER_Z = 0.42 
 
 # Bands (Rings)
 BAND_Y_POS = [-0.3, 0.1, 0.45, 0.6]
@@ -57,35 +57,37 @@ def run():
 
     # 1. Carriage Side Rails
     for x in [-X_RAIL, X_RAIL]:
-        box((W_RAIL, L_RAIL, H_RAIL), (x, 0, Z_RAIL_CENTER), mat_wood, bevel=0.02)
+        box((W_RAIL, L_RAIL, H_RAIL), (x, 0, Z_RAIL_CENTER), mat_wood, bevel=0.008)
 
     # 2. Carriage Cross Blocks
     for y in [Y_CROSS_FRONT, Y_CROSS_BACK]:
-        box((W_CROSS, D_CROSS, H_CROSS), (0, y, Z_CROSS_CENTER), mat_wood, bevel=0.02)
+        box((W_CROSS, D_CROSS, H_CROSS), (0, y, Z_CROSS_CENTER), mat_wood, bevel=0.008)
 
     # 3. Wheels
     for wx, wy in [(-X_WHEEL, Y_WHEEL_BACK), (X_WHEEL, Y_WHEEL_BACK), 
                    (-X_WHEEL, Y_WHEEL_FRONT), (X_WHEEL, Y_WHEEL_FRONT)]:
-        cyl(R_WHEEL, 0.08, (wx, wy, Z_WHEEL), mat_wood, axis='X', bevel=0.02)
-        cyl(R_WHEEL + 0.015, 0.09, (wx, wy, Z_WHEEL), mat_rim, axis='X', bevel=0.02)
+        cyl(R_WHEEL, 0.08, (wx, wy, Z_WHEEL), mat_wood, axis='X', segments=10, bevel=0.0)
+        cyl(R_WHEEL + 0.015, 0.09, (wx, wy, Z_WHEEL), mat_rim, axis='X', segments=10, bevel=0.0)
         hub_x = wx + (0.04 if wx < 0 else -0.04)
-        cyl(0.04, 0.02, (hub_x, wy, Z_WHEEL), mat_brass, axis='Z', bevel=0.01)
+        cyl(0.04, 0.02, (hub_x, wy, Z_WHEEL), mat_brass, axis='Z', segments=8, bevel=0.0)
 
     # 4. Barrel
-    cyl(B_RADIUS_BREECH, B_LENGTH, (B_CENTER_X, B_CENTER_Y, B_CENTER_Z), mat_iron, axis='Y', radius2=B_RADIUS_MUZZLE, segments=12, bevel=0.02)
+    cyl(B_RADIUS_BREECH, B_LENGTH, (B_CENTER_X, B_CENTER_Y, B_CENTER_Z), mat_iron, axis='Y', radius2=B_RADIUS_MUZZLE, segments=12, bevel=0.0)
 
     # 5. Cascabel
-    sphere(C_RADIUS, (0, C_Y, B_CENTER_Z), mat_iron, segments=12)
+    sphere(C_RADIUS, (0, C_Y, B_CENTER_Z), mat_iron, segments=8)
 
     # 6. Trunnion Blocks
     for tx in [-T_X, T_X]:
-        box((T_W, T_D, T_H), (tx, T_Y, T_Z), mat_iron, bevel=0.01)
+        box((T_W, T_D, T_H), (tx, T_Y, T_Z), mat_iron, bevel=0.0)
 
     # 7. Brass Bands
+    y_start = B_CENTER_Y - (B_LENGTH / 2)
     for by in BAND_Y_POS:
-        r_at_y = 0.1 + (by + 0.4) * (-0.025)
+        t = (by - y_start) / B_LENGTH
+        r_at_y = B_RADIUS_BREECH + t * (B_RADIUS_MUZZLE - B_RADIUS_BREECH)
         band_r = r_at_y + BAND_GAP
-        cyl(band_r, BAND_DEPTH, (0, by, B_CENTER_Z), mat_brass, axis='Y', segments=12, bevel=0.01)
+        cyl(band_r, BAND_DEPTH, (0, by, B_CENTER_Z), mat_brass, axis='Y', segments=12, bevel=0.0)
 
     finish('Cannon')
 

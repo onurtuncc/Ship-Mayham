@@ -17,10 +17,9 @@ BOARD_H = 0.6
 BOARD_D = 0.08
 BOARD_Z = 0.95
 
-# Gull specific constants
+# Gull specific constants (Updated per reviewer)
 GULL_Y_FRONT = -0.075
 GULL_Y_BACK = 0.075
-GULL_THICK = 0.04
 
 # Colors (Linear/Dark Saturated)
 COL_WOOD = (0.12, 0.055, 0.02)
@@ -54,24 +53,27 @@ box((BOARD_W, BOARD_D, BOARD_H), (0, 0, BOARD_Z), mat_wood, bevel=0.015)
 box((1.08, 0.09, 0.48), (0, -0.04, BOARD_Z), mat_blue, bevel=0.01)
 box((1.08, 0.09, 0.48), (0, 0.04, BOARD_Z), mat_blue, bevel=0.01)
 
-# Helper function for a cleaner seagull shape
+# 6. Updated Seagull drawing function
 def draw_gull(y_pos):
     # Body: slightly tapered ellipsoid-like box
-    box((0.25, GULL_THICK, 0.12), (0, y_pos, 0.93), mat_white, bevel=0.01)
+    # reviewer: box((0.28,0.05,0.1),(0,y,0.93),bevel=0.01)
+    box((0.28, 0.05, 0.1), (0, y_pos, 0.93), mat_white, bevel=0.01)
     
-    # Wings: angled upward and outward
-    # Left wing
-    box((0.35, GULL_THICK, 0.06), (-0.2, y_pos, 0.98), mat_white, rot=(0, -35, 0), bevel=0.005)
-    # Right wing
-    box((0.35, GULL_THICK, 0.06), (0.2, y_pos, 0.98), mat_white, rot=(0, 35, 0), bevel=0.005)
+    # Wings: Shallow V shape (tips pointing UP)
+    # reviewer: left wing box((0.3,0.05,0.07),(-0.25,y,0.985),'White',bevel=0.01,rot=(0,18,0))
+    # reviewer: right wing box((0.3,0.05,0.07),(0.25,y,0.985),'White',bevel=0.01,rot=(0,-18,0))
+    box((0.3, 0.05, 0.07), (-0.25, y_pos, 0.985), mat_white, bevel=0.01, rot=(0, 18, 0))
+    box((0.3, 0.05, 0.07), (0.25, y_pos, 0.985), mat_white, bevel=0.01, rot=(0, -18, 0))
     
     # Head: small sphere
-    sphere(0.055, (0.18, y_pos, 1.0), mat_white, segments=12)
+    # reviewer: sphere(0.06,(0.17,y,0.97))
+    sphere(0.06, (0.17, y_pos, 0.97), mat_white, segments=12)
     
-    # Beak: small orange cone-like box
-    box((0.06, GULL_THICK, 0.02), (0.25, y_pos, 1.0), mat_orange, bevel=0.001)
+    # Beak: small orange box
+    # reviewer: box((0.07,0.04,0.025),(0.25,y,0.955),'Orange')
+    box((0.07, 0.04, 0.025), (0.25, y_pos, 0.955), mat_orange, bevel=0.001)
 
-# 6. White seagull on the FRONT and BACK
+# 7. White seagull on the FRONT and BACK
 draw_gull(GULL_Y_FRONT)
 draw_gull(GULL_Y_BACK)
 
