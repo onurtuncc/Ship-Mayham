@@ -149,7 +149,7 @@ namespace ShipMayham
                     if (session.LocalCarriedPassengerIndex != 0) { Fail("Remote passenger pickup failed"); yield break; }
                     session.PassengerCommandRpc(-1, PassengerAction.CarryOrDrop, 0);
                     yield return new WaitForSeconds(.5f);
-                    if (session.Passengers[0].Motion != PassengerMotion.OnDeck) { Fail("Remote passenger drop failed"); yield break; }
+                    if (session.Passengers[0].Motion == PassengerMotion.Carried) { Fail("Remote passenger drop failed"); yield break; }
                     session.PassengerCommandRpc(0, PassengerAction.CarryOrDrop, 0);
                     yield return new WaitForSeconds(.5f);
                     yield return WalkTo(new Vector2(-5, -1.5f));

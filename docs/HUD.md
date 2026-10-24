@@ -62,6 +62,18 @@ rate-limits each crew member to one per second (`SignalLimiter`), cleans the lab
 and emote bubbles above the sender's head; `PrototypeFeedback` plays the gesture (wave, bow, point, angry) and a short cue.
 Signals never change the voyage.
 
+## Passenger handling
+
+Lifting a passenger takes them out of their seat, so they have to get back to one. A thrown passenger flails in the air, lies on the
+deck (`Lying`), is dizzy (`Dizzy`, the "Ow..." and "Everything is spinning..." lines) and then walks back to their seat (`Walking`,
+"Heading back to my seat") and sits. A passenger who was only put down stands for half a second ("Was that necessary?") and walks to
+the nearest free seat, which may not be their own; a rescued passenger climbs onto the deck edge, is dizzy and walks back. While a
+passenger is away from a seat, tickets and orders cannot be handled ("Passenger is busy"), a walking or dizzy passenger can be lifted
+again ("Lift passenger", G), and a passenger lying on the deck cannot. Orders and patience keep counting. The landing triggers an
+"Oof!" popup and a thud. Drinks play a seated sip (`Mixamo_SittingSip`) and food a seated clap; the old drinking clip stood the
+passenger up and walked them 2.8 m, which is why it is no longer used. Standing and sitting use quick crossfades because the
+Mixamo sit/stand clips end 0.5 m away from the seated idle pose.
+
 ## Captain hazards
 
 While sailing, the alert stack warns about the two hazards. **SHOAL AHEAD** (amber) appears when a shoal lies within 45 m of the ship's

@@ -194,7 +194,7 @@ namespace ShipMayham
         private ServiceItem[] displayedItems;
         private MaterialPropertyBlock itemProperties;
         private Vector3[] passengerVisualOffsets, passengerLabelOffsets;
-        private Quaternion[] passengerVisualRotations;
+        private Quaternion[] passengerVisualRotations, passengerFacing;
         private Transform[] passengerBuoys;
         private bool[] displayedShore, crewActiveLastFrame;
         private MaterialPropertyBlock[] originalLiveryBlocks;
@@ -271,11 +271,12 @@ namespace ShipMayham
             passengerVisualOffsets = new Vector3[PassengerVisuals.Length];
             passengerLabelOffsets = new Vector3[PassengerVisuals.Length];
             passengerVisualRotations = new Quaternion[PassengerVisuals.Length];
+            passengerFacing = new Quaternion[PassengerVisuals.Length];
             passengerBuoys = new Transform[PassengerVisuals.Length];
             for (int i = 0; i < PassengerVisuals.Length; i++)
             {
                 passengerVisualOffsets[i] = PassengerVisuals[i].localPosition;
-                passengerVisualRotations[i] = PassengerVisuals[i].localRotation;
+                passengerVisualRotations[i] = passengerFacing[i] = PassengerVisuals[i].localRotation;
                 passengerLabelOffsets[i] = PassengerLabels[i].transform.localPosition;
                 passengerBuoys[i] = PassengerVisuals[i].Find("RescueFloat_Visual");
             }
@@ -471,6 +472,28 @@ namespace ShipMayham
         private void FindTarget(CrewState crew) =>
             Target = InteractionTargeting.Find(Session, crew, Camera.transform.position, Camera.transform.forward);
 
+        /// <summary>
+        /// Which way a passenger body faces: toward where they walk, unchanged while they are being handled or lying down and
+        /// back to the seat's orientation once seated. Smoothed so the turn on arrival is not a snap.
+        /// </summary>
+        private Quaternion PassengerFacing(int index, in PassengerState p, Quaternion current)
+        {
+            Quaternion desired = current;
+            if (p.Motion == PassengerMotion.Returning)
+            {
+                var flat = new Vector3(p.Velocity.x, 0, p.Velocity.z);
+                if (flat.sqrMagnitude > .01f) desired = Quaternion.LookRotation(flat, Vector3.up);
+            }
+            else if (p.Motion == PassengerMotion.OnDeck)
+            {
+                int seat = p.SeatClaim == 0 ? index : p.SeatClaim - 1;
+                desired = passengerVisualRotations[Mathf.Clamp(seat, 0, passengerVisualRotations.Length - 1)];
+            }
+            else if (p.Motion == PassengerMotion.Carried || p.Motion == PassengerMotion.Airborne || p.Motion == PassengerMotion.Rescuing)
+                return current;
+            return Quaternion.Slerp(current, desired, 1 - Mathf.Exp(-12f * Time.deltaTime));
+        }
+
         private void LateUpdate()
         {
             if (Session == null || Camera == null) return;
@@ -613,7 +636,8 @@ namespace ShipMayham
                 Vector3 destination = ship.TransformPoint(p.Position + passengerVisualOffsets[i]);
                 PassengerVisuals[i].position = heldByMe ? Camera.transform.TransformPoint(HeldPassengerOffset) :
                     Vector3.Lerp(PassengerVisuals[i].position, destination, blend);
-                PassengerVisuals[i].rotation = ship.rotation * passengerVisualRotations[i] *
+                passengerFacing[i] = PassengerFacing(i, p, passengerFacing[i]);
+                PassengerVisuals[i].rotation = ship.rotation * passengerFacing[i] *
                     (p.Motion == PassengerMotion.Airborne ? Quaternion.Euler(0, 0, Time.time * 360) : Quaternion.identity);
                 if (p.Motion == PassengerMotion.OnDeck && (p.Routine == PassengerRoutine.Strolling || p.Routine == PassengerRoutine.Returning || p.Routine == PassengerRoutine.Working))
                 {

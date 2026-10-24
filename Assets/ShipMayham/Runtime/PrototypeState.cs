@@ -11,7 +11,8 @@ namespace ShipMayham
     public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate, Extinguisher, TemporaryPlug }
     public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
-    public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing }
+    /// <summary>Landing (lying after a throw), Dizzy, Standing (just put down) and Returning (walking to a seat) are the transitions between being handled and sitting again.</summary>
+    public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing, Landing, Dizzy, Standing, Returning }
     public enum PassengerAction : byte { CheckTicket, CarryOrDrop, Throw }
     public enum PassengerReaction : byte { None, Thanks, TicketDue, FareCollected, Complaint, Rescued }
     public enum PassengerPersonality : byte { Patient, Impatient, Nervous }
@@ -121,6 +122,8 @@ namespace ShipMayham
         public bool TicketChecked, FarePaid;
         public PassengerMotion Motion;
         public int CarrierSlot;
+        /// <summary>0 = the passenger's own seat (their index); n = seat n-1, claimed after being put down.</summary>
+        public byte SeatClaim;
         public Vector3 Position, Velocity;
         public float RecoveryRemaining, ReactionRemaining;
         public PassengerReaction Reaction;
@@ -135,6 +138,7 @@ namespace ShipMayham
             s.SerializeValue(ref Active); s.SerializeValue(ref Request);
             s.SerializeValue(ref Satisfaction); s.SerializeValue(ref RequestTimer);
             s.SerializeValue(ref TicketChecked); s.SerializeValue(ref FarePaid); s.SerializeValue(ref Motion); s.SerializeValue(ref CarrierSlot);
+            s.SerializeValue(ref SeatClaim);
             s.SerializeValue(ref Position); s.SerializeValue(ref Velocity); s.SerializeValue(ref RecoveryRemaining);
             s.SerializeValue(ref Reaction); s.SerializeValue(ref ReactionRemaining);
             s.SerializeValue(ref Personality); s.SerializeValue(ref Routine); s.SerializeValue(ref RoutineTarget);

@@ -56,19 +56,23 @@ namespace ShipMayham
                     Tally(slot, TallyKind.Throws);
                     return "Wheee! Overboard means a rescue fee and unhappy passengers.";
                 }
-                held.Motion = PassengerMotion.OnDeck;
+                held.Motion = PassengerMotion.Standing;
+                held.RecoveryRemaining = StandingSeconds;
                 Vector3 ahead = Quaternion.Euler(0, passengerCarryYaw[slot], 0) * Vector3.forward * 1.3f;
                 held.Position = SafePassengerPosition(carried, Crew[slot].Position + new Vector2(ahead.x, ahead.z));
                 held.Velocity = Vector3.zero;
                 React(carried, PassengerReaction.Complaint);
-                if (PassengerPlacedForEvent(carried)) return "New seat found! +15 event bonus on arrival.";
-                return "Passenger put down. They can be served at their new position.";
+                bool placed = PassengerPlacedForEvent(carried);
+                ClaimNearestFreeSeat(carried);
+                if (placed) return "New seat found! +15 event bonus on arrival.";
+                return "Passenger put down. They will walk to the nearest free seat.";
             }
             if (airborne) return "Land before interacting.";
             if (action == PassengerAction.Throw) return "Pick up a passenger first (G / B).";
             if (passenger < 0 || passenger >= MaxPassengers || !Passengers[passenger].Active) return "Look at a nearby passenger.";
             ref var target = ref Passengers[passenger];
-            if (target.Motion != PassengerMotion.OnDeck) return "Passenger is being carried, flying or awaiting rescue.";
+            if (action == PassengerAction.CheckTicket && target.Motion != PassengerMotion.OnDeck) return "Passenger is busy. Wait until they are back in a seat.";
+            if (!CanBeLifted(target.Motion)) return target.Motion == PassengerMotion.Landing ? "Passenger is lying dazed. Give them a moment." : "Passenger is being carried, flying or awaiting rescue.";
             if (Vector2.Distance(Crew[slot].Position, new Vector2(target.Position.x, target.Position.z)) > InteractionRange) return "Move closer to the passenger.";
             if (action == PassengerAction.CheckTicket)
             {
@@ -106,12 +110,85 @@ namespace ShipMayham
             Passengers[passenger].ReactionRemaining = 4;
         }
 
+        public const float LandingSeconds = 1.2f, DizzySeconds = 1f, StandingSeconds = .5f, PassengerWalkSpeed = 1.6f,
+            ReturnTimeoutSeconds = 8f, SeatArrivalDistance = .12f;
+
+        /// <summary>The seat a passenger sits in: their own unless they were put down elsewhere and claimed another.</summary>
+        public int SeatOf(int passenger) => Passengers[passenger].SeatClaim == 0 ? passenger : Passengers[passenger].SeatClaim - 1;
+
+        /// <summary>Passengers that are walking back or dazed can be picked up again; a passenger lying on the deck cannot.</summary>
+        public static bool CanBeLifted(PassengerMotion motion) =>
+            motion == PassengerMotion.OnDeck || motion == PassengerMotion.Standing || motion == PassengerMotion.Dizzy || motion == PassengerMotion.Returning;
+
+        /// <summary>Seats nobody else claims. A passenger's own seat is always free for them.</summary>
+        private int NearestFreeSeat(int passenger, Vector2 from)
+        {
+            int best = SeatOf(passenger);
+            float bestDistance = float.MaxValue;
+            for (int seat = 0; seat < Seats.Length; seat++)
+            {
+                bool taken = false;
+                for (int other = 0; other < MaxPassengers && !taken; other++)
+                    taken = other != passenger && Passengers[other].Active && SeatOf(other) == seat;
+                if (taken) continue;
+                float distance = Vector2.Distance(from, Seats[seat]);
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                best = seat;
+            }
+            return best;
+        }
+
+        private void ClaimNearestFreeSeat(int passenger)
+        {
+            var p = Passengers[passenger].Position;
+            int seat = NearestFreeSeat(passenger, new Vector2(p.x, p.z));
+            Passengers[passenger].SeatClaim = (byte)(seat == passenger ? 0 : seat + 1);
+        }
+
+        private bool BlockedByStation(Vector2 point)
+        {
+            foreach (var station in Stations) if ((point - station.Position).sqrMagnitude < StationClearance * StationClearance) return true;
+            return false;
+        }
+
+        private void BeginReturn(int passenger)
+        {
+            Passengers[passenger].Motion = PassengerMotion.Returning;
+            Passengers[passenger].RecoveryRemaining = ReturnTimeoutSeconds;
+        }
+
+        /// <summary>Walks the passenger toward their seat, steering around stations. A stuck passenger is seated when the timeout runs out.</summary>
+        private void TickReturn(int passenger, float dt)
+        {
+            ref var p = ref Passengers[passenger];
+            Vector2 position = new Vector2(p.Position.x, p.Position.z), goal = Seats[SeatOf(passenger)];
+            float distance = Vector2.Distance(position, goal);
+            p.RecoveryRemaining -= dt;
+            if (distance <= SeatArrivalDistance || p.RecoveryRemaining <= 0) { ReturnPassengerToSeat(passenger); return; }
+            Vector2 direction = (goal - position) / distance;
+            float step = Mathf.Min(distance, PassengerWalkSpeed * dt);
+            foreach (float angle in SteerAngles)
+            {
+                Vector2 heading = Quaternion.Euler(0, 0, angle) * direction;
+                Vector2 candidate = position + heading * step;
+                if (BlockedByStation(candidate)) continue;
+                p.Position = new Vector3(candidate.x, .5f, candidate.y);
+                p.Velocity = new Vector3(heading.x, 0, heading.y) * PassengerWalkSpeed;
+                return;
+            }
+            p.Velocity = Vector3.zero;
+        }
+
+        private static readonly float[] SteerAngles = { 0, 50, -50, 100, -100 };
+
         private void ReturnPassengerToSeat(int passenger)
         {
             ref var p = ref Passengers[passenger];
             p.Motion = PassengerMotion.OnDeck;
             p.CarrierSlot = -1;
-            p.Position = new Vector3(Seats[passenger].x, .5f, Seats[passenger].y);
+            int seat = SeatOf(passenger);
+            p.Position = new Vector3(Seats[seat].x, .5f, Seats[seat].y);
             p.Velocity = Vector3.zero;
             p.RecoveryRemaining = 0;
             p.Routine = PassengerRoutine.Seated; p.RoamIn = 15 + passenger * 4;
@@ -130,7 +207,8 @@ namespace ShipMayham
                     if (crewClear && Mathf.Abs(candidate.x) <= DeckBounds.x && Mathf.Abs(candidate.y) <= DeckBounds.y && Walkable(candidate, passenger))
                         return new Vector3(candidate.x, .5f, candidate.y);
                 }
-            return new Vector3(Seats[passenger].x, .5f, Seats[passenger].y);
+            int seat = SeatOf(passenger);
+            return new Vector3(Seats[seat].x, .5f, Seats[seat].y);
         }
 
         private void TickPassengers(float dt)
@@ -162,17 +240,33 @@ namespace ShipMayham
                     else if (p.Position.y <= .5f)
                     {
                         Vector3 landing = SafePassengerPosition(i, new Vector2(p.Position.x, p.Position.z));
-                        p.Motion = PassengerMotion.OnDeck;
+                        p.Motion = PassengerMotion.Landing;
+                        p.RecoveryRemaining = LandingSeconds;
                         p.Position = landing;
                         p.Velocity = Vector3.zero;
                     }
                 }
+                else if (p.Motion == PassengerMotion.Landing)
+                {
+                    p.RecoveryRemaining -= dt;
+                    if (p.RecoveryRemaining <= 0) { p.Motion = PassengerMotion.Dizzy; p.RecoveryRemaining = DizzySeconds; }
+                }
+                else if (p.Motion == PassengerMotion.Dizzy || p.Motion == PassengerMotion.Standing)
+                {
+                    p.RecoveryRemaining -= dt;
+                    if (p.RecoveryRemaining <= 0) BeginReturn(i);
+                }
+                else if (p.Motion == PassengerMotion.Returning) TickReturn(i, dt);
                 else if (p.Motion == PassengerMotion.Rescuing)
                 {
                     p.RecoveryRemaining = Mathf.Max(0, p.RecoveryRemaining - dt);
                     if (p.RecoveryRemaining == 0)
                     {
-                        ReturnPassengerToSeat(i);
+                        // Hauled back onto the deck at the nearest edge, then walks to the seat like everyone else.
+                        var edge = new Vector2(Mathf.Clamp(p.Position.x, -DeckBounds.x, DeckBounds.x), Mathf.Clamp(p.Position.z, -DeckBounds.y, DeckBounds.y));
+                        p.Position = SafePassengerPosition(i, edge);
+                        p.Motion = PassengerMotion.Dizzy;
+                        p.RecoveryRemaining = DizzySeconds;
                         React(i, PassengerReaction.Rescued);
                     }
                 }

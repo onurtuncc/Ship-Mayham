@@ -1,6 +1,6 @@
 # Movement netcode
 
-Network protocol version **21**, migration snapshot **17** (`PrototypeHud.NetworkProtocolVersion`).
+Network protocol version **22**, migration snapshot **18** (`PrototypeHud.NetworkProtocolVersion`).
 The main-branch HazardState remains the single captain-hazard authority. Phases 2–6 add passenger routines and deck work, electrical fire/valves, sea recovery,
 equipment, tray quantities and passage checkpoints. `DeckCommandRpc` and `PrepareVoyageRpc` are reliable
 client-to-host commands validated against the sender's crew slot, phase, hands, station and range.
@@ -9,8 +9,11 @@ Career save v2 reads v1 saves; migration/wire formats deliberately require match
 See [PHASES_2_6.md](PHASES_2_6.md) for controls and validation.
 The host runs the authoritative `VoyageSimulation`; clients only present state.
 
-Earlier versions: 15 added the per-crew voyage tally list (snapshot 11); 14 added signals;
+Version 22 also includes main's passenger landing, dizziness, standing and return-to-seat states, with replicated seat claims.
+
+Earlier versions: 17 added those recovery states; 15 added the per-crew voyage tally list (snapshot 11); 14 added signals;
 13 unstuck; 12 purser upgrades; 11 the session lobby and nickname/ready list.
+
 
 ## Data flow
 

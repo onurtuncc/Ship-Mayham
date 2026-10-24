@@ -56,7 +56,7 @@ namespace ShipMayham.Tests
             session.PassengerCommandRpc(-1, PassengerAction.CarryOrDrop, 0);
             foreach (var frame in Wait(.6f)) yield return frame;
             Assert.AreEqual(-1, session.LocalCarriedPassengerIndex);
-            Assert.AreEqual(PassengerMotion.OnDeck, session.Passengers[0].Motion);
+            Assert.That(session.Passengers[0].Motion, Is.EqualTo(PassengerMotion.Standing).Or.EqualTo(PassengerMotion.Returning), "put down: stands, then walks to a seat");
             Assert.IsTrue(view.PassengerLabels[0].gameObject.activeSelf);
             session.PassengerCommandRpc(0, PassengerAction.CarryOrDrop, 0);
             foreach (var frame in Wait(.6f)) yield return frame;
@@ -69,6 +69,8 @@ namespace ShipMayham.Tests
             Assert.AreEqual(1, session.Voyage.Value.RescueCount);
             Assert.AreEqual(anchor, session.PassengerAnchors[0].localPosition);
             foreach (var frame in Wait(8.2f)) yield return frame;
+            Assert.AreEqual(PassengerMotion.Dizzy, session.Passengers[0].Motion, "hauled aboard");
+            for (float waited = 0; session.Passengers[0].Motion != PassengerMotion.OnDeck && waited < 10; waited += Time.deltaTime) yield return null;
             Assert.AreEqual(PassengerMotion.OnDeck, session.Passengers[0].Motion);
             Assert.IsFalse(buoy.gameObject.activeSelf);
             Assert.AreEqual(-1, session.LocalCarriedPassengerIndex);

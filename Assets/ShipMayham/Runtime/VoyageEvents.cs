@@ -282,7 +282,7 @@ namespace ShipMayham
         {
             if (Event.Phase != VoyageEventPhase.Active || Event.Kind != VoyageEventKind.SeatShuffle || passenger != Event.TargetPassenger) return false;
             var p = Passengers[passenger].Position;
-            if (Vector2.Distance(new Vector2(p.x, p.z), Seats[passenger]) < 1.5f) return false;
+            if (Vector2.Distance(new Vector2(p.x, p.z), Seats[SeatOf(passenger)]) < 1.5f) return false;
             Event.Progress = Event.Goal;
             ResolveEvent();
             return true;

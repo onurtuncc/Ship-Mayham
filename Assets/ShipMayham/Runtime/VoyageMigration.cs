@@ -8,12 +8,13 @@ namespace ShipMayham
     [Serializable]
     internal sealed class VoyageMigrationSnapshot
     {
-        public int Version = 17;
+        public int Version = 18;
         public VoyageJourneyState Journey;
         public VoyageOpportunityState Opportunity;
         public ShipEmergencyState Emergency;
         public DeckConditionState Deck;
         public HazardState Hazards;
+
         public VoyageState State;
         public EncounterState Encounter;
         public VoyageEventState Event;
@@ -97,7 +98,8 @@ namespace ShipMayham
         {
             if (data == null || data.Length == 0) throw new ArgumentException("Migration data is empty.", nameof(data));
             VoyageMigrationSnapshot snapshot = JsonUtility.FromJson<VoyageMigrationSnapshot>(Encoding.UTF8.GetString(data));
-            if (snapshot == null || snapshot.Version != 17 || snapshot.Crew?.Length != MaxCrew ||
+            if (snapshot == null || snapshot.Version != 18 || snapshot.Crew?.Length != MaxCrew ||
+
                 snapshot.Passengers?.Length != MaxPassengers || snapshot.CrewPlayerIds?.Length != MaxCrew)
                 throw new InvalidOperationException("Unsupported or incomplete voyage migration snapshot.");
 

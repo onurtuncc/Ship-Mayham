@@ -173,6 +173,9 @@ namespace ShipMayham
                     Fx.Burst(FxKind.Splash, passenger, 8); Sfx(SfxKind.Whoosh, .9f, 1.1f, passenger);
                     if (CrewAnimator != null) CrewAnimator.PlayOneShot(e.Value, CrewPose.Throw, 1.2f);
                     break;
+                case FeedbackKind.PassengerLanded:
+                    Fx.Burst(FxKind.Smoke, passenger, 10); Fx.Popup("Oof!", passenger + Vector3.up * .5f, Gold, 1.2f); Sfx(SfxKind.Thud, .9f, .85f, passenger);
+                    AddTrauma(.12f); Babble.Say(passenger, e.Slot, BabbleMood.Grumpy, .7f); break;
                 case FeedbackKind.PassengerThanked:
                     Fx.Burst(FxKind.Hearts, passenger); Fx.Popup("Thanks!", passenger + Vector3.up * .3f, Pink); Sfx(SfxKind.Chime, .9f, 1, passenger); StartHop(e.Slot);
                     Babble.Say(passenger, e.Slot, BabbleMood.Happy, .8f); break;

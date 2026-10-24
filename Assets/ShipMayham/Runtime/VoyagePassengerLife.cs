@@ -62,7 +62,7 @@ namespace ShipMayham
             {
                 p.RoutineTimer -= dt;
                 if (p.RoutineTimer > 0) return;
-                p.Routine = PassengerRoutine.Returning; p.RoutineTarget = Seats[index]; p.RoutineTimer = 8;
+                p.Routine = PassengerRoutine.Returning; p.RoutineTarget = Seats[SeatOf(index)]; p.RoutineTimer = 8;
             }
             p.RoutineTimer -= dt;
             Vector2 current = new Vector2(p.Position.x, p.Position.z);
@@ -77,10 +77,11 @@ namespace ShipMayham
         {
             if (Mathf.Abs(point.x) > DeckBounds.x || Mathf.Abs(point.y) > DeckBounds.y) return false;
             foreach (var station in Stations) if (Vector2.Distance(point, station.Position) < .8f) return false;
+            for (int seat = 0; seat < Seats.Length; seat++)
+                if (seat != SeatOf(index) && Vector2.Distance(point, Seats[seat]) < .65f) return false;
             for (int i = 0; i < MaxPassengers; i++)
             {
                 if (i == index) continue;
-                if (Vector2.Distance(point, Seats[i]) < .65f) return false;
                 var p = Passengers[i];
                 if (p.Active && p.Motion == PassengerMotion.OnDeck && Vector2.Distance(point, new Vector2(p.Position.x, p.Position.z)) < .65f) return false;
             }
