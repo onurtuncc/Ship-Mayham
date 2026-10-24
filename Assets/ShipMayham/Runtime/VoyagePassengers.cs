@@ -70,10 +70,10 @@ namespace ShipMayham
             ref var target = ref Passengers[passenger];
             if (target.Motion != PassengerMotion.OnDeck) return "Passenger is being carried, flying or awaiting rescue.";
             if (Vector2.Distance(Crew[slot].Position, new Vector2(target.Position.x, target.Position.z)) > InteractionRange) return "Move closer to the passenger.";
-            target.Routine = PassengerRoutine.Seated; target.RoamIn = 15;
             if (action == PassengerAction.CheckTicket)
             {
                 target.WorkRemaining = 0;
+                PausePassengerRoutine(ref target);
                 string inspection = InspectPassengerForEvent(passenger);
                 if (!target.TicketChecked)
                 {
@@ -92,6 +92,7 @@ namespace ShipMayham
             }
             if (Crew[slot].Carrying != ServiceItem.None) return "Serve or return your item before lifting a passenger.";
             target.WorkRemaining = 0;
+            target.Routine = PassengerRoutine.Seated; target.RoamIn = 15;
             target.Motion = PassengerMotion.Carried;
             target.CarrierSlot = slot;
             passengerCarryYaw[slot] = Mathf.Repeat(yaw, 360);

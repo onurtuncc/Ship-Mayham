@@ -400,10 +400,10 @@ namespace ShipMayham
         {
             if (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing) return "Service is closed.";
             ref PassengerState p = ref Passengers[passenger];
-            if (p.Routine != PassengerRoutine.Seated) { p.Routine = PassengerRoutine.Seated; p.RoamIn = 15; }
             if (!p.Active || p.Request == ServiceItem.None) return "No order here.";
             if (p.Motion != PassengerMotion.OnDeck) return "Wait until the passenger is back on deck.";
             if (Crew[crew].Carrying != p.Request) return $"Passenger wants {p.Request}.";
+            PausePassengerRoutine(ref p);
             p.Request = ServiceItem.None;
             p.RequestTimer = 0;
             p.Satisfaction = Mathf.Min(100, p.Satisfaction + 15);
@@ -544,6 +544,7 @@ namespace ShipMayham
                 Crew[i].AtCrane = false;
                 Crew[i].OnShore = false;
                 Crew[i].Carrying = ServiceItem.None;
+                Crew[i].ServiceUnits = 0;
                 Crew[i].Position = new Vector2(-1.5f + i, -6);
                 Crew[i].JumpHeight = 0;
                 Crew[i].VerticalSpeed = 0;

@@ -26,6 +26,9 @@ namespace ShipMayham
         {
             if (!p.Active) return PassengerPose.Seated;
             if (p.Motion != PassengerMotion.OnDeck) return PassengerPose.Panicked;
+            if (p.Routine == PassengerRoutine.Working)
+                return UnityEngine.Vector2.Distance(new UnityEngine.Vector2(p.Position.x, p.Position.z), p.RoutineTarget) > 1
+                    ? PassengerPose.Walking : PassengerPose.Standing;
             if (p.Routine == PassengerRoutine.Strolling || p.Routine == PassengerRoutine.Returning) return PassengerPose.Walking;
             if (p.Routine == PassengerRoutine.Watching) return PassengerPose.Standing;
             if (p.ReactionRemaining > 0)

@@ -28,6 +28,10 @@ Editor, aynı proje açıkken batch testini çalıştıramaz. Seçenekler:
 
 ## Yeni test yazarken
 
+GDD genişletmesinin 2–6 numaralı işleri için `NavigationPhaseTests`, `PassengerLifePhaseTests`,
+`EmergencyPhaseTests`, `OpportunityPhaseTests`, `PreparationPhaseTests` ve gerçek sahne/RPC testi
+`AdventureSceneTests` bulunur. Kapsam ve dalın doğrulama sonuçları: [PHASES_2_6.md](PHASES_2_6.md).
+
 - Sahneyi okuyan testler `PrototypeSceneFixture`'dan türer; sahneyi eklemeli açıp yalnızca kendi açtığını kapatır. Test sonunda açık sahne bırakılmamalıdır.
 - PlayMode testleri `yield return new EnterPlayMode()` ve `EditorSceneManager.LoadSceneAsyncInPlayMode` çağrılarını **test metodunun kendisinde** yapmalıdır. Yardımcı bir `IEnumerator` içinden yapılırsa sahne yüklenmez ve test `NullReferenceException` ile düşer.
 - Solo akış için kalıp: sahneyi yükle, `hud.ConnectSolo()`, `Session.IsSpawned` olana kadar bekle. Etkileşimler arasında 0,35 sn bekleme vardır; bekleme süreleri bundan rahat büyük olmalıdır (0,6 sn).

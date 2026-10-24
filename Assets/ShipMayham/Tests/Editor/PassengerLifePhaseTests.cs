@@ -48,6 +48,30 @@ namespace ShipMayham.Tests
             sim.Crew[0].Position = sim.Deck.SpillPosition; sim.Crew[0].Carrying = ServiceItem.Food;
             sim.DeckCommand(10, DeckAction.CleanSpill); Assert.AreEqual(0, sim.Deck.CleanSteps);
         }
+        [Test] public void ServicePausesAWalkerStandingAndThenReturnsThemToTheirSeat()
+        {
+            var sim = Board();
+            for (int i = 0; i < 25; i++) sim.Tick(.02f); // Boarding used the shared interaction cooldown.
+            sim.Passengers[0].Position = new Vector3(-.35f, .5f, -1.5f);
+            sim.Passengers[0].Routine = PassengerRoutine.Strolling;
+            sim.Passengers[0].RoutineTarget = new Vector2(-.35f, -1.5f);
+            sim.Passengers[0].Request = ServiceItem.Food;
+            sim.Crew[0].Position = new Vector2(-1.35f, -1.5f);
+            sim.Crew[0].Carrying = ServiceItem.Food;
+            sim.Interact(10, sim.Stations.Length);
+            Assert.AreEqual(PassengerRoutine.Watching, sim.Passengers[0].Routine);
+            for (int i = 0; i < 600; i++) sim.Tick(.02f);
+            Assert.AreEqual(PassengerRoutine.Seated, sim.Passengers[0].Routine);
+            Assert.AreEqual(sim.Seats[0].x, sim.Passengers[0].Position.x);
+        }
+        [Test] public void WorkingPassengerWalksToTheJobRatherThanSlidingSeated()
+        {
+            var passenger = new PassengerState { Active = true, Motion = PassengerMotion.OnDeck,
+                Routine = PassengerRoutine.Working, Position = Vector3.zero, RoutineTarget = new Vector2(4, 0) };
+            Assert.AreEqual(PassengerPose.Walking, PassengerPresentation.PoseFor(passenger, PassengerCue.Relaxed));
+            passenger.Position = new Vector3(4, .5f, 0);
+            Assert.AreEqual(PassengerPose.Standing, PassengerPresentation.PoseFor(passenger, PassengerCue.Relaxed));
+        }
         [Test] public void MigrationKeepsRoutineTargetAndCleaningProgress()
         {
             var sim = Board(); sim.Passengers[0].Routine = PassengerRoutine.Watching; sim.Passengers[0].RoutineTimer = 3;

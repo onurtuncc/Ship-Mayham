@@ -27,6 +27,15 @@ namespace ShipMayham
         public static float PatienceFactor(PassengerPersonality personality) =>
             personality == PassengerPersonality.Impatient ? 1.6f : personality == PassengerPersonality.Patient ? .7f : 1;
 
+        private static void PausePassengerRoutine(ref PassengerState passenger)
+        {
+            if (passenger.Routine == PassengerRoutine.Seated || passenger.WorkRemaining > 0) return;
+            // Stop for service without playing a seated pose in the middle of the aisle.
+            passenger.Routine = PassengerRoutine.Watching;
+            passenger.RoutineTimer = 2;
+            passenger.RoamIn = 15;
+        }
+
         private void TickPassengerLife(int index, float dt)
         {
             ref var p = ref Passengers[index];

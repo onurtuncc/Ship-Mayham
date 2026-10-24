@@ -30,6 +30,15 @@ namespace ShipMayham.Tests
             Assert.AreEqual(ServiceItem.Food, sim.Crew[0].Carrying);
             sim.Leave(10); Assert.AreEqual(15, sim.State.FoodStock);
         }
+        [Test] public void NewVoyageClearsTheOldTrayQuantity()
+        {
+            var sim = Make(); sim.State.Phase = VoyagePhase.Arrived;
+            sim.Crew[0].Carrying = ServiceItem.Food; sim.Crew[0].ServiceUnits = 2;
+            sim.Interact(10, 0);
+            Assert.AreEqual(VoyagePhase.Boarding, sim.State.Phase);
+            Assert.AreEqual(ServiceItem.None, sim.Crew[0].Carrying);
+            Assert.AreEqual(0, sim.Crew[0].ServiceUnits);
+        }
         [Test] public void PennantCostsOnceAndHasNoMechanicalEffect()
         {
             var sim = Make(); sim.PrepareVoyage(10, PreparationAction.Pennant);

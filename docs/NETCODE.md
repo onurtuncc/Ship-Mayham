@@ -1,6 +1,16 @@
 # Movement netcode
 
-Network protocol version **15** (15 adds the per-crew voyage tally list for the awards, snapshot 11; 14 adds `SignalRpc`/`SignalBroadcastRpc` for pings and emotes; 13 adds `UnstuckRpc`; 12 adds `BuyUpgradeRpc` for the purser; 11 added the session phase and the per-slot nickname/ready list for the lobby) (`PrototypeHud.NetworkProtocolVersion`). The host runs the authoritative `VoyageSimulation`; clients only present state.
+Network protocol version **20**, migration snapshot **16** (`PrototypeHud.NetworkProtocolVersion`).
+Phases 2–6 add navigation hazards, passenger routines and deck work, electrical fire/valves, sea recovery,
+equipment, tray quantities and passage checkpoints. `DeckCommandRpc` and `PrepareVoyageRpc` are reliable
+client-to-host commands validated against the sender's crew slot, phase, hands, station and range.
+The five new state aggregates use reliable `NetworkVariable`s and are included in migration snapshots.
+Career save v2 reads v1 saves; migration/wire formats deliberately require matching current builds.
+See [PHASES_2_6.md](PHASES_2_6.md) for controls and validation.
+The host runs the authoritative `VoyageSimulation`; clients only present state.
+
+Earlier versions: 15 added the per-crew voyage tally list (snapshot 11); 14 added signals;
+13 unstuck; 12 purser upgrades; 11 the session lobby and nickname/ready list.
 
 ## Data flow
 
