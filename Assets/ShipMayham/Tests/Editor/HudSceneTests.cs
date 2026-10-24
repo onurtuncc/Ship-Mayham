@@ -218,8 +218,13 @@ namespace ShipMayham.Tests
             sim.State.Speed = 0;
             sim.State.Position = shoal.Center - new Vector2(0, 25);
             yield return new WaitForSeconds(.6f);
-            var texts = controller.GetComponentsInChildren<UnityEngine.UI.Text>(false);
-            Assert.IsTrue(System.Array.Exists(texts, t => t.text.StartsWith("SHOAL AHEAD")), "the alert stack warns about the shoal");
+            bool warned = false;
+            for (int frame = 0; frame < 120 && !warned; frame++)
+            {
+                warned = System.Array.Exists(controller.GetComponentsInChildren<UnityEngine.UI.Text>(false), t => t.text.StartsWith("SHOAL AHEAD"));
+                if (!warned) yield return null;
+            }
+            Assert.IsTrue(warned, "the alert stack warns about the shoal");
 
             sim.State.Phase = VoyagePhase.Arrived;
             deadline = Time.realtimeSinceStartup + 3;

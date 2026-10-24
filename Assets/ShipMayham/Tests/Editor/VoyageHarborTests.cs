@@ -232,6 +232,7 @@ namespace ShipMayham.Tests
         [Test] public void StormContractAcceleratesHazardsAndRewardsSafeArrival()
         {
             sim.State.Reputation = 5;
+            sim.Join(901); sim.Join(902);                   // a full crew keeps the base event timetable
             Harbor(HarborAction.GoAshore);
             sim.SelectRoute(Client, RouteProfile.StormPassage);
             Harbor(HarborAction.BoardShip);

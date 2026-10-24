@@ -129,7 +129,7 @@ namespace ShipMayham
             {
                 Event.Phase = VoyageEventPhase.Waiting;
                 Event.Kind = VoyageEventKind.None;
-                Event.NextIn = EventGap;
+                Event.NextIn = EventGapSeconds;
                 return;
             }
             int weight = 0;
@@ -186,7 +186,7 @@ namespace ShipMayham
             Event.ResolvedCount++;
             Event.Reward += 15;
             Event.Remaining = 0;
-            Event.NextIn = EventGap;
+            Event.NextIn = EventGapSeconds;
         }
 
         private void FailEvent()
@@ -218,7 +218,7 @@ namespace ShipMayham
                     if (Passengers[i].Active) Passengers[i].Satisfaction = Mathf.Max(0, Passengers[i].Satisfaction - 8);
             }
             Event.Remaining = 0;
-            Event.NextIn = EventGap;
+            Event.NextIn = EventGapSeconds;
         }
 
         private string InspectPassengerForEvent(int passenger)

@@ -25,6 +25,7 @@ namespace ShipMayham.Tests
                 new Vector2(-1.9f, 2.7f), new Vector2(1.9f, 2.7f), new Vector2(-1.9f, 4.8f), new Vector2(1.9f, 4.8f)
             });
             sim.Join(Host);
+            sim.Join(901); sim.Join(902); sim.Join(903);     // a full crew keeps the base event timetable these tests rely on
             UseStation(0);
             UseStation(1);
             sim.HelmAction(Host);
@@ -248,6 +249,7 @@ namespace ShipMayham.Tests
             voyage.State.Phase = VoyagePhase.Sailing;
             voyage.State.Route = route;
             voyage.State.Boarded = sim.State.Boarded;
+            for (ulong id = 910; id < 914; id++) voyage.Join(id);        // a full crew keeps the base timetable
             System.Array.Copy(sim.Passengers, voyage.Passengers, sim.Passengers.Length);
             for (int i = 0; i < 365; i++) voyage.Tick(.05f);
             return voyage.Event.Kind;
@@ -284,6 +286,7 @@ namespace ShipMayham.Tests
         [Test] public void MissingStationsExcludeImpossibleTasks()
         {
             var limited = new VoyageSimulation(System.Array.Empty<StationDefinition>(), sim.Seats);
+            for (ulong id = 910; id < 914; id++) limited.Join(id);        // a full crew keeps the base timetable
             limited.State.Phase = VoyagePhase.Sailing;
             limited.State.Boarded = 1;
             limited.Passengers[0] = new PassengerState { Active = true, Satisfaction = 100 };

@@ -121,10 +121,10 @@ namespace ShipMayham
             right.GetComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             var pillRow = HudKit.Node(right, "Pills");
             HudKit.Row(pillRow, 10, TextAnchor.UpperRight);
-            coins = new ResourcePill(pillRow, "Coins", "COINS", HudKit.Coin);
-            reputation = new ResourcePill(pillRow, "Reputation", "REPUTATION", HudKit.Accent);
-            food = new ResourcePill(pillRow, "Food", "FOOD", HudKit.Food);
-            drink = new ResourcePill(pillRow, "Drink", "DRINKS", HudKit.Drink);
+            coins = new ResourcePill(pillRow, "Coins", "COINS", HudKit.Coin, IconShape.Circle);
+            reputation = new ResourcePill(pillRow, "Reputation", "REPUTATION", HudKit.Accent, IconShape.Diamond);
+            food = new ResourcePill(pillRow, "Food", "FOOD", HudKit.Food, IconShape.Square);
+            drink = new ResourcePill(pillRow, "Drink", "DRINKS", HudKit.Drink, IconShape.Triangle);
             pills = new[] { coins, reputation, food, drink };
             var info = HudKit.Node(right, "Info");
             HudKit.Size(info, height: 44);
