@@ -171,3 +171,7 @@ Mixamo oturumu bu gece kapalı olduğu için 10 klip `Tools/BlenderAssets/anim/c
 | `Barrel_Float` | 0,57 × 0,69 × 0,58 | Demir çemberli, halat halkalı yüzer varil |
 
 Unity'ye statik FBX'lerde Blender +Y (ön) → Unity −Z ve X yansır; `GangwayGate` içindeki `LeafLeft`/`LeafRight` adları Blender yönüne göredir (Unity'de ham içe aktarmada LeafLeft x = +1,0). Gemi gibi 180° Y döndürülürse adlar sahnede doğru tarafa oturur.
+
+### `Mixamo_GetUpFromFall` (25 Ekim, elle yazılmış)
+
+`Mixamo_FallingFlatImpact`'ın son karesinden (yüzüstü yatış, kalça y≈0,075 m) `Mixamo_DizzyIdle`'ın ilk karesine (ayakta duruş) 45 kare, 30 fps, döngüsüz. Başlangıç ve bitiş pozları gerçek klip karelerinden okunur (`Tools/BlenderAssets/anim/getup.py`), aradaki kareler kuaterniyon ara değerlemesi ve ilk yarıda ellerin yerde sabit kalması için iki kemikli IK ile üretilir. Kalça konumu başlangıç yatışı ile bitiş duruşu arasında ~0,28 m öne/arkaya kayar (iki uç sabit olduğu için kaçınılmaz). Gerçek karakterde doğrulanmadı.
