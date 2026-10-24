@@ -34,6 +34,7 @@ namespace ShipMayham
             eventRandomState = eventSeed == 0 ? 1u : eventSeed;
             ResetEncounter();
             ResetEvents();
+            ResetNavigation();
         }
 
         public int FindCrew(ulong clientId)
@@ -207,6 +208,7 @@ namespace ShipMayham
             TickEncounter(dt);
             TickCannonballs(dt, previousShip, previousPirate);
             TickEvents(dt);
+            TickNavigation(dt);
             if (State.Elapsed >= nextLeak && State.Leak == 0)
             {
                 State.Leak = 1;
@@ -503,6 +505,7 @@ namespace ShipMayham
             nextLeak = 25;
             ResetEncounter();
             ResetEvents();
+            ResetNavigation();
             for (int i = 0; i < MaxCrew; i++)
             {
                 Crew[i].AtHelm = false;

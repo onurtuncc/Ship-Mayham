@@ -209,6 +209,7 @@ namespace ShipMayham
 
         private void Awake()
         {
+            if (GetComponent<PrototypeNavigationView>() == null) gameObject.AddComponent<PrototypeNavigationView>().View = this;
             chasePreferred = LoadChasePreference();
             clientMotion = GetComponent<PrototypeClientMotion>();
             if (clientMotion == null) clientMotion = gameObject.AddComponent<PrototypeClientMotion>();

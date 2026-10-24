@@ -30,6 +30,7 @@ namespace ShipMayham
 
         private void TickEvents(float dt)
         {
+            if (Event.Phase != VoyageEventPhase.Active) dt *= CrewPressure;
             if (Event.Phase == VoyageEventPhase.Resolved || Event.Phase == VoyageEventPhase.Failed)
             {
                 Event.NextIn = Mathf.Max(0, Event.NextIn - dt);

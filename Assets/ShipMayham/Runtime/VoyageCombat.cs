@@ -58,7 +58,7 @@ namespace ShipMayham
             Encounter.PiratePosition = Vector2.MoveTowards(Encounter.PiratePosition, new Vector2(escort.x, escort.z), dt * 7);
             Encounter.AttackRemaining = Mathf.Max(0, Encounter.AttackRemaining - dt);
             if (Encounter.AttackRemaining == 0) { Encounter.Pirate = PiratePhase.Escaped; return; }
-            Encounter.EnemyShotRemaining = Mathf.Max(0, Encounter.EnemyShotRemaining - dt);
+            Encounter.EnemyShotRemaining = Mathf.Max(0, Encounter.EnemyShotRemaining - dt * CrewPressure);
             if (Encounter.EnemyShotRemaining > 0 || Vector2.Distance(Encounter.PiratePosition, State.Position) > 70) return;
             Encounter.EnemyShotRemaining = 8;
             Encounter.PirateShotsFired++;

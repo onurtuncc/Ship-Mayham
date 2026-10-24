@@ -68,6 +68,12 @@ namespace ShipMayham
                 Place(60, MapHeight - 22, "DEPARTURE", HudKit.TextMuted, false, 12);
                 Place(90 + s.Position.x * .75f, 235 - s.Position.y * .9f, null, Color.white, true, 15);
                 var encounter = session.Encounter.Value;
+                for (int i = 0; i < VoyageSimulation.ShoalCount; i++)
+                {
+                    Vector2 shoal = VoyageSimulation.ShoalPosition(session.Navigation.Value.Seed, i);
+                    if (Vector2.Distance(s.Position, shoal) <= 60)
+                        Place(90 + shoal.x * .75f, 235 - shoal.y * .9f, "ROCK", HudKit.Warning, true, 11);
+                }
                 if (encounter.Pirate == PiratePhase.Warning || encounter.Pirate == PiratePhase.Attacking)
                 {
                     Vector2 pirate = encounter.PiratePosition;
