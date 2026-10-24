@@ -23,6 +23,10 @@ if len(ob) > 1 or (ob and ob[0] not in meshes):
 ob = bpy.context.view_layer.objects.active if len(meshes) > 1 else ob[0]
 if ob.parent: 
     mw = ob.matrix_world.copy(); ob.parent = None; ob.matrix_world = mw
+if os.environ.get('PAINT_FBX'):
+    # an imported FBX carries its axis conversion as an object rotation; bake it into the mesh so the re-export has an identity node and a Y-up mesh like the original
+    bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 import mathutils as _mu
 _pts = [ob.matrix_world @ _mu.Vector(c) for c in ob.bound_box]
 _dims = [max(p[i] for p in _pts) - min(p[i] for p in _pts) for i in range(3)]
