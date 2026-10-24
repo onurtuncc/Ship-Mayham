@@ -108,3 +108,16 @@ Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre.
 - `RockCluster` (1312 üçgen, 4,2 × 3,0 × 2,5 m, deniz kayalığı) ve `RepairHammer` (1900 üçgen, 0,21 × 0,06 × 0,59 m, tamir çekici) Gemma4 (llama.cpp + Blender MCP) ile üretildi; kaynak betikler `Tools/BlenderAssets/llm/` altındadır. Henüz sahneye bağlı değildir.
 - LLM boru hattı: `Tools/BlenderAssets/llm/gen_asset.py` (sürücü), `llm_helpers.py` (modelin kullanmak zorunda olduğu `box/cyl/sphere/mat/finish` yardımcıları; serbest bmesh kodu parçaları havada bırakıyordu), `extract_script.py` (bir sürümün betiğini geri bildirim turu için çıkarır). Düşünme modu kapalıdır (`enable_thinking: false`); açık olduğunda yanıt başına ~20 kat token harcıyordu. Çalıştırma: `uv --directory D:\blender\blender_mcp\mcp run python gen_asset.py <Ad> "<tarif>" [--start N --prev-script F --feedback "…"]`. Blender'ın MCP eklentisi (:9876), llama (:8080) ve blender-mcp (:9191) açık olmalıdır.
 - Yeni Mixamo klipleri (FBX, Without Skin, 30 fps): `Running`, `Drinking`, `Angry`, `Pointing`, `Punching`, `Pushing`, `PullingARope`, `FallingFlatImpact`, `StableSwordOutwardSlash`, `QuickFormalBow`, `SleepingIdle`, `DizzyIdle`, `CrouchIdle`, `ClimbingLadder`. `.meta` dosyaları Unity ilk içe aktarmada üretir (`HumanoidModelPostprocessor` Humanoid ve döngü ayarını yapar; döngü listesi genişletildi, sürüm 4). Mixamo'da çekiç, kürek ve yemek yeme klibi yoktur.
+
+### Yerel LLM ile üretilen altı yeni prop (24 Ekim, kullanıcı onaylı)
+
+Boyutlar Blender eksenindedir (x, y=ileri, z=yukarı), metre; henüz sahneye bağlı değiller. `llm_helpers.py` (`box/cyl/sphere/halfcyl`) ile kurulduklarından kaynak betikler `Tools/BlenderAssets/llm/<Ad>.py` altındadır.
+
+| Varlık | Üçgen | Boyut (m) | Kullanım |
+|---|---:|---|---|
+| `Cannon` | 6124 | 0,61 × 1,15 × 0,54 | Topçu istasyonu topu (bütçenin üstünde; gerekirse segment sayısı düşürülür) |
+| `ShipMast` | 644 | 2,80 × 0,89 × 4,20 | Yelkenli direk, kırmızı şeritli krem yelken, karga yuvası |
+| `PalmTree` | 4400 | 2,73 × 2,90 × 4,17 | Liman/ada ağacı |
+| `TreasureChest` | 1572 | 0,99 × 0,64 × 0,74 | Hazine sandığı (kapak hafif açık, altın paralar) |
+| `TavernSign` | 1168 | 1,65 × 0,30 × 1,63 | Salty Gull tavernası tabelası (martı kanatları dik, ileride düzeltilebilir) |
+| `FloatingCrate` | 1824 | 1,10 × 1,17 × 1,05 | Denizde sürüklenen sandık (fırsat olayı) |
