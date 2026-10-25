@@ -139,7 +139,15 @@ Elektriğin kesilmesi; Power Station'ında sigortalar sıfırlanana kadar yeni y
 _Avoid_: Blackout
 
 **Upgrade**:
-Gemiyi kalıcı güçlendiren üç yükseltmeden biri: Engine, Capacity (seats), Comfort. Purser'dan, yalnızca limandayken satın alınır.
+Gemiyi kalıcı güçlendiren beş yükseltmeden biri: Engine, Capacity (seats), Comfort, Gunnery, Extra barrels. Purser'dan, yalnızca limandayken satın alınır.
+
+**Gunnery**:
+Top mürettebatının eğitimi (2 seviye): dolum 2,5 → 2,0 → 1,5 sn, raf 3 → 4 → 5 mermi, ana namlu vuruşu 34 → 40 → 50 hasar.
+_Avoid_: Cannon upgrade (iki yükseltme de topu geliştirir)
+
+**Extra barrels**:
+Topa eklenen namlular (2 seviye). Bir atış, aynı mermiye mal olan, yana açılan 1–2 ek mermi (**volley**) fırlatır; ek mermiler yarı hasar verir.
+_Avoid_: İkinci top (tek istasyon, tek topçu)
 _Avoid_: Modül, geliştirme
 
 **Livery**:

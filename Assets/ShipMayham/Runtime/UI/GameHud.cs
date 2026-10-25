@@ -417,7 +417,7 @@ namespace ShipMayham
             {
                 string rack = e.ReloadRemaining > 0 ? $"{e.ReadyAmmo}+1" : e.ReadyAmmo.ToString();
                 string state = e.ReloadRemaining > 0 ? $"reloading {e.ReloadRemaining:0.0}s" : e.CannonLoaded ? "loaded" : "empty";
-                alerts.Add(HudKit.Info, "CANNON", $"{state}   •   rack {rack}/{VoyageSimulation.CannonBufferCapacity}   •   magazine {e.MagazineAmmo}   •   ammo {e.Ammo}/12");
+                alerts.Add(HudKit.Info, "CANNON", $"{state}   •   rack {rack}/{VoyageSimulation.RackCapacity(s)}   •   magazine {e.MagazineAmmo}   •   ammo {e.Ammo}/12");
             }
             if (voyageOpen && ev.Phase == VoyageEventPhase.Active) AddEvent(ev, gamepad);
             alerts.End();

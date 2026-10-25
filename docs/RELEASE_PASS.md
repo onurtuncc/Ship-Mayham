@@ -21,6 +21,7 @@ Bu belge, prototipi oynanabilir ve yayın içeriği üretebilir hâle getiren ge
 | Olta | İskele kenarı, 3 nokta, sınırsız | küçük balık +2, büyük +5 yiyecek, çizme +1 coin |
 | Çekiç | Sızıntıya tahta çak (kit/vana yoksa) | 3 çivi, 3 ıska; başarısızlık 1 adım verir |
 | Batık paralar | 8/liman, yüzerek | 5 coin; sekizinci +25 ve itibar |
+| Top yükseltmeleri | Purser'dan Gunnery (2 seviye) ve Extra barrels (2 seviye) | dolum 2,5→1,5 sn, raf 3→5, vuruş 34→50; ek namlu yarı hasar, ±3,5°; fiyat 120/240 ve 180/360 |
 | Kayıt / devam | Menüden solo veya online devam | yalnız limanda yazılır |
 
 Yaptığını gösterme: oynayan oyuncu olta/kazma/kilit/çekiç pozunda, elinde aracıyla görünür.

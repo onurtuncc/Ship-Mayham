@@ -12,11 +12,13 @@ namespace ShipMayham
     {
         private struct UpgradeRow { public StationKind Kind; public Text Name, Level; public Button Buy; public Text Cost; }
 
-        private static readonly (StationKind kind, string name, int max)[] Upgrades =
+        private static readonly (StationKind kind, string name, string blurb)[] Upgrades =
         {
-            (StationKind.EngineUpgrade, "ENGINE", 2),
-            (StationKind.CapacityUpgrade, "SEATS", 2),
-            (StationKind.ComfortUpgrade, "COMFORT", 1),
+            (StationKind.EngineUpgrade, "ENGINE", "faster ship, smokestacks"),
+            (StationKind.CapacityUpgrade, "SEATS", "two more passenger seats"),
+            (StationKind.ComfortUpgrade, "COMFORT", "passengers lose patience slower"),
+            (StationKind.GunneryUpgrade, "GUNNERY", "faster reload, bigger rack, harder hits"),
+            (StationKind.BatteryUpgrade, "EXTRA BARRELS", "each barrel adds a fanned-out round"),
         };
 
         private readonly PrototypeHud hud;
@@ -27,7 +29,7 @@ namespace ShipMayham
         private readonly Text preparationStatus;
         private readonly Button[] preparations = new Button[6];
         private bool showPreparation;
-        private readonly UpgradeRow[] rows = new UpgradeRow[3];
+        private readonly UpgradeRow[] rows = new UpgradeRow[Upgrades.Length];
         private bool wasOpen;
         private int signature = int.MinValue;
 
@@ -108,7 +110,7 @@ namespace ShipMayham
         {
             var (kind, displayName, _) = Upgrades[index];
             var background = HudKit.Box(parent, "Upgrade" + displayName, new Color(1, 1, 1, .07f));
-            HudKit.Size(background, height: 68);
+            HudKit.Size(background, height: 64);
             HudKit.Row(background.rectTransform, 14).padding = new RectOffset(20, 14, 8, 8);
             var name = HudKit.Label(background.transform, "Name", 26, HudKit.Ink, TextAnchor.MiddleLeft, FontStyle.Bold);
             HudKit.Size(name, flexibleWidth: 1);
@@ -135,6 +137,7 @@ namespace ShipMayham
             if (!open) { wasOpen = false; return; }
             var s = hud.Session.Voyage.Value;
             int sig = System.HashCode.Combine((int)s.Phase, s.Boarded, s.Wallet, s.EngineLevel, s.CapacityLevel, s.ComfortLevel, s.DockJobActive ? 1 : 0, s.Voyage);
+            sig = sig * 31 + s.GunneryLevel * 3 + s.BatteryLevel;
             sig = sig * 31 + s.OwnedEquipment * 7 + (int)s.Equipment + (s.OwnedPennant ? 1 : 0) + (int)hud.Session.Journey.Value.Course * 11;
             if (sig != signature || !wasOpen)
             {
@@ -183,9 +186,9 @@ namespace ShipMayham
             for (int i = 0; i < rows.Length; i++)
             {
                 var row = rows[i];
-                int level = row.Kind == StationKind.EngineUpgrade ? s.EngineLevel : row.Kind == StationKind.CapacityUpgrade ? s.CapacityLevel : s.ComfortLevel;
-                int max = Upgrades[i].max;
-                row.Name.text = Upgrades[i].name;
+                int level = VoyageSimulation.UpgradeLevel(row.Kind, s);
+                int max = VoyageSimulation.UpgradeMax(row.Kind);
+                row.Name.text = $"{Upgrades[i].name}\n<size=17><color=#c7d6e2>{Upgrades[i].blurb}</color></size>";
                 row.Level.text = $"LEVEL {level}/{max}";
                 if (level >= max)
                 {

@@ -12,6 +12,8 @@ namespace ShipMayham
         public int EngineLevel;
         public int CapacityLevel;
         public int ComfortLevel;
+        public int GunneryLevel;
+        public int BatteryLevel;
         public int DockJobsCompleted;
         public ShipLivery Livery;
         public ShipEquipment Equipment;
@@ -26,6 +28,8 @@ namespace ShipMayham
             EngineLevel = Mathf.Clamp(state.EngineLevel, 0, 2),
             CapacityLevel = Mathf.Clamp(state.CapacityLevel, 0, 2),
             ComfortLevel = Mathf.Clamp(state.ComfortLevel, 0, 1),
+            GunneryLevel = Mathf.Clamp(state.GunneryLevel, 0, CannonProgression.MaxGunnery),
+            BatteryLevel = Mathf.Clamp(state.BatteryLevel, 0, CannonProgression.MaxBattery),
             DockJobsCompleted = Mathf.Max(0, state.DockJobsCompleted),
             Livery = state.Livery <= ShipLivery.Sunset ? state.Livery : ShipLivery.Classic,
             Equipment = state.Equipment <= ShipEquipment.Workshop ? state.Equipment : ShipEquipment.Standard,
@@ -41,6 +45,8 @@ namespace ShipMayham
             state.EngineLevel = Mathf.Clamp(EngineLevel, 0, 2);
             state.CapacityLevel = Mathf.Clamp(CapacityLevel, 0, 2);
             state.ComfortLevel = Mathf.Clamp(ComfortLevel, 0, 1);
+            state.GunneryLevel = Mathf.Clamp(GunneryLevel, 0, CannonProgression.MaxGunnery);
+            state.BatteryLevel = Mathf.Clamp(BatteryLevel, 0, CannonProgression.MaxBattery);
             state.DockJobsCompleted = Mathf.Max(0, DockJobsCompleted);
             state.Livery = Livery <= ShipLivery.Sunset && state.Reputation >= VoyageSimulation.LiveryReputation(Livery)
                 ? Livery : ShipLivery.Classic;

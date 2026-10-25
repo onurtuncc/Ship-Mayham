@@ -22,7 +22,35 @@ namespace ShipMayham
 
         public static Vector3 AimDirection(float heading, Vector2 aim) => Quaternion.Euler(aim.y, heading + aim.x, 0) * Vector3.forward;
 
-        public static bool IsUpgrade(StationKind kind) => kind == StationKind.EngineUpgrade || kind == StationKind.CapacityUpgrade || kind == StationKind.ComfortUpgrade;
+        public static bool IsUpgrade(StationKind kind) => kind == StationKind.EngineUpgrade || kind == StationKind.CapacityUpgrade || kind == StationKind.ComfortUpgrade
+            || kind == StationKind.GunneryUpgrade || kind == StationKind.BatteryUpgrade;
+
+        public static int UpgradeLevel(StationKind kind, in VoyageState state)
+        {
+            switch (kind)
+            {
+                case StationKind.EngineUpgrade: return state.EngineLevel;
+                case StationKind.CapacityUpgrade: return state.CapacityLevel;
+                case StationKind.ComfortUpgrade: return state.ComfortLevel;
+                case StationKind.GunneryUpgrade: return state.GunneryLevel;
+                case StationKind.BatteryUpgrade: return state.BatteryLevel;
+                default: return 0;
+            }
+        }
+
+        public static int UpgradeMax(StationKind kind)
+        {
+            switch (kind)
+            {
+                case StationKind.ComfortUpgrade: return 1;
+                case StationKind.GunneryUpgrade: return CannonProgression.MaxGunnery;
+                case StationKind.BatteryUpgrade: return CannonProgression.MaxBattery;
+                default: return 2;
+            }
+        }
+
+        /// <summary>Rounds the cannon rack holds with the current gunnery training.</summary>
+        public static int RackCapacity(in VoyageState state) => CannonProgression.RackCapacity(state.GunneryLevel);
 
         private void TickEncounter(float dt)
         {
@@ -124,12 +152,13 @@ namespace ShipMayham
         {
             if (State.Phase != VoyagePhase.Boarding && State.Phase != VoyagePhase.Sailing) return "Cannon supplies are closed.";
             int committed = Encounter.ReadyAmmo + (Encounter.ReloadRemaining > 0 ? 1 : 0);
-            if (committed >= CannonBufferCapacity) return Encounter.ReloadRemaining > 0
+            int rack = RackCapacity(State);
+            if (committed >= rack) return Encounter.ReloadRemaining > 0
                 ? "Cannon rack full (loading round reserves a slot). Hold it or return to AMMO."
                 : "Cannon rack full. Hold the round or return it to AMMO.";
             Encounter.ReadyAmmo++;
             Crew[slot].Carrying = ServiceItem.None;
-            return $"Cannonball delivered: {Encounter.ReadyAmmo}/{CannonBufferCapacity} ready. Gunner: R / X to reload.";
+            return $"Cannonball delivered: {Encounter.ReadyAmmo}/{rack} ready. Gunner: R / X to reload.";
         }
 
         private bool CanOperateCannon(ulong clientId)
@@ -154,12 +183,15 @@ namespace ShipMayham
             if (Encounter.Ammo <= 0) return "No ammunition. A new voyage restocks 12 shots.";
             if (Encounter.ReadyAmmo <= 0) return "Cannon rack empty. Ask a crewmate to carry a round from AMMO to CANNON.";
             Encounter.ReadyAmmo--;
-            Encounter.ReloadRemaining = ReloadSeconds;
+            Encounter.ReloadRemaining = CannonProgression.ReloadSeconds(State.GunneryLevel);
             return "Reloading cannon...";
         }
 
         // Who fired the round in flight, so a hit is credited to them (not part of the migrated state).
         private int crewBallOwner = -1;
+
+        private Vector3 VolleyDirection(int index) =>
+            AimDirection(State.Heading, new Vector2(Encounter.CannonYaw + CannonProgression.VolleyYaw(index), Encounter.CannonPitch));
 
         public string FireCannon(ulong clientId, Vector2 aim)
         {
@@ -168,7 +200,7 @@ namespace ShipMayham
             if (State.Phase != VoyagePhase.Sailing) return "Cannon firing is disabled at port.";
             if (!Encounter.CannonLoaded || Encounter.ReloadRemaining > 0) return "Press R / X to reload.";
             if (Encounter.Ammo <= 0) return "No ammunition.";
-            if (Encounter.CrewBall.Active) return "Previous cannonball is still in flight.";
+            if (Encounter.CrewBall.Active || Encounter.CrewBallB.Active || Encounter.CrewBallC.Active) return "Previous cannonball is still in flight.";
             AimCannon(clientId, aim);
             Vector3 direction = AimDirection(State.Heading, new Vector2(Encounter.CannonYaw, Encounter.CannonPitch));
             Vector2 station = Stations[CannonStation].Position;
@@ -179,8 +211,13 @@ namespace ShipMayham
             Encounter.ShotFrom = origin;
             Encounter.ShotTo = origin + direction * CannonRange;
             Encounter.CrewBall = LaunchBall(origin, direction * CannonballSpeed);
+            int extraBarrels = CannonProgression.ExtraBarrels(State.BatteryLevel);
+            if (extraBarrels >= 1) Encounter.CrewBallB = LaunchBall(origin, VolleyDirection(0) * CannonballSpeed);
+            if (extraBarrels >= 2) Encounter.CrewBallC = LaunchBall(origin, VolleyDirection(1) * CannonballSpeed);
             crewBallOwner = FindCrew(clientId);
-            return "Cannonball away! Lead moving targets; raise the barrel for distant shots.";
+            return extraBarrels > 0
+                ? "Volley away! The extra barrels fan out beside the main shot."
+                : "Cannonball away! Lead moving targets; raise the barrel for distant shots.";
         }
     }
 }

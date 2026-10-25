@@ -11,11 +11,15 @@ namespace ShipMayham
 
         private void TickCannonballs(float dt, Vector2 previousShip, Vector2 previousPirate)
         {
-            TickBall(ref Encounter.CrewBall, false, dt, previousShip, previousPirate);
+            float hit = CannonProgression.HitDamage(State.GunneryLevel);
+            TickBall(ref Encounter.CrewBall, false, dt, previousShip, previousPirate, hit);
+            float volley = CannonProgression.VolleyHitDamage(State.GunneryLevel);
+            TickBall(ref Encounter.CrewBallB, false, dt, previousShip, previousPirate, volley);
+            TickBall(ref Encounter.CrewBallC, false, dt, previousShip, previousPirate, volley);
             TickBall(ref Encounter.PirateBall, true, dt, previousShip, previousPirate);
         }
 
-        private void TickBall(ref CannonballState ball, bool enemy, float dt, Vector2 previousShip, Vector2 previousPirate)
+        private void TickBall(ref CannonballState ball, bool enemy, float dt, Vector2 previousShip, Vector2 previousPirate, float damage = 0)
         {
             if (!ball.Active) return;
             dt = Mathf.Min(dt, ball.Remaining);
@@ -57,7 +61,7 @@ namespace ShipMayham
                     Encounter.ShotTo = ball.Position;
                     Encounter.Hits++;
                     Tally(crewBallOwner, TallyKind.Hits);
-                    Encounter.PirateHealth = Mathf.Max(0, Encounter.PirateHealth - 34);
+                    Encounter.PirateHealth = Mathf.Max(0, Encounter.PirateHealth - damage);
                     if (Encounter.PirateHealth == 0) { Encounter.Pirate = PiratePhase.Defeated; Encounter.Bounty = 50; }
                 }
                 return;

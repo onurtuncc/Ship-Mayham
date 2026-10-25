@@ -119,7 +119,7 @@ namespace ShipMayham
             var voyage = session.Voyage.Value; var encounter = session.Encounter.Value; var voyageEvent = session.ActiveEvent.Value;
             snapshot.Phase = voyage.Phase; snapshot.Wallet = voyage.Wallet; snapshot.Reputation = voyage.Reputation;
             snapshot.Leak = voyage.Leak; snapshot.Health = voyage.Health; snapshot.HullShield = voyage.HullShield;
-            snapshot.UpgradeLevels = voyage.EngineLevel + voyage.CapacityLevel + voyage.ComfortLevel;
+            snapshot.UpgradeLevels = voyage.EngineLevel + voyage.CapacityLevel + voyage.ComfortLevel + voyage.GunneryLevel + voyage.BatteryLevel;
             snapshot.DockJobsCompleted = voyage.DockJobsCompleted; snapshot.RescueCount = voyage.RescueCount; snapshot.CollectedFares = voyage.CollectedFares;
             snapshot.EventPhase = voyageEvent.Phase; snapshot.EventSerial = voyageEvent.Serial;
             var hazards = session.Hazards.Value;

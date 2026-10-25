@@ -89,5 +89,34 @@ namespace ShipMayham.Tests
             Assert.IsFalse(session.Crew[0].Swimming);
             yield return new ExitPlayMode();
         }
+
+        [UnityTest] public IEnumerator TheBatteryUpgradeShowsItsExtraBarrelsOnTheCannon()
+        {
+            yield return new EnterPlayMode();
+            VoyageSimulation.WalkingPassengers = false;
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var hud = Object.FindAnyObjectByType<PrototypeHud>();
+            var combat = Object.FindAnyObjectByType<PrototypeCombatView>();
+            hud.ConnectSolo();
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < deadline) yield return null;
+            for (int frame = 0; frame < 15; frame++) yield return null;
+            hud.View.CloseMenu(false); Time.timeScale = 1;
+            Assert.AreEqual(0, CountBarrels(combat), "no battery, no extra barrels");
+            hud.Session.Simulation.State.BatteryLevel = 2;
+            yield return new WaitForSecondsRealtime(.6f);
+            Assert.AreEqual(2, CountBarrels(combat));
+            hud.Session.Simulation.State.BatteryLevel = 1;
+            yield return new WaitForSecondsRealtime(.6f);
+            Assert.AreEqual(1, CountBarrels(combat));
+            yield return new ExitPlayMode();
+        }
+
+        private static int CountBarrels(PrototypeCombatView combat)
+        {
+            int count = 0;
+            foreach (Transform child in combat.CannonPivot) if (child.name.StartsWith("Battery_Barrel_") && child.gameObject.activeSelf) count++;
+            return count;
+        }
     }
 }

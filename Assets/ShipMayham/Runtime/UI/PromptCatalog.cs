@@ -46,7 +46,7 @@ namespace ShipMayham
                 case StationKind.Cannon:
                     if (crew.Carrying != ServiceItem.Ammo) return InteractionPrompt.Target("Cannon", "Man the cannon", "Pirates in range? Fire away");
                     int used = encounter.ReadyAmmo + (encounter.ReloadRemaining > 0 ? 1 : 0);
-                    return InteractionPrompt.Target("Cannon", "Load cannonball", $"Rack {used}/{VoyageSimulation.CannonBufferCapacity}");
+                    return InteractionPrompt.Target("Cannon", "Load cannonball", $"Rack {used}/{VoyageSimulation.RackCapacity(voyage)}");
                 case StationKind.Power:
                     return encounter.PowerOut
                         ? InteractionPrompt.Target("Power panel", "Reset breaker", $"{encounter.PowerRepairSteps}/3 breakers", tone: PromptTone.Normal)
@@ -57,6 +57,10 @@ namespace ShipMayham
                     return Upgrade("Seat upgrade", kind, voyage, voyage.CapacityLevel, 2);
                 case StationKind.ComfortUpgrade:
                     return Upgrade("Comfort upgrade", kind, voyage, voyage.ComfortLevel, 1);
+                case StationKind.GunneryUpgrade:
+                    return Upgrade("Gunnery training", kind, voyage, voyage.GunneryLevel, CannonProgression.MaxGunnery);
+                case StationKind.BatteryUpgrade:
+                    return Upgrade("Extra barrels", kind, voyage, voyage.BatteryLevel, CannonProgression.MaxBattery);
                 default:
                     return InteractionPrompt.Target(kind.ToString(), "Use");
             }

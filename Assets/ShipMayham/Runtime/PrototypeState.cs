@@ -9,7 +9,7 @@ namespace ShipMayham
     /// <summary>Online voyages start in the lobby; Voyage is the default so solo play and old states are unchanged.</summary>
     public enum SessionPhase : byte { Voyage, Lobby }
     public enum ServiceItem : byte { None, Food, Drink, Cargo, Ammo, LuggageA, LuggageB, LuggageC, RepairKit, SalvageA, SalvageB, SalvageC, CraneCrate, Extinguisher, TemporaryPlug }
-    public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply }
+    public enum StationKind : byte { Manifest, Helm, Food, Drink, Repair, EngineUpgrade, CapacityUpgrade, ComfortUpgrade, Cannon, Power, Ammo, RepairSupply, GunneryUpgrade, BatteryUpgrade }
     public enum PiratePhase : byte { Waiting, Warning, Attacking, Defeated, Escaped }
     /// <summary>Landing (lying after a throw), Dizzy, Standing (just put down) and Returning (walking to a seat) are the transitions between being handled and sitting again.</summary>
     public enum PassengerMotion : byte { OnDeck, Carried, Airborne, Rescuing, Landing, Dizzy, Standing, Returning, Boarding, Leaving }
@@ -45,6 +45,8 @@ namespace ShipMayham
         public int CraneStock, CraneReady;
         public float CraneSwayTime;
         public int EngineLevel, CapacityLevel, ComfortLevel;
+        /// <summary>Cannon upgrades: gun crew training (reload, rack, damage) and extra barrels (volley).</summary>
+        public int GunneryLevel, BatteryLevel;
         public ShipEquipment Equipment;
         public int OwnedEquipment;
         public bool OwnedPennant, PennantVisible;
@@ -72,6 +74,7 @@ namespace ShipMayham
             s.SerializeValue(ref CraneHook); s.SerializeValue(ref CraneHolding);
             s.SerializeValue(ref CraneStock); s.SerializeValue(ref CraneReady); s.SerializeValue(ref CraneSwayTime);
             s.SerializeValue(ref EngineLevel); s.SerializeValue(ref CapacityLevel); s.SerializeValue(ref ComfortLevel);
+            s.SerializeValue(ref GunneryLevel); s.SerializeValue(ref BatteryLevel);
             s.SerializeValue(ref Equipment); s.SerializeValue(ref OwnedEquipment); s.SerializeValue(ref OwnedPennant); s.SerializeValue(ref PennantVisible);
             s.SerializeValue(ref TimeMs);
             s.SerializeValue(ref Reputation); s.SerializeValue(ref LastReputation);

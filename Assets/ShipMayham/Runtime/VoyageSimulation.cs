@@ -356,7 +356,9 @@ namespace ShipMayham
                     return "Power restored. Service counters are online.";
                 case StationKind.EngineUpgrade:
                 case StationKind.CapacityUpgrade:
-                case StationKind.ComfortUpgrade: return Buy(kind);
+                case StationKind.ComfortUpgrade:
+                case StationKind.GunneryUpgrade:
+                case StationKind.BatteryUpgrade: return Buy(kind);
                 default: return "Unknown station.";
             }
         }
@@ -435,7 +437,8 @@ namespace ShipMayham
         }
 
         public static int UpgradeCost(StationKind kind, VoyageState state) => kind == StationKind.EngineUpgrade
-            ? 100 * (state.EngineLevel + 1) : kind == StationKind.CapacityUpgrade ? 150 * (state.CapacityLevel + 1) : 120;
+            ? 100 * (state.EngineLevel + 1) : kind == StationKind.CapacityUpgrade ? 150 * (state.CapacityLevel + 1)
+            : kind == StationKind.GunneryUpgrade ? 120 * (state.GunneryLevel + 1) : kind == StationKind.BatteryUpgrade ? 180 * (state.BatteryLevel + 1) : 120;
 
         public const float UnstuckCooldown = 30f;
         private readonly float[] unstuckReady = new float[MaxCrew];
@@ -488,15 +491,18 @@ namespace ShipMayham
         private string Buy(StationKind kind)
         {
             if (State.Phase == VoyagePhase.Sailing) return "Upgrades are available at port.";
-            int level = kind == StationKind.EngineUpgrade ? State.EngineLevel : kind == StationKind.CapacityUpgrade ? State.CapacityLevel : State.ComfortLevel;
-            int max = kind == StationKind.ComfortUpgrade ? 1 : 2;
+            int level = UpgradeLevel(kind, State);
+            int max = UpgradeMax(kind);
             if (level >= max) return "Upgrade maxed out.";
             int cost = UpgradeCost(kind, State);
             if (State.Wallet < cost) return $"Need {cost} coins.";
             State.Wallet -= cost;
             if (kind == StationKind.EngineUpgrade) State.EngineLevel++;
             else if (kind == StationKind.CapacityUpgrade) State.CapacityLevel++;
+            else if (kind == StationKind.GunneryUpgrade) State.GunneryLevel++;
+            else if (kind == StationKind.BatteryUpgrade) State.BatteryLevel++;
             else State.ComfortLevel++;
+            if (kind == StationKind.GunneryUpgrade || kind == StationKind.BatteryUpgrade) return "Upgrade purchased. The gun crew has it from the next shot.";
             return "Upgrade purchased. Capacity changes apply to the next boarding.";
         }
 
@@ -504,7 +510,7 @@ namespace ShipMayham
         {
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Phase = success ? VoyagePhase.Arrived : VoyagePhase.Failed;
-            Encounter.CrewBall.Active = Encounter.PirateBall.Active = false;
+            Encounter.CrewBall.Active = Encounter.CrewBallB.Active = Encounter.CrewBallC.Active = Encounter.PirateBall.Active = false;
             EndHazards();
             ShipMotionState = default;
             // A fixed berth aligns the gangway with the destination pier.
@@ -544,6 +550,7 @@ namespace ShipMayham
             var old = State;
             State = new VoyageState { Health = 100, Voyage = old.Voyage + 1, Wallet = old.Wallet,
                 EngineLevel = old.EngineLevel, CapacityLevel = old.CapacityLevel, ComfortLevel = old.ComfortLevel,
+                GunneryLevel = old.GunneryLevel, BatteryLevel = old.BatteryLevel,
                 Equipment = old.Equipment, OwnedEquipment = old.OwnedEquipment, OwnedPennant = old.OwnedPennant, PennantVisible = old.PennantVisible,
                 FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield,
                 RepairKitStock = VoyageRepairKits,
