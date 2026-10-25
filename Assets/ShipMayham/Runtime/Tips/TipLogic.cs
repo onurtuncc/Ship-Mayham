@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ShipMayham
 {
     /// <summary>First-time tips. The enum order is the priority order.</summary>
-    public enum TipId : byte { Welcome, TakeHelm, Harbor, Leak, Pirates, Docking, ServeOrders, CheckTickets, Signals, Hazard }
+    public enum TipId : byte { Welcome, TakeHelm, Harbor, Leak, Pirates, Docking, ServeOrders, CheckTickets, Signals, Hazard, Ladder, Overboard, Activity }
 
     /// <summary>What the tip logic needs to know about the local crew member's situation.</summary>
     public struct TipContext
@@ -17,6 +17,7 @@ namespace ShipMayham
         public bool OpenOrders;
         public bool LookingAtPassenger;
         public bool Leak, PiratesNear, HazardWarning;
+        public bool Swimming, NearLadder, NearActivity;
     }
 
     /// <summary>Pure rules of the onboarding tips: when each applies, what it says and how its key hints are written.</summary>
@@ -25,12 +26,12 @@ namespace ShipMayham
         public const float DockingHintMeters = 60f;
 
         /// <summary>Urgent tips may interrupt a calmer one that is on screen.</summary>
-        public static bool IsUrgent(TipId id) => id == TipId.Leak || id == TipId.Pirates || id == TipId.Hazard;
+        public static bool IsUrgent(TipId id) => id == TipId.Leak || id == TipId.Pirates || id == TipId.Hazard || id == TipId.Overboard;
 
         /// <summary>Priority order. The enum keeps the stored bit of each tip stable, so new tips are appended there and slotted in here.</summary>
         public static readonly TipId[] Order =
         {
-            TipId.Welcome, TipId.TakeHelm, TipId.Harbor, TipId.Leak, TipId.Pirates, TipId.Hazard,
+            TipId.Welcome, TipId.TakeHelm, TipId.Overboard, TipId.Harbor, TipId.Leak, TipId.Pirates, TipId.Hazard, TipId.Ladder, TipId.Activity,
             TipId.Docking, TipId.ServeOrders, TipId.CheckTickets, TipId.Signals
         };
 
@@ -58,7 +59,10 @@ namespace ShipMayham
                 case TipId.Docking: return c.Phase == VoyagePhase.Sailing && c.AtHelm && c.DistanceToPort < DockingHintMeters;
                 case TipId.ServeOrders: return boardingOrSailing && c.Boarded > 0 && aboard && c.OpenOrders && !c.Carrying && !c.AtHelm && !c.AtCannon;
                 case TipId.CheckTickets: return boardingOrSailing && aboard && c.LookingAtPassenger && !c.Carrying;
-                case TipId.Signals: return c.Phase == VoyagePhase.Sailing && aboard;
+                case TipId.Signals: return c.Phase == VoyagePhase.Sailing && aboard && !c.Swimming;
+                case TipId.Overboard: return c.Swimming && c.Phase == VoyagePhase.Sailing;
+                case TipId.Ladder: return c.NearLadder && !c.Swimming && (c.Phase == VoyagePhase.Boarding || c.Phase == VoyagePhase.Arrived);
+                case TipId.Activity: return c.NearActivity && c.OnShore && !c.Swimming && !c.Carrying;
                 default: return false;
             }
         }
@@ -73,6 +77,9 @@ namespace ShipMayham
                 case TipId.Harbor: return "Welcome ashore! The stalls sell food, drinks and hull shields. The port office offers routes and jobs (press Esc to use the mouse).";
                 case TipId.Leak: return "Leak! Patch it at the repair bench with {Interact}, four times. A quick-patch kit makes it instant.";
                 case TipId.Pirates: return "Pirates! Man the cannon with {Interact} and fire with {Fire}. Carry cannonballs from the magazine to the cannon.";
+                case TipId.Overboard: return "Overboard! Swim to a rope ladder on the hull and press {Interact} to climb out. Wait too long and you are hauled aboard for a small fine.";
+                case TipId.Ladder: return "Rope ladders let you dive in and swim: press {Interact} at the top. Sunken coins and a few passengers swimming back wait in the bay.";
+                case TipId.Activity: return "Chests, sand and quay edges hide skill games: press {Interact} to pick a lock, dig for treasure or go fishing for the galley.";
                 case TipId.Hazard: return "Hazard! Steer around the rocks of a shoal. Before a rogue wave hits, turn the ship's bow toward it.";
                 case TipId.Docking: return "Almost there. Slow below 1 m/s and press {Jump} at the helm within 12 m of the pier to dock.";
                 case TipId.ServeOrders: return "Passengers show what they want above their heads. Take it from its counter with {Interact}, then hand it over while looking at them.";

@@ -51,7 +51,30 @@ namespace ShipMayham
                 }
             }
             FindHarbor(session, crew, eye, forward, ref best, ref target);
+            if (crew.OnShore) FindActivity(session, crew, eye, forward, ref best, ref target);
             return target;
+        }
+
+        /// <summary>Chests to open, sand to dig and quay edges to fish from.</summary>
+        private static void FindActivity(PrototypeSession session, in CrewState crew, Vector3 eye, Vector3 forward, ref float best, ref InteractionTarget target)
+        {
+            var voyage = session.Voyage.Value;
+            if (session.Harbor == null || !session.Harbor.IsOpen) return;
+            foreach (var kind in new[] { MiniGameKind.Lockpick, MiniGameKind.Dig, MiniGameKind.Fishing })
+            {
+                var spots = VoyageSimulation.SpotsOf(kind);
+                for (int i = 0; i < spots.Length; i++)
+                {
+                    bool fresh = kind == MiniGameKind.Lockpick ? (voyage.ChestMask & (1 << i)) == 0 :
+                        kind == MiniGameKind.Dig ? (voyage.DigMask & (1 << i)) == 0 : true;
+                    if (!fresh || Vector2.Distance(crew.Position, spots[i]) > VoyageSimulation.ActivityReach) continue;
+                    Vector3 point = VoyageSimulation.HarborOrigin(voyage) + new Vector3(spots[i].x, VoyageSimulation.ShoreHeight + .5f, spots[i].y);
+                    float angle = Vector3.Angle(forward, point - eye);
+                    if (angle >= best) continue;
+                    best = angle;
+                    target = InteractionTarget.Activity(kind, i, PromptCatalog.ForActivity(kind, crew), point);
+                }
+            }
         }
 
         private static void DeckPoint(PrototypeSession session, in CrewState crew, Vector3 eye, Vector3 forward, Vector2 spot,
@@ -83,7 +106,10 @@ namespace ShipMayham
                 if (station.Kind == StationKind.Power && session.Emergency.Value.Fire == FirePhase.Burning)
                     target = InteractionTarget.Station(i, InteractionPrompt.Target("Fire circuit", "Isolate fire damage",
                         "Service counters stop until the fire is extinguished", key: HudControl.Special), anchor);
-                if (station.Kind == StationKind.Repair && session.Voyage.Value.Leak != 0)
+                if (station.Kind == StationKind.Repair && session.Voyage.Value.Leak != 0 && session.Voyage.Value.ReadyRepairKits == 0 &&
+                    !session.Emergency.Value.ValveAdjusted && crew.Carrying == ServiceItem.None)
+                    target = InteractionTarget.Station(i, PromptCatalog.ForHammer(session.Voyage.Value), anchor);
+                else if (station.Kind == StationKind.Repair && session.Voyage.Value.Leak != 0)
                     target = InteractionTarget.Station(i, InteractionPrompt.Target("Repair / valves", "Patch or apply selected valve",
                         $"R: cycle A/B/C. Hot pipe: {(char)('A' + session.Hazards.Value.Seed % 3)}. Selected: {(char)('A' + session.Emergency.Value.SelectedValve)}"), anchor);
             }

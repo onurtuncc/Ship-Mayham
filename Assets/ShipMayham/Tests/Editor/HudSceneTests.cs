@@ -374,6 +374,19 @@ namespace ShipMayham.Tests
             for (int frame = 0; frame < 30; frame++) yield return null;
             yield return CaptureWorld(hud, controller, "Logs/WorldFloaties.png", ship.TransformPoint(new Vector3(2.2f, 1.9f, -6.2f)), ship.TransformPoint(new Vector3(0, 1.0f, -1f)), 55);
 
+            // Things to find in port: a chest, a mound, a fishing rod at the quay edge and a sunken coin.
+            sim.State.Phase = VoyagePhase.Boarding;
+            for (int frame = 0; frame < 20; frame++) yield return null;
+            Vector3 origin = VoyageSimulation.HarborOrigin(sim.State);
+            var chestSpot = VoyageSimulation.ChestSpots[0];
+            yield return CaptureWorld(hud, controller, "Logs/WorldChest.png", origin + new Vector3(chestSpot.x + 3f, 1.6f, chestSpot.y - 3f), origin + new Vector3(chestSpot.x, .5f, chestSpot.y), 55);
+            var digSpot = VoyageSimulation.DigSpots[2];
+            yield return CaptureWorld(hud, controller, "Logs/WorldDig.png", origin + new Vector3(digSpot.x + 2.5f, 1.4f, digSpot.y - 2.5f), origin + new Vector3(digSpot.x, .4f, digSpot.y), 55);
+            var rodSpot = VoyageSimulation.FishingSpots[1];
+            yield return CaptureWorld(hud, controller, "Logs/WorldFishingSpot.png", origin + new Vector3(rodSpot.x - 3f, 1.8f, rodSpot.y - 2.5f), origin + new Vector3(rodSpot.x + .4f, .8f, rodSpot.y), 55);
+            var coinSpot = VoyageSimulation.CoinSpots[1];
+            yield return CaptureWorld(hud, controller, "Logs/WorldCoin.png", ship.TransformPoint(new Vector3(coinSpot.x + 1.5f, .3f, coinSpot.y - 2.2f)), ship.TransformPoint(new Vector3(coinSpot.x, -1f, coinSpot.y)), 60);
+
             // The gangway gate, closed and open.
             sim.State.Phase = VoyagePhase.Boarding;
             sim.Crew[0].Position = new Vector2(-3.4f, -6f);

@@ -149,6 +149,9 @@ namespace ShipMayham.Tests
             c = Boarding(); c.LookingAtPassenger = true; cases[TipId.CheckTickets] = c;
             c = Boarding(); c.Phase = VoyagePhase.Sailing; cases[TipId.Signals] = c;
             c = Boarding(); c.Phase = VoyagePhase.Sailing; c.HazardWarning = true; cases[TipId.Hazard] = c;
+            c = Boarding(); c.Phase = VoyagePhase.Sailing; c.Swimming = true; cases[TipId.Overboard] = c;
+            c = Boarding(); c.NearLadder = true; cases[TipId.Ladder] = c;
+            c = Boarding(); c.OnShore = true; c.NearActivity = true; cases[TipId.Activity] = c;
             foreach (TipId id in System.Enum.GetValues(typeof(TipId)))
             {
                 Assert.IsTrue(cases.ContainsKey(id), id + " has no reachability case");

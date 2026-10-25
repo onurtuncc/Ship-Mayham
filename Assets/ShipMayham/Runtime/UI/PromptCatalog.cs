@@ -92,6 +92,24 @@ namespace ShipMayham
             return InteractionPrompt.Target("Gangway gate", action, toShore ? "Supplies and repairs are in town" : "Return to the deck", key: HudControl.None, tone: PromptTone.Info);
         }
 
+        public static InteractionPrompt ForActivity(MiniGameKind kind, in CrewState crew)
+        {
+            if (crew.Carrying != ServiceItem.None)
+                return InteractionPrompt.Target(ActivityTitle(kind), "Free your hands first", "Put your item down", key: HudControl.None, tone: PromptTone.Blocked);
+            switch (kind)
+            {
+                case MiniGameKind.Lockpick: return InteractionPrompt.Target("Buried chest", "Pick the lock", "A skill game: coins inside");
+                case MiniGameKind.Dig: return InteractionPrompt.Target("Suspicious sand", "Dig", "Tap fast. Treasure, maybe");
+                default: return InteractionPrompt.Target("Fishing spot", "Cast a line", "Fish feed the galley");
+            }
+        }
+
+        private static string ActivityTitle(MiniGameKind kind) => kind == MiniGameKind.Lockpick ? "Buried chest" : kind == MiniGameKind.Dig ? "Suspicious sand" : "Fishing spot";
+
+        /// <summary>The repair bench while the hull leaks and nothing faster than hammering is at hand.</summary>
+        public static InteractionPrompt ForHammer(in VoyageState voyage) =>
+            InteractionPrompt.Target("Repair bench", "Nail a plank over the leak", $"A skill game. {voyage.RepairSteps}/4 patched by hand");
+
         public static InteractionPrompt ForLadder(in Ladder ladder, in CrewState crew, bool harborOpen)
         {
             if (crew.Swimming) return InteractionPrompt.Target(ladder.Name, "Climb up", "Pull yourself out of the water");

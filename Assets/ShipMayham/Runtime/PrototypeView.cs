@@ -128,6 +128,8 @@ namespace ShipMayham
 
         /// <summary>True while the purser's desk is open; the cursor is free and the crew member stands still.</summary>
         public bool PurserOpen { get; private set; }
+        /// <summary>True while a skill game is on screen: the crew member stands still, the look is frozen and the game reads the keys.</summary>
+        public bool MiniGameOpen { get; set; }
 
         public void OpenPurser()
         {
@@ -339,6 +341,14 @@ namespace ShipMayham
             }
         }
 
+        /// <summary>A leak with no patch kit and no valve to hand is nailed over with the hammer game.</summary>
+        private bool HammerWouldHelp()
+        {
+            var voyage = Session.Voyage.Value;
+            return voyage.Leak != 0 && voyage.ReadyRepairKits == 0 && !Session.Emergency.Value.ValveAdjusted &&
+                Session.Crew[Session.LocalCrewIndex].Carrying == ServiceItem.None;
+        }
+
         /// <summary>Yaw is relative to the ship; looking up/down never changes walking speed.</summary>
         public static Vector2 ToDeckMovement(Vector2 input, float yaw)
         {
@@ -374,6 +384,11 @@ namespace ShipMayham
                 bool leave = Session.Voyage.Value.Phase == VoyagePhase.Sailing || Session.Crew[local].OnShore;
                 if (leave || keyboard?.escapeKey.wasPressedThisFrame == true || keyboard?.eKey.wasPressedThisFrame == true || pad?.buttonEast.wasPressedThisFrame == true)
                     ClosePurser();
+                if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
+                return;
+            }
+            if (MiniGameOpen)
+            {
                 if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
                 return;
             }
@@ -446,6 +461,10 @@ namespace ShipMayham
                         Session.PickUpSalvageRpc(Target.Index);
                     else if (Target.Kind == InteractionKind.Ladder)
                         Session.LadderRpc(Target.Index);
+                    else if (Target.Kind == InteractionKind.Activity)
+                        Session.ActivityRpc(Target.ActivityKind, Target.ActivitySpot);
+                    else if (Target.Kind == InteractionKind.Station && Session.Stations[Target.Index].Kind == StationKind.Repair && HammerWouldHelp())
+                        Session.ActivityRpc(MiniGameKind.Hammer, 0);
                     else if (Target.Kind == InteractionKind.Station && Session.Stations[Target.Index].Kind == StationKind.Manifest)
                     {
                         if (Session.Voyage.Value.Phase != VoyagePhase.Sailing) OpenPurser();

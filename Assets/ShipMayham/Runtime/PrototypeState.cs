@@ -51,6 +51,8 @@ namespace ShipMayham
         public int Reputation, LastReputation;
         public int LastTickets, LastServices, LastTips, LastCosts, LastNet, LastBounty, LastEventBonus, LastRouteBonus;
         public int CheckedTickets, CollectedFares, RescueCount, LastUnpaid, LastMissing, LastRescueCosts;
+        /// <summary>Which dig spots and chests of this port are used up and which sunken coins are taken (bit per spot); reset when a new port is reached.</summary>
+        public int DigMask, ChestMask, CoinMask, ActivityPortKey;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref Phase); s.SerializeValue(ref SessionPhase); s.SerializeValue(ref Position);
@@ -77,6 +79,7 @@ namespace ShipMayham
             s.SerializeValue(ref LastRouteBonus);
             s.SerializeValue(ref CheckedTickets); s.SerializeValue(ref CollectedFares); s.SerializeValue(ref RescueCount);
             s.SerializeValue(ref LastUnpaid); s.SerializeValue(ref LastMissing); s.SerializeValue(ref LastRescueCosts);
+            s.SerializeValue(ref DigMask); s.SerializeValue(ref ChestMask); s.SerializeValue(ref CoinMask); s.SerializeValue(ref ActivityPortKey);
         }
         public bool Equals(VoyageState other) { other.TimeMs = TimeMs; return ValueType.Equals(this, other); }
     }

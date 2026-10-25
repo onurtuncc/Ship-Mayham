@@ -23,6 +23,7 @@ namespace ShipMayham.Editor
             ApplyGangwayGate(session, view);
             ApplyLadders(session);
             ApplyFloaties(view);
+            ApplyActivityProps(session, view);
             EnsureCrewController();
             EnsurePassengerController();
             EditorSceneManager.MarkSceneDirty(scene);
@@ -41,6 +42,60 @@ namespace ShipMayham.Editor
                 if (found != null) return found;
             }
             return null;
+        }
+
+        // The things to find in each port and in the water: mounds to dig, chests to open, rods on the quay edge and sunken coins.
+        private static void ApplyActivityProps(PrototypeSession session, PrototypeView view)
+        {
+            var ports = session.Harbor.PortRoots;
+            int digs = VoyageSimulation.DigSpots.Length, chests = VoyageSimulation.ChestSpots.Length, fishing = VoyageSimulation.FishingSpots.Length;
+            var mounds = new Transform[ports.Length * digs];
+            var holes = new Transform[ports.Length * digs];
+            var chestHolders = new Transform[ports.Length * chests];
+            for (int port = 0; port < ports.Length; port++)
+            {
+                Transform visuals = ports[port].Find("Visuals");
+                if (visuals == null) continue;
+                for (int i = 0; i < digs; i++)
+                {
+                    var spot = VoyageSimulation.DigSpots[i];
+                    mounds[port * digs + i] = Holder(visuals, "DigMound_" + i, "DigSpot", new Vector3(spot.x, VoyageSimulation.ShoreHeight, spot.y), 1.1f, 0);
+                    holes[port * digs + i] = Holder(visuals, "DigHole_" + i, "DigHole", new Vector3(spot.x, VoyageSimulation.ShoreHeight, spot.y), 1.1f, 0);
+                }
+                for (int i = 0; i < chests; i++)
+                {
+                    var spot = VoyageSimulation.ChestSpots[i];
+                    chestHolders[port * chests + i] = Holder(visuals, "BuriedChest_" + i, "LockBox", new Vector3(spot.x, VoyageSimulation.ShoreHeight, spot.y), 1.5f, 20 + i * 70);
+                }
+                for (int i = 0; i < fishing; i++)
+                {
+                    var spot = VoyageSimulation.FishingSpots[i];
+                    var rod = Holder(visuals, "FishingRod_" + i, "FishingRod", new Vector3(spot.x + .45f, VoyageSimulation.ShoreHeight, spot.y), 1f, 0);
+                    rod.localRotation = Quaternion.Euler(0, 0, -22f);
+                }
+            }
+            var coins = new Transform[VoyageSimulation.CoinSpots.Length];
+            for (int i = 0; i < coins.Length; i++)
+            {
+                var spot = VoyageSimulation.CoinSpots[i];
+                coins[i] = Holder(session.ShipRoot, "SunkenCoin_" + i, "SunkenCoin", new Vector3(spot.x, VoyageSimulation.SeaLevel + .08f, spot.y), 2f, 0);
+            }
+            var activity = view.GetComponent<PrototypeActivityView>() ?? view.gameObject.AddComponent<PrototypeActivityView>();
+            activity.Session = session;
+            activity.Mounds = mounds;
+            activity.Holes = holes;
+            activity.Chests = chestHolders;
+            activity.Coins = coins;
+            EditorUtility.SetDirty(activity);
+        }
+
+        private static Transform Holder(Transform parent, string name, string model, Vector3 position, float scale, float yaw)
+        {
+            var holder = parent.Find(name) ?? Root(name, parent);
+            holder.localPosition = position;
+            holder.localRotation = Quaternion.Euler(0, yaw, 0);
+            if (holder.Find("Model_" + model) == null) AddProp(holder, model, Vector3.zero, scale);
+            return holder;
         }
 
         // Passengers who cannot swim wear a red-and-white ring at the waist; the view shows it only for them.

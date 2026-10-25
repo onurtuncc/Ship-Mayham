@@ -39,6 +39,7 @@ namespace ShipMayham
         private readonly SignalLayer signals;
         private readonly SignalWheel wheel;
         private readonly TipCard tips;
+        private readonly MiniGameOverlay miniGame;
         private readonly System.Func<TipContext> tipContext;
 
         private int voyageSignature = int.MinValue, objectiveSignature = int.MinValue, alertSignature = int.MinValue, carrySignature = int.MinValue;
@@ -193,6 +194,8 @@ namespace ShipMayham
             if (hud.Session != null) hud.Session.SignalReceived += signals.Add;
             purser = new PurserPanel(hud, screen);
             pause = new PauseMenu(hud, screen);
+            miniGame = new MiniGameOverlay(hud, screen);
+            if (hud.Session != null) hud.Session.MiniGameOpened += miniGame.Open;
             tips = new TipCard(screen);
             tipContext = BuildTipContext;
             screen.gameObject.SetActive(false);
@@ -201,13 +204,13 @@ namespace ShipMayham
         public void SetVisible(bool visible)
         {
             HudKit.SetActive(root, visible);
-            if (!visible) tips.Reset();
+            if (!visible) { tips.Reset(); miniGame.Close(); }
         }
 
         /// <summary>Stops listening to the session (the HUD is going away).</summary>
         public void Dispose()
         {
-            if (hud.Session != null) hud.Session.SignalReceived -= signals.Add;
+            if (hud.Session != null) { hud.Session.SignalReceived -= signals.Add; hud.Session.MiniGameOpened -= miniGame.Open; }
         }
 
         public void ToggleHelp() => help.Toggle();
@@ -249,6 +252,7 @@ namespace ShipMayham
             pause.Tick();
             signals.Tick(hud);
             wheel.Tick(view);
+            miniGame.Tick(Time.unscaledDeltaTime);
             tips.Tick(Time.unscaledTime, tipContext, gamepad, view != null && (view.MenuOpen || view.PurserOpen || view.WheelOpen) || help.Visible);
             for (int i = 0; i < pills.Length; i++) pills[i].Tick(dt);
         }
@@ -283,6 +287,9 @@ namespace ShipMayham
             }
             var target = hud.View != null ? hud.View.Target : default;
             context.LookingAtPassenger = target.Kind == InteractionKind.Passenger;
+            context.Swimming = crew.Swimming;
+            context.NearLadder = target.Kind == InteractionKind.Ladder;
+            context.NearActivity = target.Kind == InteractionKind.Activity;
             return context;
         }
 
@@ -372,12 +379,14 @@ namespace ShipMayham
             sig = sig * 31 + HashCode(hz.Wave == WavePhase.Warning ? 1 : 0, Mathf.CeilToInt(hz.WaveRemaining), hz.Wave == WavePhase.Warning ? Mathf.RoundToInt(HazardLogic.TurnToFace(s.Heading, hz.WaveBearing) / 5f) : 0, shoalIndex, Mathf.RoundToInt(shoalGap / 3f));
             sig = sig * 31 + HashCode(Mathf.CeilToInt(e.WarningRemaining), Mathf.RoundToInt(e.PirateHealth), Mathf.RoundToInt(e.EnemyShotRemaining * 2), e.Ammo, e.MagazineAmmo, e.ReadyAmmo);
             sig = sig * 31 + HashCode(Mathf.RoundToInt(e.ReloadRemaining * 2), e.CannonLoaded ? 1 : 0, (int)ev.Phase, (int)ev.Kind, ev.Progress, ev.TargetPassenger, Mathf.CeilToInt(ev.Remaining));
-            sig = sig * 31 + HashCode(Mathf.RoundToInt(ev.CoolingTime * 2), atCrane ? 1 : 0, craneInTarget ? 1 : 0, s.CraneHolding ? 1 : 0, s.DockJobProgress, gamepad ? 1 : 0, voyageOpen ? 1 : 0);
+            sig = sig * 31 + HashCode(Mathf.RoundToInt(ev.CoolingTime * 2), atCrane ? 1 : 0, craneInTarget ? 1 : 0, s.CraneHolding ? 1 : 0, s.DockJobProgress, gamepad ? 1 : 0, (voyageOpen ? 1 : 0) + (local >= 0 && session.Crew[local].Swimming ? 2 : 0));
             if (sig == alertSignature) return;
             alertSignature = sig;
 
             alerts.Begin();
             if (voyageOpen && s.Phase == VoyagePhase.Sailing) AddHazards(s, hz, shoalIndex, shoalGap);
+            if (voyageOpen && s.Phase == VoyagePhase.Sailing && local >= 0 && session.Crew[local].Swimming)
+                alerts.Add(HudKit.Danger, "OVERBOARD!", "Swim to a rope ladder on the hull and press E to climb out. Otherwise you are hauled aboard, for a small fine.");
             if (atCrane)
             {
                 alerts.Add(craneInTarget ? HudKit.Good : HudKit.Info, $"CRANE   {s.DockJobProgress}/{VoyageSimulation.DockJobGoal} landed",
@@ -416,7 +425,7 @@ namespace ShipMayham
             {
                 int turn = Mathf.RoundToInt(HazardLogic.TurnToFace(s.Heading, hz.WaveBearing));
                 string how = Mathf.Abs(turn) <= HazardLogic.WaveSafeAngle ? "Hold this heading!" : turn > 0 ? $"Turn right {turn}°." : $"Turn left {-turn}°.";
-                alerts.Add(HudKit.Danger, $"ROGUE WAVE   {Mathf.CeilToInt(hz.WaveRemaining)}s", $"Coming from the {HazardLogic.Compass(hz.WaveBearing)}. Point the bow at it. {how}");
+                alerts.Add(HudKit.Danger, $"ROGUE WAVE   {Mathf.CeilToInt(hz.WaveRemaining)}s", $"Coming from the {HazardLogic.Compass(hz.WaveBearing)}. Point the bow at it. {how} Stay off the far rail or hold the helm.");
             }
             if (shoalIndex >= 0)
                 alerts.Add(HudKit.Warning, $"SHOAL AHEAD   {shoalGap:0} m", "Steer around the rocks. A slow ship takes less damage.");

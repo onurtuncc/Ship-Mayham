@@ -16,7 +16,7 @@ namespace ShipMayham
     public sealed class PrototypeHud : MonoBehaviour
     {
         private const string SessionType = "ship-mayham-prototype";
-        public const ushort NetworkProtocolVersion = 24;
+        public const ushort NetworkProtocolVersion = 25;
 
         public NetworkManager Manager;
         public PrototypeSession Session;

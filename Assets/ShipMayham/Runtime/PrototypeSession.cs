@@ -73,6 +73,8 @@ namespace ShipMayham
                 seats[i] = new Vector2(p.x, p.z);
             }
             Simulation = new VoyageSimulation(stations, seats, Harbor != null, (uint)UnityEngine.Random.Range(1, int.MaxValue));
+            Simulation.MiniGameStarted += OnMiniGameStarted;
+            Simulation.CrewNotice += OnCrewNotice;
             CareerProgressStore.Load(ref Simulation.State);
             if (LobbyBeforeVoyage) Simulation.OpenLobby();
             bool restored = VoyageMigrationDataHandler.RestorePending(Simulation);
@@ -407,6 +409,46 @@ namespace ShipMayham
             ulong sender = rpc.Receive.SenderClientId;
             string result = Simulation.ToggleDockJob(sender, kind);
             if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        /// <summary>Raised on the player who must play a mini-game the host just opened for them.</summary>
+        public event System.Action<MiniGameStart> MiniGameOpened;
+
+        private void OnMiniGameStarted(int slot, MiniGameStart start)
+        {
+            ulong id = Simulation.Crew[slot].ClientId;
+            MiniGameStartRpc((byte)start.Kind, start.Target, start.Seed, start.Difficulty, RpcTarget.Single(id, RpcTargetUse.Temp));
+        }
+
+        private void OnCrewNotice(int slot, string text)
+        {
+            ulong id = Simulation.Crew[slot].ClientId;
+            if (id != ulong.MaxValue) NoticeRpc(new FixedString128Bytes(text), RpcTarget.Single(id, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        private void MiniGameStartRpc(byte kind, int target, uint seed, float difficulty, RpcParams rpc = default) =>
+            MiniGameOpened?.Invoke(new MiniGameStart { Kind = (MiniGameKind)kind, Target = target, Seed = seed, Difficulty = difficulty });
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void ActivityRpc(MiniGameKind kind, int target, RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.ActivityCommand(sender, kind, target);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(new FixedString128Bytes(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void MiniGameResultRpc(MiniGameKind kind, int target, MiniGameOutcome outcome, int score, int elapsedMs, RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            var result = new MiniGameResult { Kind = kind, Target = target, Outcome = outcome, Score = score, ElapsedMs = elapsedMs };
+            string text = Simulation.FinishMiniGame(sender, result);
+            if (!string.IsNullOrEmpty(text)) NoticeRpc(new FixedString128Bytes(text), RpcTarget.Single(sender, RpcTargetUse.Temp));
             Publish();
         }
 

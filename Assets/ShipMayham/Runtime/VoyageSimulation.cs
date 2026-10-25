@@ -141,6 +141,7 @@ namespace ShipMayham
             int carriedPassenger = CarriedPassenger(i);
             if (carriedPassenger >= 0) ReturnPassengerToSeat(carriedPassenger);
             ReturnItem(i);
+            miniGames[i] = default;
             inputs[i] = Vector2.zero;
             inputExpires[i] = 0;
             interactionReady[i] = 0;
@@ -204,6 +205,7 @@ namespace ShipMayham
             else steering.Reset();
             TickPassengers(dt);
             TickSwimmers(dt);
+            TickActivities(dt);
             if (State.DockJobActive && State.DockJobType == DockJobKind.CraneLoading && HarborOpen) State.CraneSwayTime += dt;
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Elapsed += dt;
@@ -550,6 +552,7 @@ namespace ShipMayham
             ResetEmergencies();
             ResetOpportunities();
             ResetJourney();
+            ResetActivities();
             for (int i = 0; i < MaxCrew; i++)
             {
                 Crew[i].AtHelm = false;
