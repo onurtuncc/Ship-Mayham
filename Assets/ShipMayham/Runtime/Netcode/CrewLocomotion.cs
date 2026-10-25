@@ -54,11 +54,14 @@ namespace ShipMayham
             StepVertical(ref state, dt);
             CrewKinematics.Step(ref state.Velocity, input, maxSpeed, dt);
             Vector2 attempted = state.Velocity * dt, position = state.Position;
+            // Someone already standing inside an obstacle (put there by a ladder, a respawn or a passenger sitting down beside
+            // them) could otherwise never take a single step: every step out still starts inside. Let them walk free.
+            bool trapped = !world.Walkable(position);
             // Separate axes allow sliding along counters.
             Vector2 candidate = new Vector2(Mathf.Clamp(position.x + attempted.x, world.Min.x, world.Max.x), position.y);
-            if (world.Walkable(candidate)) position = candidate;
+            if (trapped || world.Walkable(candidate)) position = candidate;
             candidate = new Vector2(position.x, Mathf.Clamp(position.y + attempted.y, world.Min.y, world.Max.y));
-            if (world.Walkable(candidate)) position = candidate;
+            if (trapped || world.Walkable(candidate)) position = candidate;
             CrewKinematics.ResolveBlocked(ref state.Velocity, attempted, position - state.Position);
             state.Position = position;
         }

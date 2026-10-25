@@ -156,11 +156,57 @@ namespace ShipMayham
             ref var crew = ref Crew[slot];
             crew.Swimming = false;
             crew.OnShore = Ladders[ladder].OnQuay;
-            crew.Position = Ladders[ladder].Top;
+            crew.Position = FreeStandingSpot(Ladders[ladder].Top, crew.OnShore);
             crew.Velocity = Vector2.zero;
             inputs[slot] = Vector2.zero;
             ladderReady[slot] = clock + LadderCooldownSeconds;
             overboardClock[slot] = 0;
+        }
+
+        /// <summary>
+        /// The walkable spot nearest to <paramref name="desired"/> on the deck or the quay: a ladder top sits right beside a
+        /// counter, and standing inside its clearance would leave the crew member unable to step away.
+        /// </summary>
+        public Vector2 FreeStandingSpot(Vector2 desired, bool onShore)
+        {
+            if (StandsFree(desired, onShore) && Margin(desired, onShore) >= LandingMargin) return desired;
+            // Nearest ring that has room; on it, the spot farthest from the counters, so the first steps are not into a corner.
+            for (int ring = 1; ring <= 8; ring++)
+            {
+                Vector2 best = desired;
+                float bestMargin = float.NegativeInfinity;
+                for (int direction = 0; direction < 16; direction++)
+                {
+                    float angle = direction * Mathf.PI / 8;
+                    Vector2 candidate = desired + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (ring * .25f);
+                    if (!StandsFree(candidate, onShore)) continue;
+                    float margin = Margin(candidate, onShore);
+                    if (margin > bestMargin) { bestMargin = margin; best = candidate; }
+                }
+                if (bestMargin >= LandingMargin || ring == 8 && bestMargin > float.NegativeInfinity) return best;
+            }
+            return desired;
+        }
+
+        /// <summary>Room (metres) a landing spot should leave to the nearest counter or seat.</summary>
+        public const float LandingMargin = .3f;
+
+        // Distance to the nearest deck obstacle beyond its clearance; the quay has no small obstacles near its ladder.
+        private float Margin(Vector2 p, bool onShore)
+        {
+            if (onShore) return float.MaxValue;
+            float margin = float.MaxValue;
+            foreach (var station in Stations) margin = Mathf.Min(margin, Vector2.Distance(p, station.Position) - StationClearance);
+            for (int i = 0; i < Mathf.Min(Seats.Length, OpenSeats); i++) margin = Mathf.Min(margin, Vector2.Distance(p, Seats[i]) - SeatClearance);
+            return margin;
+        }
+
+        private bool StandsFree(Vector2 p, bool onShore)
+        {
+            if (onShore)
+                return p.x >= HarborTownLayout.Bounds.xMin && p.x <= HarborTownLayout.Bounds.xMax &&
+                       p.y >= HarborTownLayout.Bounds.yMin && p.y <= HarborTownLayout.Bounds.yMax && ShoreWalkable(p);
+            return Mathf.Abs(p.x) <= DeckBounds.x && Mathf.Abs(p.y) <= DeckBounds.y && Walkable(p);
         }
 
         /// <summary>The ship cannot leave while someone is still in the sea: they are not aboard.</summary>

@@ -72,7 +72,8 @@ namespace ShipMayham.Tests
             Tick(.8f);
             Assert.That(sim.LadderCommand(Host, 1), Does.StartWith("Up you go"));
             Assert.IsFalse(sim.Crew[0].Swimming);
-            Assert.AreEqual(VoyageSimulation.Ladders[1].Top, sim.Crew[0].Position);
+            Assert.Less(Vector2.Distance(VoyageSimulation.Ladders[1].Top, sim.Crew[0].Position), 1.3f, "beside the ladder top");
+            Assert.GreaterOrEqual(Vector2.Distance(sim.Crew[0].Position, sim.Stations[2].Position), VoyageSimulation.StationClearance, "clear of the counter next to it");
             Assert.AreEqual(0, sim.CrewInWater);
         }
 
