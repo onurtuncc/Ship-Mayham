@@ -177,8 +177,7 @@ namespace ShipMayham.Tests
         [Test] public void AmmoCannotBeTakenAshoreAndSlowsWalking()
         {
             Use(Supplier, Magazine);
-            sim.Crew[2].Position = VoyageSimulation.ShipGangway;
-            Advance(); sim.HarborCommand(Supplier, HarborAction.GoAshore);
+            Assert.IsFalse(GangwayWalk.Cross(sim, Supplier, true));
             Assert.IsFalse(sim.Crew[2].OnShore);
             sim.Crew[2].Position = new Vector2(0, -6);
             sim.SetInput(Supplier, Vector2.up);
@@ -279,8 +278,7 @@ namespace ShipMayham.Tests
 
         [Test] public void SuspendedAshorePlayerCannotBlockDeparture()
         {
-            sim.Crew[2].Position = VoyageSimulation.ShipGangway;
-            sim.HarborCommand(Supplier, HarborAction.GoAshore);
+            GangwayWalk.Cross(sim, Supplier, true);
             Assert.AreEqual(1, sim.CrewAshore);
             sim.SuspendConnection(Supplier);
             Assert.AreEqual(0, sim.CrewAshore);

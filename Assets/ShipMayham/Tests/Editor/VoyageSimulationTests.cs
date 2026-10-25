@@ -57,7 +57,7 @@ namespace ShipMayham.Tests
             Assert.Less(sim.Crew[slot].Position.x - blocked, CrewKinematics.WalkSpeed * .02f * .6f);
         }
 
-        [Test] public void ShipSpeedAndHeadingEaseInAtTheHelm()
+        [Test] public void TheHelmSetsTheEngineLeverAndTheShipGathersWay()
         {
             sim.Crew[0].Position = sim.Stations[1].Position + Vector2.right;
             sim.Interact(Host, 1);
@@ -65,15 +65,19 @@ namespace ShipMayham.Tests
             sim.State.Phase = VoyagePhase.Sailing;
             sim.SetInput(Host, new Vector2(1, 1));
             sim.Tick(.02f);
-            Assert.Less(sim.State.Speed, .2f, "Speed builds gradually.");
+            Assert.Less(sim.State.Speed, .05f, "Speed builds gradually.");
             Assert.Less(sim.State.Heading, .5f, "The rudder builds up instead of snapping to the full turn rate.");
-            for (int i = 0; i < 75; i++) { sim.SetInput(Host, new Vector2(1, 1)); sim.Tick(.02f); }
-            Assert.Greater(sim.State.Speed, 3f);
-            Assert.Greater(sim.State.Heading, 20f);
+            for (int i = 0; i < 100; i++) { sim.SetInput(Host, new Vector2(0, 1)); sim.Tick(.02f); }
+            Assert.AreEqual(1f, sim.State.Throttle, .01f, "W pushed the lever to full ahead");
+            for (int i = 0; i < 300; i++) { sim.SetInput(Host, Vector2.zero); sim.Tick(.02f); }
+            Assert.AreEqual(1f, sim.State.Throttle, .01f, "the lever stays set at the helm");
+            Assert.Greater(sim.State.Speed, 2.5f);
+            for (int i = 0; i < 150; i++) { sim.SetInput(Host, Vector2.right); sim.Tick(.02f); }
+            Assert.Greater(sim.State.YawRate, 5f);
             float heading = sim.State.Heading;
-            sim.SetInput(Host, new Vector2(0, 1));
+            sim.SetInput(Host, Vector2.zero);
             sim.Tick(.02f);
-            Assert.Greater(sim.State.Heading, heading, "The ship keeps swinging briefly after the wheel is released.");
+            Assert.Greater(sim.State.Heading, heading, "The ship keeps swinging after the wheel is released.");
         }
 
         private void Advance(float seconds)
@@ -216,7 +220,8 @@ namespace ShipMayham.Tests
                 sim.Tick(.05f);
             }
             Assert.GreaterOrEqual(sim.State.Position.y, 211);
-            for (int i = 0; i < 30; i++) { sim.SetInput(Host, Vector2.down); sim.Tick(.05f); }
+            // Taking the way off: the lever goes astern until she is slow enough to berth.
+            for (int i = 0; i < 400 && sim.State.Speed > .8f; i++) { sim.SetInput(Host, Vector2.down); sim.Tick(.05f); }
             sim.HelmAction(Host);
             Assert.AreEqual(VoyagePhase.Arrived, sim.State.Phase);
             Assert.AreEqual(120, sim.State.LastTickets, "One unpaid passenger was not checked/charged on this voyage.");

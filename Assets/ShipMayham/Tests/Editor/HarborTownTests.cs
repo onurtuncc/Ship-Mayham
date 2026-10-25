@@ -83,7 +83,7 @@ namespace ShipMayham.Tests
             Assert.IsTrue(hud.Session.IsSpawned); var session = hud.Session;
             Assert.AreEqual(18, session.Harbor.ShoreMarkers.Length);
             Assert.IsNotNull(session.Harbor.PortRoots[0].Find("Town_Visuals/Tavern/Model_HarborHut"));
-            session.Simulation.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore); yield return Wait(.6f);
+            GangwayWalk.Place(session.Simulation, 0, true); yield return Wait(.6f);
             session.SelectDockJobRpc(DockJobKind.SalvageRun); yield return Wait(.6f);
             Assert.IsTrue(session.Harbor.SalvageMarkers[0].gameObject.activeSelf);
             session.Simulation.Crew[0].Position = HarborTownLayout.SalvagePoint(0) + Vector2.right;

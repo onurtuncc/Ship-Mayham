@@ -24,8 +24,11 @@ namespace ShipMayham
         {
             public MoveCommand Command;
             public float SpeedFactor;
-            public ILocomotionWorld World;
+            public ILocomotionWorld ShipWorld, ShoreWorld;
+            public bool GateOpen;
         }
+
+        private readonly GangwayWorld gangway = new GangwayWorld();
 
         private readonly List<Pending> pending = new List<Pending>(MaxPending);
         private uint nextSeq = 1, lastAck;
@@ -70,17 +73,36 @@ namespace ShipMayham
         /// <summary>A numbered command without prediction (the player is at a station, or this is the host).</summary>
         public MoveCommand Issue(Vector2 input, bool jump) => MoveCommand.Create(nextSeq++, input, jump);
 
-        /// <summary>One fixed step: creates the command to send and predicts it locally.</summary>
-        public MoveCommand Step(Vector2 input, bool jump, float speedFactor, ILocomotionWorld world)
+        /// <summary>One fixed step in a single world (no gangway): creates the command to send and predicts it locally.</summary>
+        public MoveCommand Step(Vector2 input, bool jump, float speedFactor, ILocomotionWorld world) =>
+            Step(input, jump, speedFactor, world, world, false);
+
+        /// <summary>
+        /// One fixed step: creates the command to send and predicts it locally. The walker moves in the ship or the quay world
+        /// depending on which area the prediction is in, and walks the gangway exactly as the server does when the gate is open.
+        /// </summary>
+        public MoveCommand Step(Vector2 input, bool jump, float speedFactor, ILocomotionWorld shipWorld, ILocomotionWorld shoreWorld, bool gateOpen)
         {
             var command = MoveCommand.Create(nextSeq++, input, jump);
             previousPosition = State.Position; previousJump = State.JumpHeight;
-            // Predict from the quantised input the server will actually see.
-            CrewLocomotion.Step(ref State, command.Input, command.Jump, CrewKinematics.WalkSpeed * speedFactor, CrewLocomotion.StepSeconds, world);
+            var entry = new Pending { Command = command, SpeedFactor = speedFactor, ShipWorld = shipWorld, ShoreWorld = shoreWorld, GateOpen = gateOpen };
+            Simulate(entry);
             if (pending.Count >= MaxPending) pending.RemoveAt(0);
-            pending.Add(new Pending { Command = command, SpeedFactor = speedFactor, World = world });
+            pending.Add(entry);
             return command;
         }
+
+        // Predict from the quantised input the server will actually see, with the server's world and gangway rules.
+        private void Simulate(in Pending p)
+        {
+            ILocomotionWorld world = gangway.Use(State.OnShore ? p.ShoreWorld : p.ShipWorld, p.GateOpen, State.OnShore);
+            CrewLocomotion.Step(ref State, p.Command.Input, p.Command.Jump, CrewKinematics.WalkSpeed * p.SpeedFactor, CrewLocomotion.StepSeconds, world);
+            if (p.GateOpen && GangwayPassage.Handover(ref State)) previousPosition = ToFrame(previousPosition, !State.OnShore, State.OnShore);
+        }
+
+        /// <summary>Re-expresses a position given in one area's coordinates in another's (exact while the ship is at its berth).</summary>
+        public static Vector2 ToFrame(Vector2 position, bool fromShore, bool toShore) =>
+            fromShore == toShore ? position : toShore ? GangwayPassage.ShipToShore(position) : GangwayPassage.ShoreToShip(position);
 
         /// <summary>Applies an authoritative state: rewind, replay unacknowledged commands, smooth the difference.</summary>
         public void Reconcile(CrewMotionState server, uint ack, double serverTime)
@@ -94,6 +116,7 @@ namespace ShipMayham
             Vector2 beforePosition = RenderPosition;
             float beforeJump = RenderJump;
             Vector2 oldState = State.Position; float oldJump = State.JumpHeight;
+            bool beforeShore = State.OnShore;
             State = server;
             int firstUnseen = 0;
             while (firstUnseen < pending.Count && pending[firstUnseen].Command.Seq <= ack) firstUnseen++;
@@ -101,14 +124,14 @@ namespace ShipMayham
             previousPosition = State.Position; previousJump = State.JumpHeight;
             for (int i = 0; i < pending.Count; i++)
             {
-                var p = pending[i];
                 previousPosition = State.Position; previousJump = State.JumpHeight;
-                CrewLocomotion.Step(ref State, p.Command.Input, p.Command.Jump, CrewKinematics.WalkSpeed * p.SpeedFactor, CrewLocomotion.StepSeconds, p.World);
+                Simulate(pending[i]);
             }
 
-            // The correction is measured between what was on screen and what the rewound-and-replayed prediction now puts on screen.
-            Vector2 error = beforePosition - RenderPosition;
-            LastError = (oldState - State.Position).magnitude;
+            // The correction is measured between what was on screen and what the rewound-and-replayed prediction now puts on screen,
+            // in the area the prediction is in now (the server may have walked the gangway a step earlier or later).
+            Vector2 error = ToFrame(beforePosition, beforeShore, State.OnShore) - RenderPosition;
+            LastError = (ToFrame(oldState, beforeShore, State.OnShore) - State.Position).magnitude;
             if (error.magnitude > SnapDistance) { PositionOffset = Vector2.zero; JumpOffset = 0; return; }
             PositionOffset += error.magnitude < DeadZone ? Vector2.zero : error;
             float jumpError = beforeJump - RenderJump;

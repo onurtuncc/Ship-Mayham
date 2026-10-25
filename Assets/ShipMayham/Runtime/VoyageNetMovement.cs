@@ -19,6 +19,7 @@ namespace ShipMayham
         private readonly bool[] hasCommands = new bool[MaxCrew];
         private readonly float[] lastCommandClock = new float[MaxCrew], moveBudget = new float[MaxCrew];
         private readonly Vector2[] lastWalkPosition = new Vector2[MaxCrew];
+        private readonly GangwayWorld[] gangwayWorlds = { new GangwayWorld(), new GangwayWorld(), new GangwayWorld(), new GangwayWorld() };
         private ILocomotionWorld deckWorld;
 
         private ILocomotionWorld DeckWorldInstance => deckWorld ?? (deckWorld = new DeckLocomotionWorld(this));
@@ -94,16 +95,21 @@ namespace ShipMayham
             if (Crew[i].Doing != MiniGameKind.None) { input = Vector2.zero; jump = false; }       // busy with a skill game: standing still
             var state = new CrewMotionState
             {
-                Position = Crew[i].Position, Velocity = Crew[i].Velocity, JumpHeight = Crew[i].JumpHeight, VerticalSpeed = Crew[i].VerticalSpeed
+                Position = Crew[i].Position, Velocity = Crew[i].Velocity, JumpHeight = Crew[i].JumpHeight, VerticalSpeed = Crew[i].VerticalSpeed,
+                OnShore = Crew[i].OnShore
             };
-            // Teleports (boarding, going ashore, respawn) must not carry the old momentum into the new place.
+            // Teleports (ladders, respawn) must not carry the old momentum into the new place.
             if ((state.Position - lastWalkPosition[i]).sqrMagnitude > .0004f) state.Velocity = Vector2.zero;
-            ILocomotionWorld world = Crew[i].Swimming ? WaterWorld : Crew[i].OnShore ? ShoreWorldInstance : DeckWorldInstance;
+            bool gate = GateIsOpenFor(i);
+            ILocomotionWorld world = Crew[i].Swimming ? WaterWorld
+                : gangwayWorlds[i].Use(Crew[i].OnShore ? ShoreWorldInstance : DeckWorldInstance, gate, Crew[i].OnShore);
             CrewLocomotion.Step(ref state, input, jump && !Crew[i].Swimming, CrewKinematics.WalkSpeed * WalkSpeedFactor(i), dt, world);
+            // Walking the gangway: halfway along the plank the crew member changes area without a button or a jump.
+            if (gate) GangwayPassage.Handover(ref state);
             Crew[i].Position = state.Position; Crew[i].Velocity = state.Velocity;
             Crew[i].JumpHeight = state.JumpHeight; Crew[i].VerticalSpeed = state.VerticalSpeed;
+            Crew[i].OnShore = state.OnShore;
             lastWalkPosition[i] = state.Position;
-            TryGangway(i, input);
         }
 
         // One crew member's share of Tick: stations use the held input, walkers are advanced here only when no command stream

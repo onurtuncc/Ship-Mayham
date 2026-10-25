@@ -97,8 +97,7 @@ namespace ShipMayham.Tests
         {
             Use(10, Store); Use(10, 0); Use(10, 1); Use(10, 4);
             Assert.AreEqual(0, sim.State.Boarded); Assert.IsFalse(sim.Crew[0].AtHelm);
-            sim.Crew[0].Position = VoyageSimulation.ShipGangway; Advance(sim);
-            sim.HarborCommand(10, HarborAction.GoAshore);
+            GangwayWalk.Cross(sim, 10, true);
             Assert.IsFalse(sim.Crew[0].OnShore); Assert.AreEqual(ServiceItem.RepairKit, sim.Crew[0].Carrying); Conserved();
         }
         [Test] public void RangeAndAirborneAndShoreChecksRejectPickup()
@@ -132,7 +131,7 @@ namespace ShipMayham.Tests
             Assert.That(Encoding.UTF8.GetString(old), Does.Contain("\"Version\":10"));
 
             Assert.Throws<InvalidOperationException>(() => sim.ImportMigrationData(old));
-            Assert.AreEqual(26, PrototypeHud.NetworkProtocolVersion);
+            Assert.AreEqual(27, PrototypeHud.NetworkProtocolVersion);
 
         }
         [TestCase(VoyagePhase.Arrived)] [TestCase(VoyagePhase.Failed)]

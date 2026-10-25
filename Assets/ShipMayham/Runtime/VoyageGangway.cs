@@ -3,47 +3,33 @@ using UnityEngine;
 namespace ShipMayham
 {
     /// <summary>
-    /// The gangway gate: walking into it while it is open carries a crew member across, in either direction, without a button.
-    /// The view glides the body along the plank, so the change of area is a short walk rather than a jump.
+    /// The gangway gate. While it is open a crew member with free hands simply walks through it, along the plank and onto the
+    /// quay, and back the same way; there is no button and no jump (see <see cref="GangwayPassage"/>).
     /// </summary>
     public sealed partial class VoyageSimulation
     {
-        public const float GateTriggerRadius = 1f, GateCooldownSeconds = .8f, GateInputThreshold = .25f;
-        private readonly float[] gateReady = new float[MaxCrew];
-
-        /// <summary>The gate's trigger point for a crew member in the given area, in that area's own coordinates.</summary>
+        /// <summary>The gate's point for a crew member in the given area, in that area's own coordinates.</summary>
         public static Vector2 GatePoint(bool ashore) => ashore ? HarborPoint(HarborAction.BoardShip) : ShipGangway;
 
-        /// <summary>True when the crew member could pass the gate right now if they walked into it (hands free).</summary>
-        public bool GateIsOpenFor(int slot)
+        /// <summary>The rule both ends use: the harbor is open and the crew member walks with empty hands, at no station.</summary>
+        public static bool GateOpen(bool harborOpen, in CrewState crew, bool carryingPassenger) =>
+            harborOpen && !crew.AtHelm && !crew.AtCannon && !crew.AtCrane && !crew.Swimming &&
+            crew.Carrying == ServiceItem.None && !carryingPassenger;
+
+        /// <summary>True when the crew member could walk through the gate right now.</summary>
+        public bool GateIsOpenFor(int slot) => slot >= 0 && slot < MaxCrew && GateOpen(HarborOpen, Crew[slot], CarriedPassenger(slot) >= 0);
+
+        /// <summary>Crew standing on the plank, between the ship's rail and the quay: neither aboard nor ashore yet.</summary>
+        public bool CrewOnGangway
         {
-            if (slot < 0 || !HarborOpen) return false;
-            var crew = Crew[slot];
-            if (crew.AtHelm || crew.AtCannon || crew.AtCrane || crew.Swimming) return false;
-            return crew.Carrying == ServiceItem.None && CarriedPassenger(slot) < 0;
+            get
+            {
+                foreach (var crew in Crew)
+                    if (crew.Active && !crew.OnShore && !crew.Swimming && GangwayPassage.OnPlank(crew.Position)) return true;
+                return false;
+            }
         }
 
-        private string CrossGangway(int slot, bool toShore)
-        {
-            ref var crew = ref Crew[slot];
-            crew.OnShore = toShore;
-            crew.Position = GatePoint(toShore);
-            crew.Velocity = Vector2.zero;
-            inputs[slot] = Vector2.zero;
-            gateReady[slot] = clock + GateCooldownSeconds;
-            return toShore ? "Welcome ashore! Supplies and hull protection use the shared wallet." : "Back aboard. All crew must board before departure.";
-        }
-
-        /// <summary>Called after a walking step: opens the gate for someone who walks into it with free hands.</summary>
-        private void TryGangway(int i, Vector2 input)
-        {
-            if (clock < gateReady[i] || input.sqrMagnitude < GateInputThreshold * GateInputThreshold) return;
-            if (Crew[i].JumpHeight > 0 || Crew[i].VerticalSpeed > 0 || !GateIsOpenFor(i)) return;
-            bool toShore = !Crew[i].OnShore;
-            if (Vector2.Distance(Crew[i].Position, GatePoint(Crew[i].OnShore)) > GateTriggerRadius) return;
-            // Walking toward the other area: west off the ship, east back onto it.
-            if (toShore ? input.x > -GateInputThreshold : input.x < GateInputThreshold) return;
-            CrossGangway(i, toShore);
-        }
+        public const string WalkThroughGate = "Walk through the gangway gate to go ashore or board.";
     }
 }

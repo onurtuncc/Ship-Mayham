@@ -18,7 +18,6 @@ namespace ShipMayham
         public readonly Vector2[] Seats;
         private readonly float[] interactionReady = new float[MaxCrew];
         private readonly float[] inputExpires = new float[MaxCrew];
-        private ShipSteering steering;
         private readonly Vector2[] inputs = new Vector2[MaxCrew];
         private readonly string[] crewPlayerIds = new string[MaxCrew];
         private float clock;
@@ -134,7 +133,7 @@ namespace ShipMayham
 
         private void ReleaseCrewResponsibilities(int i)
         {
-            if (Crew[i].AtHelm) State.Speed = 0;
+            if (Crew[i].AtHelm) ShipMotionState = default;
             Crew[i].AtHelm = false;
             Crew[i].AtCrane = false;
             if (Crew[i].AtCannon) ReleaseCannon(i);
@@ -195,23 +194,20 @@ namespace ShipMayham
             }
             if (State.Phase == VoyagePhase.Sailing)
             {
-                float maxSpeed = 4 + State.EngineLevel * 1.5f;
-                float speedDelta, headingDelta;
-                if (helmManned) steering.Step(helmInput, State.Speed, dt, out speedDelta, out headingDelta);
-                else { steering.Release(dt); speedDelta = steering.Throttle * ShipSteering.SpeedPerThrottle * dt; headingDelta = steering.TurnVelocity * dt; }
-                State.Speed = Mathf.Clamp(State.Speed + speedDelta, 0, maxSpeed);
+                var motion = ShipMotionState;
+                float headingDelta = ShipSteering.Step(ref motion, helmInput, helmManned, MaxShipSpeed, dt);
+                ShipMotionState = motion;
                 State.Heading = Mathf.Repeat(State.Heading + headingDelta, 360);
             }
-            else steering.Reset();
+            else ShipMotionState = default;
             TickPassengers(dt);
             TickSwimmers(dt);
             TickActivities(dt);
             if (State.DockJobActive && State.DockJobType == DockJobKind.CraneLoading && HarborOpen) State.CraneSwayTime += dt;
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Elapsed += dt;
-            float radians = State.Heading * Mathf.Deg2Rad;
             Vector2 previousShip = State.Position, previousPirate = Encounter.PiratePosition;
-            State.Position += new Vector2(Mathf.Sin(radians), Mathf.Cos(radians)) * (State.Speed * dt);
+            State.Position += ShipSteering.Velocity(ShipMotionState, State.Heading) * dt;
             // Prototype sailing area: visible map bounds, no possibility of sailing away forever.
             State.Position.x = Mathf.Clamp(State.Position.x, -90, 90);
             State.Position.y = Mathf.Clamp(State.Position.y, -20, 250);
@@ -246,6 +242,16 @@ namespace ShipMayham
             }
         }
 
+        /// <summary>Top speed ahead with the current engine.</summary>
+        public float MaxShipSpeed => 4 + State.EngineLevel * 1.5f;
+
+        /// <summary>The helm and hull motion, stored in the replicated state so clients, migration and saves all carry it.</summary>
+        public ShipMotion ShipMotionState
+        {
+            get => new ShipMotion { Throttle = State.Throttle, Rudder = State.Rudder, Speed = State.Speed, Drift = State.Drift, YawRate = State.YawRate };
+            set { State.Throttle = value.Throttle; State.Rudder = value.Rudder; State.Speed = value.Speed; State.Drift = value.Drift; State.YawRate = value.YawRate; }
+        }
+
         private bool Walkable(Vector2 p, int ignorePassenger = -1)
         {
             foreach (var station in Stations) if ((p - station.Position).sqrMagnitude < StationClearance * StationClearance) return false;
@@ -264,7 +270,7 @@ namespace ShipMayham
             if (Crew[i].OnShore) return "Board the ship before using ship stations.";
             if (clock < interactionReady[i]) return string.Empty;
             interactionReady[i] = clock + .35f;
-            if (Crew[i].AtHelm) { Crew[i].AtHelm = false; return "Helm released. The ship keeps its speed; S brakes."; }
+            if (Crew[i].AtHelm) { Crew[i].AtHelm = false; return "Helm released. The engine eases to STOP and the ship carries its way."; }
             if (Crew[i].AtCannon) { ReleaseCannon(i); return "Cannon released."; }
             if (Crew[i].JumpHeight > 0 || Crew[i].VerticalSpeed > 0) return "Land before interacting.";
             if (CarriedPassenger(i) >= 0) return "Put the passenger down before using stations or serving.";
@@ -302,7 +308,7 @@ namespace ShipMayham
                 case StationKind.Helm:
                     foreach (var crew in Crew) if (crew.Active && crew.AtHelm) return "Helm occupied.";
                     Crew[i].AtHelm = true;
-                    return "Helm: W/S throttle & brake, A/D turn, Space depart/dock, E release.";
+                    return "Helm: W/S engine lever (stays set), A/D wheel, Space depart/dock, E release.";
                 case StationKind.Food: return TakeItem(i, ServiceItem.Food);
                 case StationKind.Drink: return TakeItem(i, ServiceItem.Drink);
                 case StationKind.Repair:
@@ -364,14 +370,15 @@ namespace ShipMayham
                 if (State.Boarded == 0) return "Board passengers at the manifest first.";
                 if (AnyPassengerBoarding) return "Passengers are still boarding. Wait until everyone is seated.";
                 if (CrewAshore > 0) return "Cannot depart: crew are still ashore. Ask them to board at the gangway.";
+                if (CrewOnGangway) return "Cannot depart: someone is still on the gangway.";
                 if (SwimmersBlockDeparture) return "Cannot depart: someone is still swimming. Wait for them to climb a ladder.";
                 if (State.DockJobActive) return "Finish or cancel the cargo relay before departure.";
                 State.Phase = VoyagePhase.Sailing;
-                return "Under way! W accelerates. Serve passengers and watch the hull.";
+                return "Under way! W sets the engine ahead; she gathers way slowly. Serve passengers and watch the hull.";
             }
             if (State.Phase != VoyagePhase.Sailing) return "Use the manifest to prepare another voyage.";
             if (Vector2.Distance(State.Position, Destination) > DockRadius) return "Get within 12 m of the destination marker.";
-            if (State.Speed > 1) return "Too fast to dock. Hold S to brake below 1 m/s.";
+            if (Mathf.Abs(State.Speed) > 1) return "Too fast to dock. Pull the lever to ASTERN to take the way off below 1 m/s.";
             if (Journey.Course != PassageCourse.Direct && Journey.Checkpoints < 2) return "Visit both marked passage gates before docking.";
             Settle(true);
             return "Docked! Earnings paid to the shared wallet.";
@@ -499,7 +506,7 @@ namespace ShipMayham
             State.Phase = success ? VoyagePhase.Arrived : VoyagePhase.Failed;
             Encounter.CrewBall.Active = Encounter.PirateBall.Active = false;
             EndHazards();
-            State.Speed = 0;
+            ShipMotionState = default;
             // A fixed berth aligns the gangway with the destination pier.
             if (success && HarborEnabled) { State.Position = Destination; State.Heading = 0; }
             State.LastTickets = 0;

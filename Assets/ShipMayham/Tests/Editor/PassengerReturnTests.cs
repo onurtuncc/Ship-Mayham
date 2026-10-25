@@ -246,9 +246,10 @@ namespace ShipMayham.Tests
         // ------------------------------------------------------------ edge cases
 
         [Test]
-        public void AStuckWalkerIsSeatedWhenTheTimeoutRunsOut()
+        public void AStuckWalkerWalksOutWhenTheTimeoutRunsOutInsteadOfTeleporting()
         {
-            // Walled in by stations on every side, the passenger cannot walk; the timeout puts them in the seat.
+            // Walled in by stations on every side, the passenger cannot walk around them; once the timeout runs out they walk
+            // straight through to the seat. Nobody vanishes from one spot and reappears in another.
             var walled = new VoyageSimulation(new[]
             {
                 new StationDefinition(StationKind.Manifest, new Vector2(-4, -4)),
@@ -270,8 +271,15 @@ namespace ShipMayham.Tests
             walled.Passengers[0].Motion = PassengerMotion.Returning;
             walled.Passengers[0].RecoveryRemaining = VoyageSimulation.ReturnTimeoutSeconds;
             walled.Passengers[0].Position = new Vector3(4f, .5f, 2f);
-            for (float t = 0; t < VoyageSimulation.ReturnTimeoutSeconds + .5f; t += .02f) walled.Tick(.02f);
+            float largestStep = 0;
+            for (float t = 0; t < VoyageSimulation.ReturnTimeoutSeconds + VoyageSimulation.StuckGraceSeconds && walled.Passengers[0].Motion == PassengerMotion.Returning; t += .02f)
+            {
+                Vector3 before = walled.Passengers[0].Position;
+                walled.Tick(.02f);
+                if (walled.Passengers[0].Motion == PassengerMotion.Returning) largestStep = Mathf.Max(largestStep, Vector3.Distance(before, walled.Passengers[0].Position));
+            }
             Assert.AreEqual(PassengerMotion.OnDeck, walled.Passengers[0].Motion);
+            Assert.LessOrEqual(largestStep, VoyageSimulation.PassengerWalkSpeed * .02f + 1e-4f, "walked, did not jump");
             Assert.AreEqual(walled.Seats[0], new Vector2(walled.Passengers[0].Position.x, walled.Passengers[0].Position.z));
         }
 

@@ -57,7 +57,8 @@ namespace ShipMayham.Editor
                     Transform root = FindDescendant(port, resident);
                     if (root == null) throw new InvalidOperationException($"Resident '{resident}' is missing under {port.name}.");
                     RemoveStaticCharacter(root);
-                    animators.Add(AddHumanAnimator(root, model, NpcScale, controller, out _));
+                    animators.Add(AddHumanAnimator(root, model, NpcScale, controller, out Transform body));
+                    body.localRotation = Quaternion.Euler(0, ResidentModelYaw, 0);
                 }
             }
 

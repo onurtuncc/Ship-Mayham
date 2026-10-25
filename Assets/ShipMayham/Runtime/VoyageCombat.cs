@@ -66,8 +66,8 @@ namespace ShipMayham
             Encounter.EnemyShotTo = DeckToWorld(State, new Vector3(4, 1, -3));
             Vector3 delta = Encounter.EnemyShotTo - Encounter.EnemyShotFrom;
             float flight = new Vector2(delta.x, delta.z).magnitude / CannonballSpeed;
-            float heading = State.Heading * Mathf.Deg2Rad;
-            Vector3 lead = new Vector3(Mathf.Sin(heading), 0, Mathf.Cos(heading)) * (State.Speed * flight);
+            Vector2 shipVelocity = ShipSteering.Velocity(ShipMotionState, State.Heading);
+            Vector3 lead = new Vector3(shipVelocity.x, 0, shipVelocity.y) * flight;
             delta += lead + Vector3.up * (.5f * CannonballGravity * flight * flight);
             Encounter.PirateBall = LaunchBall(Encounter.EnemyShotFrom, delta / Mathf.Max(.1f, flight));
         }

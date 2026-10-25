@@ -130,10 +130,7 @@ namespace ShipMayham
             interactionReady[slot] = clock + .35f;
             if (IsPortCargo(crew.Carrying)) return HandleDockItem(slot, action);
             if (crew.Carrying != ServiceItem.None || CarriedPassenger(slot) >= 0) return "Return your item or put the passenger down first.";
-            if (action == HarborAction.GoAshore || action == HarborAction.BoardShip)
-            {
-                return CrossGangway(slot, action == HarborAction.GoAshore);
-            }
+            if (action == HarborAction.GoAshore || action == HarborAction.BoardShip) return WalkThroughGate;
             if (action == HarborAction.HarborMaster) return "Port office: choose a route or a paid town job on the harbor board. Salvage pays 36 coins +1 reputation.";
             if (action == HarborAction.PaintShop) return "Paint dock: Classic is free. Seafoam needs 2 reputation; Sunset needs 5. Choose your paint on the board.";
             if (action == HarborAction.FishMarket) return TakeCraneCrate(slot);

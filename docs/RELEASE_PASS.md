@@ -4,7 +4,7 @@ Bu belge, prototipi oynanabilir ve yayın içeriği üretebilir hâle getiren ge
 
 ## Düzeltilen hatalar
 
-- **Işınlanmalar kalktı.** Yolcular iskeleden sıraya girip kapıdan geçerek koltuklarına yürür (`Boarding`) ve sefer bitince aynı yoldan iner (`Leaving`); kalkış herkes oturana, yeni sefer herkes inene kadar bekler. Atılan, bırakılan ve kurtarılan yolcular yatar, sersemler ve koltuklarına yürür. Gemi–kara geçişi düğme değil, kapıya yürümektir ve kayarak yapılır.
+- **Işınlanmalar kalktı.** Yolcular iskeleden sıraya girip kapıdan geçerek koltuklarına yürür (`Boarding`) ve sefer bitince aynı yoldan iner (`Leaving`); kalkış herkes oturana, yeni sefer herkes inene kadar bekler. Atılan, bırakılan ve kurtarılan yolcular yatar, sersemler ve koltuklarına yürür. Gemi–kara geçişi düğme değil, kapıdan geçip iskele tahtası boyunca yürümektir (bkz. aşağıda "Hareket ve dümen geçişi").
 - **Kapalı koltuklar.** Kapasite yükseltmesiyle açılmamış koltuklar ne çarpışır, ne sahiplenilir (bırakılan yolcu yalnız açık koltuklardan en yakın boşa oturur).
 - **Su içme.** Eski 15 sn'lik klip yolcuyu kaldırıp 2,8 m yürütüyordu; yerini yerinde yudumlama klibi aldı.
 
@@ -12,7 +12,7 @@ Bu belge, prototipi oynanabilir ve yayın içeriği üretebilir hâle getiren ge
 
 | Mekanik | Özet | Ayar sayıları |
 | --- | --- | --- |
-| Gangway kapısı | Eller boşken kapıya yürü | tetik 1 m, bekleme 0,8 sn |
+| Gangway kapısı | Eller boşken kapıdan geç, tahta boyunca yürü; E ile geçiş yok | şerit ±0,6 m, devir çizgileri x=-6,9 / -6,5 |
 | Yüzme | Halat merdivenle suya atla (limanda), yüz, batık para topla, merdivenle çık | hız %60, 30 sn limit (denizde), 5 coin ceza |
 | Denize savrulma | Rogue wave, dümen/topta olmayan ve uzak korkuluğa 2,2 m içindeki mürettebatı denize atar | 2,2 m |
 | Yüzen/yüzemeyen yolcu | %70 yüzer, kendi merdivenine yüzer (3–8 sn); diğerleri simitle çırpınır, 8 sn sonra çekilir | |
@@ -25,13 +25,24 @@ Bu belge, prototipi oynanabilir ve yayın içeriği üretebilir hâle getiren ge
 
 Yaptığını gösterme: oynayan oyuncu olta/kazma/kilit/çekiç pozunda, elinde aracıyla görünür.
 
+## Hareket ve dümen geçişi (protokol 27)
+
+- **Yolcular takılmadan yürür.** İstemci yolcuları 25 Hz ağ güncellemelerini doğrudan kovalayan lerp yerine mürettebatla aynı `MotionSmoother` ile, gemi düzleminde çizer; yüz yönü yumuşatılmış hıza bakar. Simülasyonda yürüyüş hızlanarak başlar (14 m/s²) ve engelden kaçarken zaten geçtiği taraftan devam eder (zikzak yok). Zaman aşımı artık koltuğa ışınlamaz: takılan yolcu engelleri yok sayarak yürür; ancak 6 sn (`StuckGraceSeconds`) daha sürerse son çare olarak yerine konur. Gezinti yolu kapanırsa yolcu bekler, sonra yürüyerek döner.
+- **Gangway yürünür.** Kapı açıkken (liman açık, eller boş, istasyonda değil) gemi korkuluğundan rıhtıma uzanan 1,2 m genişliğinde bir şerit yürünebilir. Tahtanın ortasında konum diğer alanın koordinatlarına birebir çevrilir (`GangwayPassage`); arada 0,4 m boşluk tahtada duranın alan değiştirip durmasını engeller. Sunucu, istemci tahmini ve uzak oyuncu interpolasyonu aynı kuralı kullanır; tampon temizlenmez, kaydırılır. Tahtadayken kalkış yapılamaz. `HarborCommand(GoAshore/BoardShip)` artık kimseyi geçirmez.
+- **Gerçekçi dümen.** `ShipSteering` Nomoto birinci derece modeliyle çalışır (T·r' + r = K·δ, T=1,8 sn, K=16°/s): pruva dönmeye geç başlar, dümen ortalanınca bir süre dönmeye devam eder. W/S motor telgrafı gibi kolu hareket ettirir ve kol bırakılınca yerinde kalır (tam tornistan -0,6). Doğrusal + karesel su direnci: gemi yavaş hızlanır, uzun süre süzülür, durmak için tornistan gerekir. Dümen ancak su akışıyla etkilidir (kendi hız + ileri yönde pervane akıntısı); geri giderken dümen ters çalışır. Dönüşte gövde dışa kayar ve hız kaybeder. HUD motor emrini ve dümen açısını gösterir. Ayar sabitleri `ShipSteering` içindedir.
+- **Yön düzeltmeleri.** Güverte bankı modeli -Z'ye bakıyordu, yolcular arkalığa dönük oturuyordu; bank sarmalayıcısı 180° döndürüldü. Kasaba sakinlerinin kökleri eski statik modele göre yazılmıştı; rigged gövdeleri 180° çevrildi, artık tezgâhlarına bakıyorlar. Uygulama: `Ship Mayham/Upgrade Prototype (Release Props)` (`PrototypeFacingBuilder`).
+- **Merdivenden çıkış.** Suda merdiven artık bakış açısına göre değil, uzanma mesafesindeki en yakın merdiven olarak seçilir; merdivenin dibindeyken E/A çalışır.
+
+Kaynaklar: Nomoto modeli için [NTNU IFAC 2005](https://skoge.folk.ntnu.no/prost/proceedings/ifac2005/Fullpapers/02331.pdf); oyun tarafında hıza bağlı dümen etkisi ve yanal sürtünme için [Uppsala oyun tasarımı yazısı](https://babel.speldesign.uu.se/?p=1979238).
+
 ## Elle kabul edilmesi gerekenler
 
 Otomatik testler (694 test) kuralları, ağ durumunu, kaydı ve sahne bağlantılarını kapsar; şunlar insanlı denemeyle onaylanmalıdır:
 
 1. Dört kişiyle yüzme, merdivenden çıkış ve rogue wave ile denize savrulma hissi; 30 sn limitin ve 5 coin cezasının doğru dengede olup olmadığı.
 2. Her mini oyunun zorluğu ve süresi (özellikle olta ve kilit); gamepad ile oynanış.
-3. Yolcu yürüyüşlerinin kalabalık koridorda takılmaması; kapının açılış zamanlaması.
+3. Yolcu yürüyüşlerinin kalabalık koridorda takılmaması; kapının açılış zamanlaması; online istemcide gangway yürüyüşünün akıcılığı.
+7. Yeni dümen modelinin dengesi: hızlanma, tornistanla durma mesafesi (~15 m) ve 12 m'lik yanaşma alanı; gerekirse `ShipSteering` sabitleri.
 4. Kilit açma ve çekiç sonuç sesleri henüz yok (yalnız efektler ve bildirim metinleri var).
 5. Online devamda gerçek Relay ile yeniden katılma; kayıtlı dünyanın tarayıcıda (WebGL) yeniden açılması.
 6. Yüzme, ladders ve kazı için sanat: modeller primitif/boyalı ilk sürümdür; animasyonlar Blender'da yazıldı, Mixamo ile değiştirilebilir.

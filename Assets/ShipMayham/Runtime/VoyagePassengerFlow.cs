@@ -76,27 +76,47 @@ namespace ShipMayham
             return GateInside;
         }
 
-        /// <summary>One step toward <paramref name="goal"/>, steering around stations. Returns true when the passenger has arrived.</summary>
-        private bool WalkToward(int passenger, Vector2 goal, float speed, float dt, float arrival)
+        /// <summary>Metres per second squared a walking passenger speeds up with, so a walk starts with a step, not at full pace.</summary>
+        public const float WalkerAcceleration = 14f;
+        /// <summary>
+        /// Seconds after a walk's timeout during which a stuck passenger keeps walking, ignoring obstacles, before the last-resort
+        /// snap to the goal. Walking through a counter for a moment reads far better than vanishing and reappearing in a seat.
+        /// </summary>
+        public const float StuckGraceSeconds = 6f;
+
+        /// <summary>
+        /// One step toward <paramref name="goal"/>, steering around stations. The pace ramps up from the current velocity, and when
+        /// an obstacle forces a detour the passenger keeps to the side they were already passing on instead of zig-zagging.
+        /// <paramref name="ghost"/> ignores obstacles (a stuck walker whose timeout ran out). Returns true on arrival.
+        /// </summary>
+        private bool WalkToward(int passenger, Vector2 goal, float speed, float dt, float arrival, bool ghost = false)
         {
             ref var p = ref Passengers[passenger];
             Vector2 position = new Vector2(p.Position.x, p.Position.z);
             float distance = Vector2.Distance(position, goal);
             if (distance <= arrival) return true;
             Vector2 direction = (goal - position) / distance;
-            float step = Mathf.Min(distance, speed * dt);
+            Vector2 previous = new Vector2(p.Velocity.x, p.Velocity.z);
+            float pace = Mathf.MoveTowards(Mathf.Min(previous.magnitude, speed), speed, WalkerAcceleration * dt);
+            float step = Mathf.Min(distance, pace * dt);
+            // Positive steer angles turn counter-clockwise: try the side the walker is already heading toward first.
+            float side = previous.sqrMagnitude > .01f && direction.x * previous.y - direction.y * previous.x < 0 ? -1 : 1;
             foreach (float angle in SteerAngles)
             {
-                Vector2 heading = Quaternion.Euler(0, 0, angle) * direction;
+                Vector2 heading = Quaternion.Euler(0, 0, angle * side) * direction;
                 Vector2 candidate = position + heading * step;
-                if (BlockedByStation(candidate)) continue;
+                if (!ghost && BlockedByStation(candidate)) continue;
                 p.Position = new Vector3(candidate.x, .5f, candidate.y);
-                p.Velocity = new Vector3(heading.x, 0, heading.y) * speed;
+                p.Velocity = new Vector3(heading.x, 0, heading.y) * pace;
                 return false;
             }
             p.Velocity = Vector3.zero;
             return false;
         }
+
+        /// <summary>A walk whose timeout ran out keeps going through obstacles; only past the grace period does it give up.</summary>
+        private static bool WalkTimedOut(in PassengerState p) => p.RecoveryRemaining <= 0;
+        private static bool WalkAbandoned(in PassengerState p) => p.RecoveryRemaining <= -StuckGraceSeconds;
 
         private void TickBoarding(int passenger, float dt)
         {
@@ -104,9 +124,9 @@ namespace ShipMayham
             p.RecoveryRemaining -= dt;
             Vector2 position = new Vector2(p.Position.x, p.Position.z), seat = Seats[SeatOf(passenger)];
             Vector2 goal = position.x < GateInside.x - .4f ? GateInside : AisleGoalIn(position, seat);
-            if (p.RecoveryRemaining <= 0) { ReturnPassengerToSeat(passenger); return; }
+            if (WalkAbandoned(p)) { ReturnPassengerToSeat(passenger); return; }
             bool atSeat = goal == seat;
-            if (WalkToward(passenger, goal, GangwayWalkSpeed, dt, atSeat ? SeatArrivalDistance : .15f) && atSeat)
+            if (WalkToward(passenger, goal, GangwayWalkSpeed, dt, atSeat ? SeatArrivalDistance : .15f, WalkTimedOut(p)) && atSeat)
                 ReturnPassengerToSeat(passenger);
         }
 
@@ -117,7 +137,7 @@ namespace ShipMayham
             Vector2 position = new Vector2(p.Position.x, p.Position.z);
             bool onDeck = position.x > GateInside.x + .4f;
             Vector2 goal = onDeck ? AisleGoalOut(position) : new Vector2(PierLaneEnd, PierLaneStart.y);
-            bool arrived = p.RecoveryRemaining <= 0 || WalkToward(passenger, goal, GangwayWalkSpeed, dt, onDeck ? .15f : .3f) && !onDeck;
+            bool arrived = WalkAbandoned(p) || WalkToward(passenger, goal, GangwayWalkSpeed, dt, onDeck ? .15f : .3f, WalkTimedOut(p)) && !onDeck;
             if (!arrived) return;
             p.Active = false;
             p.Velocity = Vector3.zero;

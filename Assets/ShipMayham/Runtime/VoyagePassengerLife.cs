@@ -23,6 +23,8 @@ namespace ShipMayham
     public sealed partial class VoyageSimulation
     {
         public DeckConditionState Deck;
+        /// <summary>Pace of a passenger strolling to the aisle and back, in metres per second.</summary>
+        public const float StrollSpeed = .85f;
         private void ResetDeck() => Deck = new DeckConditionState { NextSpill = 35, SpillPosition = new Vector2(0, -3) };
         public static float PatienceFactor(PassengerPersonality personality) =>
             personality == PassengerPersonality.Impatient ? 1.6f : personality == PassengerPersonality.Patient ? .7f : 1;
@@ -66,12 +68,25 @@ namespace ShipMayham
             }
             p.RoutineTimer -= dt;
             Vector2 current = new Vector2(p.Position.x, p.Position.z);
-            Vector2 next = Vector2.MoveTowards(current, p.RoutineTarget, dt * .85f);
-            if (PassengerWalkable(index, next)) p.Position = new Vector3(next.x, .5f, next.y);
-            if (p.RoutineTimer <= 0) { ReturnPassengerToSeat(index); return; }
+            // Someone in the way makes a stroller wait; a walk back that waited too long goes on through them rather than
+            // teleporting into the seat.
+            bool late = p.Routine == PassengerRoutine.Returning && p.RoutineTimer <= 0;
+            Vector2 next = Vector2.MoveTowards(current, p.RoutineTarget, dt * StrollSpeed);
+            if (late || PassengerWalkable(index, next))
+            {
+                p.Position = new Vector3(next.x, .5f, next.y);
+                p.Velocity = new Vector3(next.x - current.x, 0, next.y - current.y) / dt;
+            }
+            else p.Velocity = Vector3.zero;
+            if (p.RoutineTimer <= 0 && p.Routine == PassengerRoutine.Strolling)
+            {
+                p.Routine = PassengerRoutine.Returning; p.RoutineTarget = Seats[SeatOf(index)]; p.RoutineTimer = 8;
+                return;
+            }
+            if (p.RoutineTimer <= -StuckGraceSeconds) { ReturnPassengerToSeat(index); return; }
             if (Vector2.Distance(new Vector2(p.Position.x, p.Position.z), p.RoutineTarget) > .08f) return;
             if (p.Routine == PassengerRoutine.Returning) ReturnPassengerToSeat(index);
-            else { p.Routine = PassengerRoutine.Watching; p.RoutineTimer = 4; }
+            else { p.Routine = PassengerRoutine.Watching; p.RoutineTimer = 4; p.Velocity = Vector3.zero; }
         }
         private bool PassengerWalkable(int index, Vector2 point)
         {

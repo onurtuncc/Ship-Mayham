@@ -68,7 +68,7 @@ namespace ShipMayham
             if (action == DeckAction.HaulChest)
             {
                 if (State.Phase != VoyagePhase.Sailing || !Opportunity.ChestAvailable || Opportunity.ChestClaimed) return "No sea chest to haul.";
-                if (State.Speed > 1 || Vector2.Distance(State.Position, Opportunity.ChestPosition) > 15) return "Bring the ship within 15 m and slow below 1 m/s.";
+                if (Mathf.Abs(State.Speed) > 1 || Vector2.Distance(State.Position, Opportunity.ChestPosition) > 15) return "Bring the ship within 15 m and slow below 1 m/s.";
                 Opportunity.ChestAvailable = false; Opportunity.ChestClaimed = true; Opportunity.ChestReward = 30;
                 return "Sea chest recovered! +30 bonus on successful arrival.";
             }

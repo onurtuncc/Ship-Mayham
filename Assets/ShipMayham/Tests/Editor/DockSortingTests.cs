@@ -23,6 +23,11 @@ namespace ShipMayham.Tests
         { for (int i = 0; i < 8; i++) s.Tick(.05f); }
         private static void Use(VoyageSimulation s, ulong id, HarborAction action)
         {
+            if (action == HarborAction.GoAshore || action == HarborAction.BoardShip)
+            {
+                GangwayWalk.Cross(s, id, action == HarborAction.GoAshore);
+                return;
+            }
             s.Crew[s.FindCrew(id)].Position = VoyageSimulation.HarborPoint(action) + (action >= HarborAction.BuyFood ? Vector2.right * 1.2f : Vector2.zero);
             Advance(s); s.HarborCommand(id, action);
         }
@@ -182,7 +187,7 @@ namespace ShipMayham.Tests
             while (!hud.Session.IsSpawned && Time.realtimeSinceStartup < end) yield return null;
             Assert.IsTrue(hud.Session.IsSpawned);
             var session = hud.Session; var s = session.Simulation;
-            s.Crew[0].Position = VoyageSimulation.ShipGangway; session.HarborCommandRpc(HarborAction.GoAshore);
+            GangwayWalk.Place(s, 0, true);
             yield return Wait(.6f); session.SelectDockJobRpc(DockJobKind.LuggageSort);
             s.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.BuyFood) + Vector2.right;
             session.DockItemCommandRpc(HarborAction.BuyFood, DockJobKind.LuggageSort); yield return Wait(.3f);

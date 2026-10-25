@@ -127,14 +127,17 @@ namespace ShipMayham
                 var ladder = VoyageSimulation.Ladders[i];
                 Vector2 reach = crew.Swimming ? ladder.Base : ladder.Top;
                 if (!crew.Swimming && ladder.OnQuay != crew.OnShore) continue;
-                if (Vector2.Distance(crew.Position, reach) > VoyageSimulation.LadderReach) continue;
+                float distance = Vector2.Distance(crew.Position, reach);
+                if (distance > VoyageSimulation.LadderReach) continue;
                 Vector3 point = crew.Swimming
                     ? session.ShipRoot.TransformPoint(new Vector3(ladder.Base.x, VoyageSimulation.SeaLevel + .9f, ladder.Base.y))
                     : ladder.OnQuay ? VoyageSimulation.HarborOrigin(voyage) + new Vector3(ladder.Top.x, VoyageSimulation.ShoreHeight + .7f, ladder.Top.y)
                     : session.ShipRoot.TransformPoint(new Vector3(ladder.Top.x, .5f + .7f, ladder.Top.y));
-                float angle = Vector3.Angle(forward, point - eye);
-                if (angle >= best) continue;
-                best = angle;
+                // A swimmer at the foot of a ladder has it right above them, far outside any view cone: in the water the
+                // nearest ladder within reach is the target wherever the camera points. Scores stay below every angle.
+                float score = crew.Swimming ? distance / VoyageSimulation.LadderReach - 1f : Vector3.Angle(forward, point - eye);
+                if (score >= best) continue;
+                best = score;
                 target = InteractionTarget.Ladder(i, PromptCatalog.ForLadder(ladder, crew, session.Harbor != null && session.Harbor.IsOpen), point);
             }
         }

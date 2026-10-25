@@ -205,7 +205,13 @@ namespace ShipMayham
         private Vector3[] passengerVisualOffsets, passengerLabelOffsets;
         private Quaternion[] passengerVisualRotations, passengerFacing;
         private Transform[] passengerBuoys, passengerFloaties;
-        private bool[] displayedShore, crewActiveLastFrame;
+        // Passengers are drawn through the same snapshot smoother as the crew, in the deck frame: chasing each 25 Hz update with
+        // a plain lerp made every walker stutter.
+        private MotionSmoother[] passengerMotion;
+        private bool[] passengerShown, passengerHeldShown;
+        /// <summary>Speed (m/s) above which a passenger body turns to face where it walks.</summary>
+        private const float PassengerFaceWalkSpeed = .25f;
+        private bool[] displayedShore, crewActiveLastFrame, crewSmootherShore;
         private MaterialPropertyBlock[] originalLiveryBlocks;
         private int displayedLivery = -1;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -239,7 +245,7 @@ namespace ShipMayham
             carryPositions = new Vector3[CrewRoots.Length];
             carryRotations = new Quaternion[CrewRoots.Length];
             displayedItems = new ServiceItem[CrewRoots.Length];
-            displayedShore = new bool[CrewRoots.Length];
+            displayedShore = new bool[CrewRoots.Length]; crewSmootherShore = new bool[CrewRoots.Length];
             displayedSwim = new bool[CrewRoots.Length];
             crewActiveLastFrame = new bool[CrewRoots.Length];
             crewBlend = new Vector3[CrewRoots.Length]; crewLastRender = new Vector3[CrewRoots.Length];
@@ -285,8 +291,12 @@ namespace ShipMayham
             passengerFacing = new Quaternion[PassengerVisuals.Length];
             passengerBuoys = new Transform[PassengerVisuals.Length];
             passengerFloaties = new Transform[PassengerVisuals.Length];
+            passengerMotion = new MotionSmoother[PassengerVisuals.Length];
+            passengerShown = new bool[PassengerVisuals.Length];
+            passengerHeldShown = new bool[PassengerVisuals.Length];
             for (int i = 0; i < PassengerVisuals.Length; i++)
             {
+                passengerMotion[i] = new MotionSmoother { CorrectionRate = 14f, SnapDistance = 3f, MaxSpeed = 20f };
                 passengerVisualOffsets[i] = PassengerVisuals[i].localPosition;
                 passengerVisualRotations[i] = passengerFacing[i] = PassengerVisuals[i].localRotation;
                 passengerLabelOffsets[i] = PassengerLabels[i].transform.localPosition;
@@ -508,13 +518,33 @@ namespace ShipMayham
         /// Which way a passenger body faces: toward where they walk, unchanged while they are being handled or lying down and
         /// back to the seat's orientation once seated. Smoothed so the turn on arrival is not a snap.
         /// </summary>
-        private Quaternion PassengerFacing(int index, in PassengerState p, Quaternion current)
+        /// <summary>Standing height in a walking area: the deck, the quay, or the slope of the gangway plank between them.</summary>
+        private static float WalkHeight(Vector2 position, bool onShore)
+        {
+            Vector2 shipLocal = onShore ? GangwayPassage.ShoreToShip(position) : position;
+            if (GangwayPassage.InLane(shipLocal) && shipLocal.x < GangwayPassage.DeckEdgeX)
+                return GangwayPassage.PlankHeight(shipLocal, .5f, VoyageSimulation.ShoreHeight);
+            return onShore ? VoyageSimulation.ShoreHeight : .5f;
+        }
+
+        private Quaternion PassengerFacing(int index, in PassengerState p, Quaternion current, Vector3 walkVelocity)
         {
             Quaternion desired = current;
+            var flat = new Vector3(walkVelocity.x, 0, walkVelocity.z);
+            bool walking = flat.sqrMagnitude > PassengerFaceWalkSpeed * PassengerFaceWalkSpeed;
             if (p.Motion == PassengerMotion.Returning || p.Motion == PassengerMotion.Boarding || p.Motion == PassengerMotion.Leaving)
             {
-                var flat = new Vector3(p.Velocity.x, 0, p.Velocity.z);
-                if (flat.sqrMagnitude > .01f) desired = Quaternion.LookRotation(flat, Vector3.up);
+                if (walking) desired = Quaternion.LookRotation(flat, Vector3.up);
+            }
+            else if (p.Motion == PassengerMotion.OnDeck && p.Routine != PassengerRoutine.Seated)
+            {
+                // Up and about on deck: face the way they walk; standing to watch keeps the last heading.
+                if (walking) desired = Quaternion.LookRotation(flat, Vector3.up);
+                else if (p.Routine == PassengerRoutine.Working)
+                {
+                    var toWork = new Vector3(p.RoutineTarget.x - p.Position.x, 0, p.RoutineTarget.y - p.Position.z);
+                    if (toWork.sqrMagnitude > .01f) desired = Quaternion.LookRotation(toWork, Vector3.up);
+                }
             }
             else if (p.Motion == PassengerMotion.OnDeck)
             {
@@ -574,7 +604,6 @@ namespace ShipMayham
             }
             ApplyLivery(state.Livery);
             Transform ship = Session.ShipRoot;
-            float blend = wasSpawned ? 1 - Mathf.Exp(-18 * Time.deltaTime) : 1;
             float now = Time.unscaledTime, dt = Time.deltaTime;
             Vector3 shipTarget = new Vector3(state.Position.x, 0, state.Position.y);
             if (!wasSpawned) { shipPosition.Snap(shipTarget, now); shipHeading.Snap(state.Heading, now); }
@@ -593,29 +622,35 @@ namespace ShipMayham
                 crewActiveLastFrame[i] = show;
                 if (!show) { crewWorldKnown[i] = false; continue; }
                 var crew = Session.Crew[i];
-                float groundHeight = crew.Swimming ? VoyageSimulation.SeaLevel + SwimBodyOffset : crew.OnShore ? VoyageSimulation.ShoreHeight : .5f;
-                var target = new Vector3(crew.Position.x, groundHeight + crew.JumpHeight, crew.Position.y);
-                // Smooth in the frame the crew member walks in (deck or quay), then place that frame; smoothing in world space made
-                // crew slide across the deck whenever the ship moved.
-                var motion = crewMotion[i];
-                if (displayedShore[i] != crew.OnShore || !crewActiveLastFrame[i]) motion.Snap(target, now);
-                Vector3 local3 = motion.Step(target, now, dt);
                 Vector3 netPosition = default;
-                bool fromNet = clientMotion != null && clientMotion.TryGetCrew(i, out netPosition, out crewNetVelocity[i]);
+                bool netShore = false;
+                bool fromNet = clientMotion != null && clientMotion.TryGetCrew(i, out netPosition, out crewNetVelocity[i], out netShore);
+                // The predicted or interpolated position can be in the other area a moment before the crew list says so (walking
+                // the gangway): place the body in the area its coordinates belong to.
+                bool onShore = fromNet ? netShore : crew.OnShore;
+                float swimHeight = VoyageSimulation.SeaLevel + SwimBodyOffset;
+                var target = new Vector3(crew.Position.x, (crew.Swimming ? swimHeight : WalkHeight(crew.Position, crew.OnShore)) + crew.JumpHeight, crew.Position.y);
+                // Smooth in the frame the crew member walks in (deck or quay), then place that frame; smoothing in world space made
+                // crew slide across the deck whenever the ship moved. The area change at the gangway is exact, so a snap is invisible.
+                var motion = crewMotion[i];
+                if (crewSmootherShore[i] != crew.OnShore) motion.Snap(target, now);
+                crewSmootherShore[i] = crew.OnShore;
+                Vector3 local3 = motion.Step(target, now, dt);
                 if (fromNet)
                 {
-                    local3 = new Vector3(netPosition.x, groundHeight + netPosition.y, netPosition.z);
+                    var flat = new Vector2(netPosition.x, netPosition.z);
+                    local3 = new Vector3(netPosition.x, (crew.Swimming ? swimHeight : WalkHeight(flat, onShore)) + netPosition.y, netPosition.z);
                     if (!crewFromNet[i]) crewBlend[i] = BlendFrom(crewLastRender[i], local3);
                 }
                 else if (crewFromNet[i]) crewBlend[i] = BlendFrom(crewLastRender[i], local3);
-                if (displayedShore[i] != crew.OnShore) crewBlend[i] = Vector3.zero;
+                if (displayedShore[i] != onShore) crewBlend[i] = Vector3.zero;
                 crewFromNet[i] = fromNet;
                 crewBlend[i] *= Mathf.Exp(-9f * dt);
                 local3 += crewBlend[i];
                 crewLastRender[i] = local3;
-                Vector3 world = crew.OnShore ? VoyageSimulation.HarborOrigin(state) + local3 : ship.TransformPoint(local3);
-                // Passing the gangway gate changes the area the crew member walks in; glide along the plank instead of jumping.
-                if (crewWorldKnown[i] && (displayedShore[i] != crew.OnShore || displayedSwim[i] != crew.Swimming))
+                Vector3 world = onShore ? VoyageSimulation.HarborOrigin(state) + local3 : ship.TransformPoint(local3);
+                // A change of area by ladder (or any leftover difference from the gangway) glides instead of jumping.
+                if (crewWorldKnown[i] && (displayedShore[i] != onShore || displayedSwim[i] != crew.Swimming))
                 {
                     Vector3 jump = crewWorldLast[i] - world;
                     crewGlide[i] = jump.magnitude <= GateGlideMaxDistance ? jump : Vector3.zero;
@@ -624,8 +659,8 @@ namespace ShipMayham
                 CrewRoots[i].position = world + crewGlide[i];
                 crewWorldLast[i] = CrewRoots[i].position;
                 crewWorldKnown[i] = true;
-                CrewRoots[i].rotation = crew.OnShore ? Quaternion.identity : ship.rotation;
-                displayedShore[i] = crew.OnShore;
+                CrewRoots[i].rotation = onShore ? Quaternion.identity : ship.rotation;
+                displayedShore[i] = onShore;
                 displayedSwim[i] = crew.Swimming;
                 bool me = local == i;
                 // Hide only the local body, never the root or another client's representation.
@@ -677,21 +712,20 @@ namespace ShipMayham
                 bool show = active && i < Session.Passengers.Count && Session.Passengers[i].Active;
                 PassengerVisuals[i].gameObject.SetActive(show);
                 PassengerLabels[i].gameObject.SetActive(show);
-                if (!show) continue;
+                if (!show) { passengerShown[i] = false; continue; }
                 var p = Session.Passengers[i];
                 // Move presentation children, never the seat/interaction roots used by gameplay.
                 bool heldByMe = p.Motion == PassengerMotion.Carried && p.CarrierSlot == local;
-                Vector3 destination = ship.TransformPoint(p.Position + passengerVisualOffsets[i]);
-                PassengerVisuals[i].position = heldByMe ? Camera.transform.TransformPoint(HeldPassengerOffset) :
-                    Vector3.Lerp(PassengerVisuals[i].position, destination, blend);
-                passengerFacing[i] = PassengerFacing(i, p, passengerFacing[i]);
+                Vector3 localTarget = p.Position + passengerVisualOffsets[i];
+                // Appearing, or leaving the local player's arms (drawn in camera space), starts from where the body really is.
+                if (!passengerShown[i] || passengerHeldShown[i] != heldByMe) passengerMotion[i].Snap(localTarget, now);
+                passengerShown[i] = true;
+                passengerHeldShown[i] = heldByMe;
+                Vector3 smoothedLocal = passengerMotion[i].Step(localTarget, now, dt);
+                PassengerVisuals[i].position = heldByMe ? Camera.transform.TransformPoint(HeldPassengerOffset) : ship.TransformPoint(smoothedLocal);
+                passengerFacing[i] = PassengerFacing(i, p, passengerFacing[i], passengerMotion[i].Velocity);
                 PassengerVisuals[i].rotation = ship.rotation * passengerFacing[i] *
                     (p.Motion == PassengerMotion.Airborne ? Quaternion.Euler(0, 0, Time.time * 360) : Quaternion.identity);
-                if (p.Motion == PassengerMotion.OnDeck && (p.Routine == PassengerRoutine.Strolling || p.Routine == PassengerRoutine.Returning || p.Routine == PassengerRoutine.Working))
-                {
-                    Vector3 direction = new Vector3(p.RoutineTarget.x - p.Position.x, 0, p.RoutineTarget.y - p.Position.z);
-                    if (direction.sqrMagnitude > .01f) PassengerVisuals[i].rotation = ship.rotation * Quaternion.LookRotation(direction) * passengerVisualRotations[i];
-                }
                 if (passengerBuoys[i] != null) passengerBuoys[i].gameObject.SetActive(p.Motion == PassengerMotion.Rescuing && !p.CanSwim);
                 if (passengerFloaties[i] != null) passengerFloaties[i].gameObject.SetActive(!p.CanSwim);
                 bool focused = Target.IsPassenger(i);

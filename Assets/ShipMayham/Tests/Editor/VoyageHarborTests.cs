@@ -31,6 +31,11 @@ namespace ShipMayham.Tests
         }
         private void Harbor(HarborAction action, ulong client = Client)
         {
+            if (action == HarborAction.GoAshore || action == HarborAction.BoardShip)
+            {
+                GangwayWalk.Cross(sim, client, action == HarborAction.GoAshore);
+                return;
+            }
             sim.Crew[sim.FindCrew(client)].Position = VoyageSimulation.HarborPoint(action) + (action >= HarborAction.BuyFood ? Vector2.right * 1.2f : Vector2.zero);
             Advance(); sim.HarborCommand(client, action);
         }
@@ -39,7 +44,6 @@ namespace ShipMayham.Tests
 
         [Test] public void GangwayTransfersCoordinatesAndStopsOldInput()
         {
-            sim.SetInput(Client, Vector2.up);
             Harbor(HarborAction.GoAshore);
             Assert.IsTrue(sim.Crew[1].OnShore);
             Assert.AreEqual(VoyageSimulation.HarborPoint(HarborAction.BoardShip), sim.Crew[1].Position);
@@ -68,13 +72,11 @@ namespace ShipMayham.Tests
             Assert.AreEqual(0, sim.State.HullShield);
             Assert.IsFalse(sim.Crew[1].OnShore);
         }
-        [Test] public void EmptyHandsAndGroundingAreRequiredForGangway()
+        [Test] public void EmptyHandsAndNoStationAreRequiredForGangway()
         {
             sim.Crew[1].Carrying = ServiceItem.Drink;
             Harbor(HarborAction.GoAshore); Assert.IsFalse(sim.Crew[1].OnShore);
             sim.Crew[1].Carrying = ServiceItem.None;
-            Advance(); sim.Jump(Client); sim.HarborCommand(Client, HarborAction.GoAshore);
-            Assert.IsFalse(sim.Crew[1].OnShore);
             Advance(1); sim.Crew[1].AtCannon = true;
             Harbor(HarborAction.GoAshore); Assert.IsFalse(sim.Crew[1].OnShore);
         }

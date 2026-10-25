@@ -31,6 +31,12 @@ namespace ShipMayham
 
         public void Clear() => count = 0;
 
+        /// <summary>Moves every held sample by the same offset (the entity's coordinates changed, not its place).</summary>
+        public void Shift(Vector3 offset)
+        {
+            for (int i = 0; i < count; i++) samples[i].Position += offset;
+        }
+
         public void Add(MotionSample sample)
         {
             // Insert keeping time order; drop exact duplicates (the same datagram arriving twice).

@@ -55,8 +55,7 @@ namespace ShipMayham
                 bool harborPreview = Array.IndexOf(Environment.GetCommandLineArgs(), "--ship-preview-harbor") >= 0;
                 if (harborPreview)
                 {
-                    session.Simulation.Crew[0].Position = VoyageSimulation.ShipGangway;
-                    session.HarborCommandRpc(HarborAction.GoAshore);
+                    session.Simulation.Crew[0].OnShore = true;
                     session.Simulation.Crew[0].Position = new Vector2(1.5f, -9);
                     yield return new WaitForSeconds(1);
                 }
@@ -187,9 +186,7 @@ namespace ShipMayham
                 Debug.Log("SHIP_SMOKE_VOYAGE CLIENT wallet=" + settledWallet + " bounty=" + session.Voyage.Value.LastBounty);
                 if (slot == 3)
                 {
-                    yield return WalkTo(VoyageSimulation.ShipGangway);
-                    session.HarborCommandRpc(HarborAction.GoAshore);
-                    yield return new WaitForSeconds(.5f);
+                    yield return WalkThroughGate(true);
                     if (!session.Crew[slot].OnShore) { Fail("Remote gangway disembark failed"); yield break; }
                     session.SelectDockJobRpc(DockJobKind.LuggageSort);
                     yield return new WaitForSeconds(.5f);
@@ -219,8 +216,8 @@ namespace ShipMayham
                     session.HarborCommandRpc(HarborAction.MaintainHull);
                     yield return new WaitForSeconds(.5f);
                     yield return WalkToHarbor(HarborAction.BoardShip);
-                    session.HarborCommandRpc(HarborAction.BoardShip);
-                    yield return new WaitForSeconds(.5f);
+                    yield return WalkThroughGate(false);
+                    if (session.Crew[slot].OnShore) { Fail("Remote gangway boarding failed"); yield break; }
                     Debug.Log("SHIP_SMOKE_HARBOR CLIENT " + slot);
                 }
                 while (session.Voyage.Value.Voyage < 2) yield return null;
@@ -292,6 +289,21 @@ namespace ShipMayham
             yield return WalkTo(new Vector2(-3, session.Crew[session.LocalCrewIndex].Position.y));
             yield return WalkTo(new Vector2(-3, p.y));
             yield return WalkTo(p);
+        }
+
+        // Walks the gangway lane: up to the gate, through it until the area changes, then clear of the plank.
+        private IEnumerator WalkThroughGate(bool toShore)
+        {
+            int slot = session.LocalCrewIndex;
+            yield return WalkTo(toShore ? new Vector2(-4.6f, GangwayPassage.LaneY) : new Vector2(5f, GangwayPassage.LaneY));
+            Vector2 push = toShore ? Vector2.left : Vector2.right;
+            for (float waited = 0; session.Crew[slot].OnShore != toShore && waited < 6f; waited += .05f)
+            {
+                session.MoveRpc(push);
+                yield return new WaitForSeconds(.05f);
+            }
+            if (session.Crew[slot].OnShore != toShore) { session.MoveRpc(Vector2.zero); yield break; }
+            yield return WalkTo(toShore ? new Vector2(4f, GangwayPassage.LaneY) : new Vector2(-4f, GangwayPassage.LaneY));
         }
 
         private IEnumerator WalkTo(Vector2 point)

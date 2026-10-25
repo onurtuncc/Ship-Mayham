@@ -7,6 +7,8 @@ namespace ShipMayham
     {
         public Vector2 Position, Velocity;
         public float JumpHeight, VerticalSpeed;
+        /// <summary>Which area's coordinates <see cref="Position"/> is in: the quay (true) or the ship (false).</summary>
+        public bool OnShore;
 
         public bool Airborne => JumpHeight > 0 || VerticalSpeed != 0;
     }

@@ -74,8 +74,9 @@ namespace ShipMayham
             {
                 accumulator -= CrewLocomotion.StepSeconds;
                 float factor = crew.Swimming ? VoyageSimulation.SwimSpeedFactor : crew.OnShore ? 1 : session.LocalCarriedPassengerIndex >= 0 ? .7f : crew.Carrying == ServiceItem.Ammo ? .8f : 1;
-                ILocomotionWorld world = crew.Swimming ? VoyageSimulation.WaterWorld : crew.OnShore ? VoyageSimulation.ShoreWorld : (deckWorld ?? (deckWorld = new DeckWorld(session)));
-                var packet = core.StepFixed(latestInput, jumpLatched && !crew.Swimming, factor, world);
+                ILocomotionWorld shipWorld = crew.Swimming ? VoyageSimulation.WaterWorld : (deckWorld ?? (deckWorld = new DeckWorld(session)));
+                bool gate = VoyageSimulation.GateOpen(session.Harbor != null && session.Harbor.IsOpen, crew, session.LocalCarriedPassengerIndex >= 0);
+                var packet = core.StepFixed(latestInput, jumpLatched && !crew.Swimming, factor, shipWorld, VoyageSimulation.ShoreWorld, gate);
                 jumpLatched = false;
                 if (session.IsServer) session.ApplyLocalMoveCommands(packet);
                 else session.MoveCommandsRpc(packet);
@@ -92,10 +93,13 @@ namespace ShipMayham
         }
 
         /// <summary>Crew position (x, jump, z) and velocity for drawing; false when the view should use its own smoothing.</summary>
-        public bool TryGetCrew(int slot, out Vector3 position, out Vector3 velocity)
+        public bool TryGetCrew(int slot, out Vector3 position, out Vector3 velocity) => TryGetCrew(slot, out position, out velocity, out _);
+
+        /// <summary>As above, plus whether the position is in quay coordinates (true) or ship coordinates (false).</summary>
+        public bool TryGetCrew(int slot, out Vector3 position, out Vector3 velocity, out bool onShore)
         {
             var session = View != null ? View.Session : null;
-            return core.TryGetCrew(slot, Time.unscaledTime, session != null && session.IsServer, out position, out velocity);
+            return core.TryGetCrew(slot, Time.unscaledTime, session != null && session.IsServer, out position, out velocity, out onShore);
         }
 
         /// <summary>Interpolated ship pose for clients. The host drives its own ship directly, so it gets false.</summary>

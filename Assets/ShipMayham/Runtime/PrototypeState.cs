@@ -29,6 +29,8 @@ namespace ShipMayham
         public SessionPhase SessionPhase;
         public Vector2 Position;
         public float Heading, Speed, Health, Elapsed;
+        /// <summary>The helm: engine lever, rudder, sideways skid and rate of turn (see <see cref="ShipSteering"/>).</summary>
+        public float Throttle, Rudder, Drift, YawRate;
         public float HullShield;
         public RouteProfile Route;
         public ShipLivery Livery;
@@ -57,6 +59,7 @@ namespace ShipMayham
         {
             s.SerializeValue(ref Phase); s.SerializeValue(ref SessionPhase); s.SerializeValue(ref Position);
             s.SerializeValue(ref Heading); s.SerializeValue(ref Speed); s.SerializeValue(ref Health); s.SerializeValue(ref Elapsed);
+            s.SerializeValue(ref Throttle); s.SerializeValue(ref Rudder); s.SerializeValue(ref Drift); s.SerializeValue(ref YawRate);
             s.SerializeValue(ref HullShield);
             s.SerializeValue(ref Route);
             s.SerializeValue(ref Livery);

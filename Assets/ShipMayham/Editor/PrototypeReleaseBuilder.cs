@@ -25,6 +25,7 @@ namespace ShipMayham.Editor
             ApplyFloaties(view);
             ApplyActivityProps(session, view);
             ApplyCrewTools(view);
+            ApplyFacing(session);
             EnsureCrewController();
             EnsurePassengerController();
             EditorSceneManager.MarkSceneDirty(scene);

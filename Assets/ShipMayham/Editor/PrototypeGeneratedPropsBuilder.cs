@@ -69,7 +69,10 @@ namespace ShipMayham.Editor
                 }
             }
             foreach (var passenger in session.PassengerAnchors)
+            {
                 ReplaceProp(passenger.Find("SeatVisuals"), "Seat_Primitive", "DeckBench", Vector3.zero, .65f);
+                passenger.Find("SeatVisuals/Model_DeckBench").localRotation = Quaternion.Euler(0, BenchModelYaw, 0);
+            }
 
             var combat = view.GetComponent<PrototypeCombatView>();
             if (combat != null && combat.PirateRoot != null)

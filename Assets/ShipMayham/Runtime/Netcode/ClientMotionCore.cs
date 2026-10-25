@@ -62,10 +62,14 @@ namespace ShipMayham
 
         // ---------------------------------------------------------------- outgoing
 
-        /// <summary>One fixed step: builds this step's command (predicting it when allowed) and returns the packet to send.</summary>
-        public MoveCommandPacket StepFixed(Vector2 input, bool jump, float speedFactor, ILocomotionWorld world)
+        /// <summary>One fixed step in a single world: builds this step's command (predicting it when allowed) and returns the packet.</summary>
+        public MoveCommandPacket StepFixed(Vector2 input, bool jump, float speedFactor, ILocomotionWorld world) =>
+            StepFixed(input, jump, speedFactor, world, world, false);
+
+        /// <summary>One fixed step with both areas and the gangway rule, so prediction walks through the gate like the server.</summary>
+        public MoveCommandPacket StepFixed(Vector2 input, bool jump, float speedFactor, ILocomotionWorld shipWorld, ILocomotionWorld shoreWorld, bool gateOpen)
         {
-            MoveCommand command = Predicting ? Predictor.Step(input, jump, speedFactor, world) : Predictor.Issue(input, jump);
+            MoveCommand command = Predicting ? Predictor.Step(input, jump, speedFactor, shipWorld, shoreWorld, gateOpen) : Predictor.Issue(input, jump);
             recent.Add(command);
             if (recent.Count > MoveCommandPacket.MaxCommands) recent.RemoveAt(0);
             return MoveCommandPacket.Pack(recent);
@@ -79,25 +83,36 @@ namespace ShipMayham
             lastSnapshotTime = now;
             CountLoss(snapshot.Seq);
             double time = snapshot.TimeMs / 1000.0;
-            float heading = snapshot.ShipHeading * Mathf.Deg2Rad;
+            Vector2 shipVelocity = ShipSteering.Velocity(new ShipMotion { Speed = snapshot.ShipSpeed, Drift = snapshot.ShipDrift }, snapshot.ShipHeading);
             shipBuffer.Add(new MotionSample
             {
                 Time = time, Position = new Vector3(snapshot.ShipPosition.x, 0, snapshot.ShipPosition.y), Angle = snapshot.ShipHeading,
-                Velocity = new Vector3(Mathf.Sin(heading), 0, Mathf.Cos(heading)) * snapshot.ShipSpeed
+                Velocity = new Vector3(shipVelocity.x, 0, shipVelocity.y)
             });
             if (snapshot.Crew == null) return;
             foreach (var packet in snapshot.Crew)
             {
                 int slot = packet.Slot;
                 if (slot < 0 || slot >= crewBuffers.Length) continue;
-                if (crewOnShore[slot] != packet.OnShore) { crewBuffers[slot].Clear(); crewOnShore[slot] = packet.OnShore; }
+                if (crewOnShore[slot] != packet.OnShore)
+                {
+                    // A change of area (the gangway, a quay ladder): keep the history but re-express it in the new area's
+                    // coordinates, so interpolation carries on in one piece instead of restarting.
+                    Vector2 shift = LocalCrewPredictor.ToFrame(Vector2.zero, crewOnShore[slot], packet.OnShore);
+                    crewBuffers[slot].Shift(new Vector3(shift.x, 0, shift.y));
+                    remoteFollow[slot] += new Vector3(shift.x, 0, shift.y);
+                    crewOnShore[slot] = packet.OnShore;
+                }
                 crewBuffers[slot].Add(new MotionSample
                 {
                     Time = time, Position = new Vector3(packet.Position.x, packet.JumpHeight, packet.Position.y),
                     Velocity = new Vector3(packet.Velocity.x, packet.VerticalSpeed, packet.Velocity.y)
                 });
                 if (slot != LocalSlot) continue;
-                lastServerState = new CrewMotionState { Position = packet.Position, Velocity = packet.Velocity, JumpHeight = packet.JumpHeight, VerticalSpeed = packet.VerticalSpeed };
+                lastServerState = new CrewMotionState
+                {
+                    Position = packet.Position, Velocity = packet.Velocity, JumpHeight = packet.JumpHeight, VerticalSpeed = packet.VerticalSpeed, OnShore = packet.OnShore
+                };
                 lastServerAck = packet.InputAck; hasServerState = true;
                 if (predicting) Predictor.Reconcile(lastServerState, lastServerAck, time);
                 else Predictor.Resync(lastServerState, lastServerAck);
@@ -131,18 +146,25 @@ namespace ShipMayham
         /// Crew position (x, jump height, z) in the frame they walk in. The local walker is predicted, everyone else interpolated;
         /// <paramref name="authoritativeLocal"/> (the host's own crew) opts out because the host already has the truth.
         /// </summary>
-        public bool TryGetCrew(int slot, float now, bool authoritativeLocal, out Vector3 position, out Vector3 velocity)
+        public bool TryGetCrew(int slot, float now, bool authoritativeLocal, out Vector3 position, out Vector3 velocity) =>
+            TryGetCrew(slot, now, authoritativeLocal, out position, out velocity, out _);
+
+        /// <summary>As above, plus which area's coordinates the position is in (it can run ahead of the replicated crew list).</summary>
+        public bool TryGetCrew(int slot, float now, bool authoritativeLocal, out Vector3 position, out Vector3 velocity, out bool onShore)
         {
             position = velocity = Vector3.zero;
+            onShore = false;
             if (slot < 0 || slot >= crewBuffers.Length || !Clock.HasData) return false;
             if (slot == LocalSlot && predicting)
             {
                 if (!Predictor.Initialized) return false;
+                onShore = Predictor.State.OnShore;
                 position = new Vector3(Predictor.RenderPosition.x, Predictor.RenderJump, Predictor.RenderPosition.y);
                 velocity = new Vector3(Predictor.State.Velocity.x, Predictor.State.VerticalSpeed, Predictor.State.Velocity.y);
                 return true;
             }
             if (slot == LocalSlot && authoritativeLocal) return false;
+            onShore = crewOnShore[slot];
             if (!crewBuffers[slot].Sample(Clock.RenderTime(now), out Vector3 target, out velocity, out _)) return false;
             position = Follow(target, velocity, now, ref remoteFollow[slot], ref remoteFollowTime[slot], ref remoteFollowing[slot], 3f);
             return true;

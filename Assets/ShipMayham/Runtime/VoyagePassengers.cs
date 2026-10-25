@@ -171,9 +171,9 @@ namespace ShipMayham
             Vector2 position = new Vector2(p.Position.x, p.Position.z), seat = Seats[SeatOf(passenger)];
             Vector2 goal = AisleGoalIn(position, seat);
             p.RecoveryRemaining -= dt;
-            if (p.RecoveryRemaining <= 0) { ReturnPassengerToSeat(passenger); return; }
+            if (WalkAbandoned(p)) { ReturnPassengerToSeat(passenger); return; }
             bool atSeat = goal == seat;
-            if (WalkToward(passenger, goal, PassengerWalkSpeed, dt, atSeat ? SeatArrivalDistance : .1f) && atSeat)
+            if (WalkToward(passenger, goal, PassengerWalkSpeed, dt, atSeat ? SeatArrivalDistance : .1f, WalkTimedOut(p)) && atSeat)
                 ReturnPassengerToSeat(passenger);
         }
 

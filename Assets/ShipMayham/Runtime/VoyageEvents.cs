@@ -48,7 +48,7 @@ namespace ShipMayham
             if (Event.Phase != VoyageEventPhase.Active) return;
             if (Event.Kind == VoyageEventKind.EngineOverheat)
             {
-                Event.CoolingTime = State.Speed <= 1 ? Event.CoolingTime + dt : 0;
+                Event.CoolingTime = Mathf.Abs(State.Speed) <= 1 ? Event.CoolingTime + dt : 0;
                 if (Event.CoolingTime >= 8) { ResolveEvent(); return; }
             }
             Event.Remaining = Mathf.Max(0, Event.Remaining - dt);
@@ -206,7 +206,7 @@ namespace ShipMayham
             }
             else if (Event.Kind == VoyageEventKind.LooseCargo) DamageHull(12);
             else if (Event.Kind == VoyageEventKind.FuseOverload) DamageHull(8);
-            else if (Event.Kind == VoyageEventKind.EngineOverheat) { DamageHull(15); State.Speed = 0; }
+            else if (Event.Kind == VoyageEventKind.EngineOverheat) { DamageHull(15); State.Speed = 0; State.Throttle = 0; }
             else if (Event.Kind == VoyageEventKind.VipService || Event.Kind == VoyageEventKind.SeatShuffle)
             {
                 if (Event.TargetPassenger >= 0)
@@ -255,7 +255,7 @@ namespace ShipMayham
             if (Event.Phase != VoyageEventPhase.Active) return null;
             if (Event.Kind == VoyageEventKind.EngineOverheat)
             {
-                if (State.Speed > 1) return "Engine too hot! Ask the captain to slow below 1 m/s.";
+                if (Mathf.Abs(State.Speed) > 1) return "Engine too hot! Ask the captain to slow below 1 m/s.";
                 Event.Progress++;
                 Tally(slot, TallyKind.Repairs);
                 if (Event.Progress < Event.Goal) return $"Venting engine: {Event.Progress}/{Event.Goal}";

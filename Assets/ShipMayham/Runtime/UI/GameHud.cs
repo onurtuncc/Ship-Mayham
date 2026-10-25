@@ -13,7 +13,7 @@ namespace ShipMayham
         private readonly GameObject root;
 
         // Top-left
-        private readonly Text voyageTitle, phaseText, routeText, hullValue, statusLine;
+        private readonly Text voyageTitle, phaseText, routeText, hullValue, statusLine, helmLine;
         private readonly Image phaseChip, hullFill;
         private readonly AlertList alerts;
         private readonly ReportPanel report;
@@ -90,6 +90,8 @@ namespace ShipMayham
             HudKit.Size(hullValue, width: 96);
             statusLine = HudKit.Label(card.transform, "Status", 20, HudKit.Ink);
             HudKit.Size(statusLine, height: 28);
+            helmLine = HudKit.Label(card.transform, "Helm", 18, HudKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Bold);
+            HudKit.Size(helmLine, height: 24);
 
             alerts = new AlertList(left, "Alerts", 6);
             report = new ReportPanel(left);
@@ -299,6 +301,7 @@ namespace ShipMayham
             int sig = HashCode(s.Voyage, (int)s.Phase, (int)s.Route, Mathf.RoundToInt(s.Health), (int)s.HullShield,
                 Mathf.RoundToInt(s.Speed * 2), Mathf.RoundToInt(dist / 5), s.Boarded);
             sig = sig * 31 + s.CheckedTickets + s.Served * 7;
+            sig = sig * 31 + Mathf.RoundToInt(s.Throttle * 20) * 97 + Mathf.RoundToInt(s.Rudder * ShipSteering.MaxRudderDegrees / 5);
             if (sig == voyageSignature) return;
             voyageSignature = sig;
             voyageTitle.text = "VOYAGE " + s.Voyage;
@@ -316,6 +319,16 @@ namespace ShipMayham
                 : s.Phase == VoyagePhase.Boarding
                     ? $"{s.Boarded} passengers   •   tickets {s.CheckedTickets}/{s.Boarded}"
                     : $"{s.Boarded} passengers   •   {s.Served} orders served";
+            bool sailing = s.Phase == VoyagePhase.Sailing;
+            HudKit.SetActive(helmLine.gameObject, sailing);
+            if (sailing) helmLine.text = $"{ShipSteering.EngineOrder(s.Throttle)}   •   rudder {RudderText(s.Rudder)}";
+        }
+
+        /// <summary>Rudder angle as a helmsman reads it: degrees to port or starboard, or amidships.</summary>
+        public static string RudderText(float rudder)
+        {
+            int degrees = Mathf.RoundToInt(Mathf.Abs(rudder) * ShipSteering.MaxRudderDegrees / 5) * 5;
+            return degrees == 0 ? "amidships" : $"{degrees}° {(rudder < 0 ? "port" : "starboard")}";
         }
 
         private void TickResources(float dt, in VoyageState s)

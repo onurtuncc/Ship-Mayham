@@ -127,59 +127,112 @@ namespace ShipMayham.Tests
 
         // ---------------------------------------------------------------- ship handling
 
-        private static void Run(ref ShipSteering steering, Vector2 input, float seconds, ref float speed, ref float heading, float maxSpeed = 7)
+        private const float Dt = .02f, Cruise = 4f;
+
+        /// <summary>Runs the helm for a while; returns the heading change in degrees.</summary>
+        private static float Run(ref ShipMotion m, Vector2 input, float seconds, bool manned = true, float maxSpeed = Cruise)
         {
-            for (float t = 0; t < seconds - 1e-4f; t += .02f)
-            {
-                steering.Step(input, speed, .02f, out float ds, out float dh);
-                speed = Mathf.Clamp(speed + ds, 0, maxSpeed);
-                heading += dh;
-            }
+            float heading = 0;
+            for (float t = 0; t < seconds - 1e-4f; t += Dt) heading += ShipSteering.Step(ref m, input, manned, maxSpeed, Dt);
+            return heading;
         }
 
-        [Test] public void ThrottleEasesInInsteadOfSnapping()
+        [Test] public void TheEngineLeverStaysWhereItIsSet()
         {
-            var steering = new ShipSteering();
-            float speed = 0, heading = 0;
-            Run(ref steering, Vector2.up, .1f, ref speed, ref heading);
-            Assert.Less(steering.Throttle, .5f);
-            float early = speed;
-            Run(ref steering, Vector2.up, 1.4f, ref speed, ref heading);
-            Assert.Greater(speed, early * 4, "Speed should build as the lever rises.");
-            Assert.AreEqual(1f, steering.Throttle, .01f);
+            var m = new ShipMotion();
+            Run(ref m, Vector2.up, .5f);
+            float lever = m.Throttle;
+            Assert.Greater(lever, .2f);
+            Assert.Less(lever, .4f, "the lever travels, it does not snap");
+            Run(ref m, Vector2.zero, 3f);
+            Assert.AreEqual(lever, m.Throttle, 1e-4f, "letting go of W leaves the engine order as it was");
         }
 
-        [Test] public void RudderBuildsAndReleasesTurnRate()
+        [Test] public void AShipGathersWaySlowlyAndReachesItsTopSpeed()
         {
-            var steering = new ShipSteering();
-            float speed = 5, heading = 0;
-            Run(ref steering, Vector2.right, .1f, ref speed, ref heading);
-            Assert.Less(steering.TurnVelocity, ShipSteering.MaxTurnRate * .3f, "Turn rate must ramp, not jump to the maximum.");
-            Run(ref steering, Vector2.right, 1f, ref speed, ref heading);
-            Assert.AreEqual(ShipSteering.MaxTurnRate, steering.TurnVelocity, .5f);
-            float before = heading;
-            Run(ref steering, Vector2.zero, .1f, ref speed, ref heading);
-            Assert.Greater(heading, before, "The ship keeps swinging briefly after the wheel is released.");
-            Run(ref steering, Vector2.zero, 1f, ref speed, ref heading);
-            Assert.AreEqual(0, steering.TurnVelocity, .01f);
+            var m = new ShipMotion { Throttle = 1 };
+            Run(ref m, Vector2.zero, 1f);
+            Assert.Less(m.Speed, 1.2f, "a hull does not leap forward");
+            Run(ref m, Vector2.zero, 40f);
+            Assert.AreEqual(Cruise, m.Speed, .05f, "full ahead settles on the top speed against the water's resistance");
         }
 
-        [Test] public void ShipsTurnSlowerAtAStandstillButStillTurn()
+        [Test] public void StoppingTheEngineCoastsAndAsternTakesTheWayOff()
         {
-            var parked = new ShipSteering(); var cruising = new ShipSteering();
-            float speed = 0, heading = 0, fastSpeed = 6, fastHeading = 0;
-            Run(ref parked, Vector2.right, 2f, ref speed, ref heading);
-            Run(ref cruising, Vector2.right, 2f, ref fastSpeed, ref fastHeading);
-            Assert.Greater(heading, 20f, "The helm must never feel dead.");
-            Assert.Less(heading, fastHeading * .8f);
+            var coasting = new ShipMotion { Speed = Cruise };
+            Run(ref coasting, Vector2.zero, 3f);
+            Assert.Greater(coasting.Speed, 1.8f, "with the engine stopped she carries her way");
+            var braking = new ShipMotion { Speed = Cruise, Throttle = -ShipSteering.MaxAstern };
+            Run(ref braking, Vector2.zero, 3f);
+            Assert.Less(braking.Speed, coasting.Speed - .6f, "astern brakes harder than coasting");
+            Run(ref braking, Vector2.zero, 10f);
+            Assert.Less(braking.Speed, 0, "held astern, she starts to make sternway");
+            Assert.Greater(braking.Speed, -Cruise * .5f, "and goes astern slower than ahead");
         }
 
-        [Test] public void ReleasingTheHelmSettlesTheControls()
+        [Test] public void TheRudderNeedsWaterFlowingPastIt()
         {
-            var steering = new ShipSteering { Throttle = 1, TurnVelocity = 40 };
-            for (int i = 0; i < 60; i++) steering.Release(.02f);
-            Assert.AreEqual(0, steering.Throttle, .001f);
-            Assert.AreEqual(0, steering.TurnVelocity, .001f);
+            var drifting = new ShipMotion();
+            var underWay = new ShipMotion { Speed = Cruise, Throttle = 1 };
+            float still = Run(ref drifting, Vector2.right, 3f);
+            float moving = Run(ref underWay, Vector2.right, 3f);
+            Assert.Less(Mathf.Abs(still), 1f, "a ship lying still does not answer the helm");
+            Assert.Greater(moving, 15f);
+            var wash = new ShipMotion { Throttle = 1 };
+            float kicked = 0;
+            for (int n = 0; n < 50; n++) { wash.Speed = 0; kicked += ShipSteering.Step(ref wash, Vector2.right, true, Cruise, Dt); }
+            Assert.Greater(kicked, .5f, "propeller wash gives a little steering even before she moves");
+        }
+
+        [Test] public void TheBowTakesAMomentToSwingAndKeepsSwingingAfterTheRudderIsCentred()
+        {
+            var m = new ShipMotion { Speed = Cruise, Throttle = 1, Rudder = 1 };
+            ShipSteering.Step(ref m, Vector2.right, true, Cruise, Dt);
+            Assert.Less(m.YawRate, ShipSteering.TurnRateGain * .1f, "rate of turn builds with the Nomoto lag");
+            Run(ref m, Vector2.right, 8f);
+            float steady = m.YawRate;
+            Assert.Greater(steady, ShipSteering.TurnRateGain * .8f);
+            m.Rudder = 0;
+            ShipSteering.Step(ref m, Vector2.zero, true, Cruise, Dt);
+            Assert.Greater(m.YawRate, steady * .9f, "the swing carries on after the wheel is centred");
+            Run(ref m, Vector2.zero, 10f);
+            Assert.AreEqual(0, m.YawRate, .3f, "and dies away");
+        }
+
+        [Test] public void GoingAsternReversesTheSteering()
+        {
+            var m = new ShipMotion { Speed = -1.5f, Throttle = -ShipSteering.MaxAstern };
+            Assert.Less(Run(ref m, Vector2.right, 2f), 0, "starboard rudder swings the bow to port going astern");
+        }
+
+        [Test] public void ATurningHullSkidsOutwardAndLosesSpeed()
+        {
+            var straight = new ShipMotion { Speed = Cruise, Throttle = 1 };
+            var turning = new ShipMotion { Speed = Cruise, Throttle = 1 };
+            Run(ref straight, Vector2.zero, 6f);
+            Run(ref turning, Vector2.right, 6f);
+            Assert.Less(turning.Drift, -.1f, "turning to starboard, the hull slips to port");
+            Assert.Less(turning.Speed, straight.Speed - .1f);
+            Assert.Less(ShipSteering.Velocity(turning, 0).x, 0, "the skid shows in the ship's track");
+        }
+
+        [Test] public void AnEmptyHelmEasesTheControlsBackWhileTheShipCarriesItsWay()
+        {
+            var m = new ShipMotion { Speed = Cruise, Throttle = 1, Rudder = 1 };
+            Run(ref m, Vector2.zero, 3f, false);
+            Assert.AreEqual(0, m.Throttle, .001f);
+            Assert.AreEqual(0, m.Rudder, .001f);
+            Assert.Greater(m.Speed, 1.5f);
+        }
+
+        [Test] public void EngineOrdersReadLikeATelegraph()
+        {
+            Assert.AreEqual("STOP", ShipSteering.EngineOrder(0));
+            Assert.AreEqual("FULL AHEAD", ShipSteering.EngineOrder(1));
+            Assert.AreEqual("FULL ASTERN", ShipSteering.EngineOrder(-ShipSteering.MaxAstern));
+            Assert.AreEqual("amidships", GameHud.RudderText(0));
+            Assert.AreEqual("35° starboard", GameHud.RudderText(1));
+            Assert.AreEqual("35° port", GameHud.RudderText(-1));
         }
     }
 }

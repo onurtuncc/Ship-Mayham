@@ -34,8 +34,7 @@ namespace ShipMayham.Tests
             Assert.IsNotNull(harbor);
             Assert.AreEqual(18, harbor.ShoreMarkers.Length);
             Assert.AreEqual(12, session.Stations.Length, "Ammo and repair supply append stations; existing IDs stay stable.");
-            sim.Crew[0].Position = VoyageSimulation.ShipGangway;
-            session.HarborCommandRpc(HarborAction.GoAshore);
+            GangwayWalk.Place(sim, 0, true);
             foreach (var frame in Wait(.6f)) yield return frame;
             Assert.IsTrue(session.Crew[0].OnShore);
             Assert.IsTrue(harbor.Walkways[0].gameObject.activeSelf);
@@ -93,8 +92,7 @@ namespace ShipMayham.Tests
             foreach (var frame in Wait(.6f)) yield return frame;
             view.LiveryRenderers[0].GetPropertyBlock(properties);
             Assert.AreEqual(originalPaint, properties.GetColor("_BaseColor"));
-            sim.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.BoardShip);
-            session.HarborCommandRpc(HarborAction.BoardShip);
+            GangwayWalk.Place(sim, 0, false);
             foreach (var frame in Wait(.6f)) yield return frame;
             Assert.IsFalse(session.Crew[0].OnShore);
             Assert.That(Vector3.Distance(view.CrewRoots[0].localPosition, new Vector3(-5, .5f, -6)), Is.LessThan(.03f));

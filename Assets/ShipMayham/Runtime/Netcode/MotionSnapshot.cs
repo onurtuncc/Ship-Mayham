@@ -34,7 +34,7 @@ namespace ShipMayham
         public ushort Seq;
         public uint TimeMs;
         public Vector2 ShipPosition;
-        public float ShipHeading, ShipSpeed;
+        public float ShipHeading, ShipSpeed, ShipDrift;
         public CrewMotionPacket[] Crew;
 
         public static MotionSnapshot From(VoyageSimulation sim, ushort seq)
@@ -43,7 +43,7 @@ namespace ShipMayham
             for (int i = 0; i < VoyageSimulation.MaxCrew; i++) if (sim.Crew[i].Active) active++;
             var snapshot = new MotionSnapshot
             {
-                Seq = seq, TimeMs = sim.ClockMs, ShipPosition = sim.State.Position, ShipHeading = sim.State.Heading, ShipSpeed = sim.State.Speed,
+                Seq = seq, TimeMs = sim.ClockMs, ShipPosition = sim.State.Position, ShipHeading = sim.State.Heading, ShipSpeed = sim.State.Speed, ShipDrift = sim.State.Drift,
                 Crew = new CrewMotionPacket[active]
             };
             int n = 0;
@@ -63,7 +63,7 @@ namespace ShipMayham
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref Seq); serializer.SerializeValue(ref TimeMs);
-            serializer.SerializeValue(ref ShipPosition); serializer.SerializeValue(ref ShipHeading); serializer.SerializeValue(ref ShipSpeed);
+            serializer.SerializeValue(ref ShipPosition); serializer.SerializeValue(ref ShipHeading); serializer.SerializeValue(ref ShipSpeed); serializer.SerializeValue(ref ShipDrift);
             serializer.SerializeValue(ref Crew);
         }
     }

@@ -476,7 +476,8 @@ namespace ShipMayham
                 $"{K(HudControl.Interact)}  Chests, sand, fishing spots: skill games";
             right.text =
                 "<b>HELM</b>\n" +
-                $"{move}  Steer and throttle\n" +
+                $"{move}  Engine lever (stays set) and wheel\n" +
+                "Go astern to stop: a ship coasts a long way\n" +
                 $"{K(HudControl.Jump)}  Depart or dock\n" +
                 $"{K(HudControl.Camera)}  Switch camera\n\n" +
                 "<b>CANNON</b>\n" +

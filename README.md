@@ -23,6 +23,7 @@ Windows build: **Ship Mayham → Build Prototype (Windows)**. WebGL yayını: [d
 | Eylem | Klavye / fare | Gamepad |
 | --- | --- | --- |
 | Hareket / bakış | WASD / fare | Sol / sağ analog |
+| Dümende: motor kolu (yerinde kalır) / dümen | W/S / A/D | Sol analog |
 | Etkileşim | E | A |
 | Zıpla (dümende: kalkış / yanaşma) | Space | X |
 | Bilet kontrolü / ücret tahsili | F | Y |
