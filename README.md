@@ -14,6 +14,8 @@ Gereksinim: Unity **6000.4.6f1**.
 2. `Assets/ShipMayham/Scenes/ShipPrototype.unity` sahnesini aç (veya **Ship Mayham → Open Prototype**).
 3. Play'e bas. Ana menüde bir takma ad seç. **Play solo** doğrudan oyuna girer. **Host online** bir **lobi** açar (Unity Relay, port yönlendirme gerekmez): kodu paylaş, arkadaşlar **Join online** ile katılıp **Ready** basar, hepsi hazır olunca sen **Start voyage** dersin. Sefer başladıktan sonra da katılınabilir.
 
+**Continue last world** (ana menü): host'un son dünyası limanda (her 15 sn, limana varınca ve çıkarken) cihaza kaydedilir. **Continue solo** veya **Continue online** ile devam edilir; online devamda arkadaşlar yeni kodla katılır ve kendi slotlarını ve konumlarını geri alır. Yeni dünya başlatmak kaydı değiştirir, Settings'ten silinebilir.
+
 Windows build: **Ship Mayham → Build Prototype (Windows)**. WebGL yayını: [docs/WEBGL_DEPLOYMENT.md](docs/WEBGL_DEPLOYMENT.md).
 
 ## Kontroller
@@ -28,10 +30,18 @@ Windows build: **Ship Mayham → Build Prototype (Windows)**. WebGL yayını: [d
 | Fırlat / ateş (top) | Sol tık | RT |
 | Top doldur | R | X |
 | Ping (kısa basış) / emote çarkı (basılı tut) | Q | D-pad yukarı |
+| Kapıdan geç (karaya çık / gemiye bin) | Kapıya doğru yürü | Kapıya doğru yürü |
+| Merdiven: suya atla / çık, sandık, kum, olta | E | A |
+| Mini oyun: vur / çevir / olta / kaz | Space, E veya sol tık | A |
+| Mini oyundan vazgeç | Esc | B |
 | Menü (devam, ayarlar, sıkıştım, çık) | Esc | Start |
 | Kontrol rehberi | F1 | — |
 
 Oyundaki ipuçları kullandığın cihaza göre tuşları gösterir.
+
+## Neler yapılır
+
+Gemi limanda: yolcular iskeleden sıraya girip gemiye yürür (kapı, yolcu ve mürettebat için aynıdır) ve sefer bitince gemiden iner. Karada: Purser ve dükkânlar, işler, **gömülü sandık** (kilit açma), **kazı yerleri**, **iskele kenarında olta** (balık galeye yiyecek olur). Suda: halat merdivenden atlayıp yüzün, batık paraları toplayın; yüzemeyen yolcular simit takar. Seyirde: sızıntıyı **çekiçle tahta çakarak** kapatın, rogue wave'in uzak korkuluktaki oyuncuyu denize savurmasına dikkat edin. Ayrıntı: [docs/RELEASE_PASS.md](docs/RELEASE_PASS.md).
 
 ## Dokümanlar
 
@@ -46,6 +56,7 @@ Oyundaki ipuçları kullandığın cihaza göre tuşları gösterir.
 | Ağ ve hareket | [docs/NETCODE.md](docs/NETCODE.md), [docs/RELAY_MIGRATION_TEST.md](docs/RELAY_MIGRATION_TEST.md) |
 | HUD ve etkileşim arayüzü | [docs/HUD.md](docs/HUD.md) |
 | Test | [docs/TESTING.md](docs/TESTING.md) |
+| Yayın öncesi geçiş (yüzme, mini oyunlar, kayıt) | [docs/RELEASE_PASS.md](docs/RELEASE_PASS.md) |
 | Sanat üretimi | [docs/ART_PIPELINE.md](docs/ART_PIPELINE.md) |
 | Oyun hissi (ses, efekt) | [docs/GAME_FEEL.md](docs/GAME_FEEL.md) |
 | Yayın | [docs/WEBGL_DEPLOYMENT.md](docs/WEBGL_DEPLOYMENT.md) |

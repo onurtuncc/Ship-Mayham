@@ -194,6 +194,40 @@ _Avoid_: Görev, quest, olay (genel anlamda)
 Ship event'lerin Route ağırlıklarıyla karılan, tur bitmeden tekrar etmeyen destesi.
 _Avoid_: Rastgele olay havuzu
 
+### Gece geçişi: su, mini oyunlar, kayıt
+
+**Gate**:
+Gangway'in gemi tarafındaki kapı. Eller boşken kapıya doğru yürümek Crew member'ı karaya veya gemiye geçirir; düğme yoktur.
+_Avoid_: Kapı düğmesi, "go ashore" butonu
+
+**Ladder**:
+Gemi omurgasındaki üç ve rıhtımdaki bir halat merdiven. Üstünde E suya atlatır, dibinde E çıkarır.
+_Avoid_: İskele merdiveni, rampa
+
+**Swimmer**:
+Suda olan Crew member (limanda isteyerek, denizde rogue wave ile savrulmuş). Seyirde 30 sn içinde merdivene yetişemeyen halatla çekilir ve 5 coin öder.
+_Avoid_: Overboard oyuncu (yalnız denizdeki durum için "overboard" denir)
+
+**Floaties**:
+Yüzemeyen yolcunun belindeki kırmızı-beyaz simit. Yolcuların yaklaşık %70'i yüzer.
+_Avoid_: Can simidi (Life ring ayrı bir prop'tur)
+
+**Mini-game**:
+Host'un bir Crew member için açtığı kısa beceri oyunu: lockpick, hammer, fishing, dig. İstemci oynar, host sonucu doğrular.
+_Avoid_: Bulmaca, quest
+
+**Activity spot**:
+Limanda mini oyun açan yer: gömülü sandık (lockpick), kazı yeri (dig), olta noktası (fishing). Her liman yenilenir.
+_Avoid_: Görev noktası
+
+**Sunken coin**:
+Liman suyunda yüzerken toplanan para (5 coin, sekizi de toplanınca bonus ve itibar).
+_Avoid_: Batık hazine (hazine sandıktır)
+
+**Saved world**:
+Host'un son dünyasının cihazdaki kaydı; yalnız limanda yazılır, menüden devam edilir.
+_Avoid_: Save game, checkpoint
+
 ### Liman
 
 **Harbor**:

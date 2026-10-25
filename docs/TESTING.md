@@ -11,6 +11,8 @@
 | Relay host devri | `Scripts/Test-RelayMigration.ps1` | Gerçek internet oturumunda host kaybı ve migration ([RELAY_MIGRATION_TEST.md](RELAY_MIGRATION_TEST.md)). |
 | Web imleç koruması | `node Scripts/Test-WebCursor.cjs` | `WebCursor.jslib` pointer-lock davranışı. |
 
+Testlerin varsayılanları: `TestDefaults` (`[SetUpFixture]`) yolcuların gangway yürüyüşünü kapatır (`VoyageSimulation.WalkingPassengers = false`); yürüyüşü sınayan testler (`PassengerFlowTests`) açıp geri alır. PlayMode testleri alan yeniden yüklendiği için bayrağı `EnterPlayMode` sonrasında kendileri kapatır. Dünya kaydı batch çalıştırmalarda kapalıdır (`WorldSave.Enabled`); kaydı sınayan testler `WorldSave.ForceEnabled` ile açar ve temizler. Solo PlayMode testleri menü açılınca zamanın durduğunu (`timeScale = 0`) unutmamalı: `View.CloseMenu(false)` ve gerekirse `Time.timeScale = 1`.
+
 Dört insanla oynanış dengesi, farklı tarayıcılar/cihazlar ve gerçek pointer-lock kabulü otomatik testlerin kapsamı dışındadır; elle yapılmalıdır.
 
 ## EditMode testlerini çalıştırma

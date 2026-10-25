@@ -69,6 +69,24 @@ their caption, and every alert card repeats its severity as a shape on the right
 green good a square, blue information a circle (`IconShapes`, drawn as small generated sprites). Food and drinks are also told apart by
 words on the passenger labels, station labels, prompts and the carry pill. There is no colour-blind mode to switch on: the shapes are always shown.
 
+## Mini-games and the saved world
+
+`MiniGameOverlay` plays the skill game the host opened (`PrototypeSession.MiniGameOpened`): the lock (move the pick, hold to turn), the
+plank (strike when the marker is over the green patch), the rod (strike on the bite, hold to lift the green bar) and the shovel (tap fast).
+Space, E, a click or the gamepad's A is the action; Escape (gamepad B) gives up, and so does losing the pointer lock. While it is open
+`PrototypeView.MiniGameOpen` freezes the look and the movement, and the other players see the crew member in the matching pose with the tool
+in hand. The prompt on a chest, a mound or the quay edge says what the game is; the repair bench offers the plank game when the hull leaks and
+no patch kit or valve is ready.
+
+The main menu shows **YOUR LAST WORLD** (host, voyage, coins, reputation, age) with Continue Solo / Continue Online when a world was saved at port.
+The Settings page can erase it (click twice).
+
+## Ladders, the water and the gate
+
+A swimmer sees the water line at eye level and the prompt "Overboard!" or "Swimming" with the ladders to aim for. A ladder shows "Dive in and swim",
+"Climb up" or why it cannot be used (under way, full hands). The gate shows "Walk through to go ashore / board the ship" and turns red when the hands
+are full. Alerts: OVERBOARD! (red) at sea, the rogue wave card now says to stay off the far rail.
+
 ## Passenger handling
 
 Lifting a passenger takes them out of their seat, so they have to get back to one. A thrown passenger flails in the air, lies on the
