@@ -62,6 +62,7 @@ namespace ShipMayham.Tests
             session.PassengerCommandRpc(0, PassengerAction.CarryOrDrop, 0);
             foreach (var frame in Wait(.6f)) yield return frame;
             sim.Crew[0].Position = new Vector2(-5, -1.5f);
+            session.Simulation.Passengers[0].CanSwim = false;
             session.PassengerCommandRpc(-1, PassengerAction.Throw, -90);
             foreach (var frame in Wait(.3f)) yield return frame;
             Assert.AreEqual(PassengerMotion.Rescuing, session.Passengers[0].Motion);

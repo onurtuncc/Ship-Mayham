@@ -224,6 +224,7 @@ namespace ShipMayham.Tests
         [Test]
         public void RescuedPassengerClimbsBackDizzyThenWalksToTheSeat()
         {
+            sim.Passengers[0].CanSwim = false;
             Lift(0);
             sim.Crew[0].Position = new Vector2(-5, -1.5f);
             Advance(.4f);
@@ -321,7 +322,7 @@ namespace ShipMayham.Tests
         [TestCase(PassengerMotion.Returning, PassengerPose.Walking)]
         [TestCase(PassengerMotion.Carried, PassengerPose.Panicked)]
         [TestCase(PassengerMotion.Airborne, PassengerPose.Panicked)]
-        [TestCase(PassengerMotion.Rescuing, PassengerPose.Panicked)]
+        [TestCase(PassengerMotion.Rescuing, PassengerPose.SwimPanic)]
         public void EachHandlingStateHasItsOwnPose(PassengerMotion motion, PassengerPose expected)
         {
             var p = new PassengerState { Active = true, Motion = motion, Reaction = PassengerReaction.Thanks, ReactionRemaining = 3 };

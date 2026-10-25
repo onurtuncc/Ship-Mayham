@@ -22,6 +22,7 @@ namespace ShipMayham.Editor
             if (session == null || view == null || session.Harbor == null) throw new InvalidOperationException("A complete prototype scene is required.");
             ApplyGangwayGate(session, view);
             ApplyLadders(session);
+            ApplyFloaties(view);
             EnsureCrewController();
             EnsurePassengerController();
             EditorSceneManager.MarkSceneDirty(scene);
@@ -40,6 +41,19 @@ namespace ShipMayham.Editor
                 if (found != null) return found;
             }
             return null;
+        }
+
+        // Passengers who cannot swim wear a red-and-white ring at the waist; the view shows it only for them.
+        private static void ApplyFloaties(PrototypeView view)
+        {
+            foreach (var visual in view.PassengerVisuals)
+            {
+                if (visual == null) continue;
+                var holder = visual.Find("Floaties") ?? Root("Floaties", visual);
+                var ring = AddProp(holder, "Floaties", Vector3.zero, .7f);
+                ring.localPosition = new Vector3(0, .6f, 0);
+                ring.localScale = Vector3.one * .7f;
+            }
         }
 
         // Rope ladders hang from the ship's rails and the quay edge down into the water; the same positions drive the gameplay (VoyageSimulation.Ladders).

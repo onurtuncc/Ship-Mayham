@@ -10,6 +10,7 @@ namespace ShipMayham
     [RequireComponent(typeof(PrototypeView))]
     public sealed class PrototypePassengerAnimator : MonoBehaviour
     {
+        private const float GetUpSeconds = 1.4f;
         private const float FadeSeconds = .25f, SitFadeSeconds = .35f, HandledFadeSeconds = .2f, LyingStartOffset = .3f;
         private const PassengerPose None = (PassengerPose)255;
         private static readonly PassengerPose[] Flavours = { PassengerPose.Laughing, PassengerPose.Clapping, PassengerPose.Fidgeting, PassengerPose.Laughing };
@@ -55,9 +56,12 @@ namespace ShipMayham
                 var passenger = session.Passengers[i];
                 var motion = passenger.Motion;
                 bool changed = motion != lastMotion[i];
+                var previousMotion = lastMotion[i];
                 lastMotion[i] = motion;
                 // A change of handling beats any gesture still playing: a thrown passenger must not keep clapping.
                 if (changed && Time.time < oneShotUntil[i]) oneShotUntil[i] = 0;
+                // Lying on the deck, then getting up from the fall before the dizzy stand.
+                if (previousMotion == PassengerMotion.Landing && motion == PassengerMotion.Dizzy) { PlayOneShot(i, PassengerPose.GetUp, GetUpSeconds); continue; }
                 if (Time.time < oneShotUntil[i] && passenger.Routine == PassengerRoutine.Seated && motion == PassengerMotion.OnDeck) continue;
 
                 var cue = PassengerPresentation.CueFor(passenger, session.ActiveEvent.Value, session.Voyage.Value, i);

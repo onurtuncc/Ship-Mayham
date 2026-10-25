@@ -294,7 +294,8 @@ namespace ShipMayham
                     { Active = true, Satisfaction = 100, Request = p % 2 == 0 ? ServiceItem.Food : ServiceItem.Drink,
                         FarePaid = p != (State.Voyage - 1) % State.Boarded, CarrierSlot = -1,
                         Personality = (PassengerPersonality)(p % 3), RoamIn = 15 + p * 4,
-                        Position = BoardingStart(p), Motion = BoardingMotion, RecoveryRemaining = FlowTimeoutSeconds };
+                        Position = BoardingStart(p), Motion = BoardingMotion, RecoveryRemaining = FlowTimeoutSeconds,
+                        CanSwim = PassengerSwims(p, State.Voyage) };
                     return PassengersWalk ? "Passengers are coming aboard. Take the helm once everyone is seated." : "Passengers aboard. Take the helm; Space departs.";
                 case StationKind.Helm:
                     foreach (var crew in Crew) if (crew.Active && crew.AtHelm) return "Helm occupied.";

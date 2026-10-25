@@ -34,6 +34,9 @@ namespace ShipMayham
                 case PassengerMotion.Boarding:
                 case PassengerMotion.Leaving: return PassengerPose.Walking;
                 case PassengerMotion.OnDeck: break;
+                case PassengerMotion.Rescuing:
+                    if (!p.CanSwim) return PassengerPose.SwimPanic;
+                    return p.Velocity.x * p.Velocity.x + p.Velocity.z * p.Velocity.z > .04f ? PassengerPose.Swim : PassengerPose.Tread;
                 default: return PassengerPose.Panicked;
             }
 
@@ -80,7 +83,8 @@ namespace ShipMayham
         {
             if (p.Motion == PassengerMotion.Carried) return "Put me down!";
             if (p.Motion == PassengerMotion.Airborne) return "Wheee!";
-            if (p.Motion == PassengerMotion.Rescuing) return $"HELP! Rescue in {p.RecoveryRemaining:0.0}s";
+            if (p.Motion == PassengerMotion.Rescuing)
+                return p.CanSwim ? $"Swimming to the ladder! {p.RecoveryRemaining:0.0}s" : $"HELP! I can't swim! {p.RecoveryRemaining:0.0}s";
             if (p.Motion == PassengerMotion.Landing) return "Ow...";
             if (p.Motion == PassengerMotion.Dizzy) return "Everything is spinning...";
             if (p.Motion == PassengerMotion.Standing) return "Was that necessary?";

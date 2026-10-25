@@ -359,6 +359,21 @@ namespace ShipMayham.Tests
             yield return Capture(hud, controller, "Logs/HudSwim.png");
             sim.Crew[0].Swimming = false;
 
+            // Passengers who swim and who do not: one treading water next to a flailing one.
+            sim.State.Phase = VoyagePhase.Boarding;
+            sim.State.Boarded = 4;
+            for (int p = 0; p < 4; p++) sim.Passengers[p] = new PassengerState { Active = true, Satisfaction = 100, CarrierSlot = -1, FarePaid = true, Position = new Vector3(sim.Seats[p].x, .5f, sim.Seats[p].y), CanSwim = p % 2 == 0 };
+            sim.Crew[0].Position = new Vector2(3.5f, -5f);
+            foreach (var passengerAnimator in hud.View.GetComponent<PrototypePassengerAnimator>().Animators) passengerAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            sim.Passengers[0].Motion = PassengerMotion.Rescuing; sim.Passengers[0].RecoveryRemaining = 60; sim.Passengers[0].Position = new Vector3(-7.2f, VoyageSimulation.SeaLevel + VoyageSimulation.PassengerSwimDepth, -3f);
+            sim.Passengers[1].Motion = PassengerMotion.Rescuing; sim.Passengers[1].RecoveryRemaining = 60; sim.Passengers[1].Position = new Vector3(-7.2f, VoyageSimulation.SeaLevel + VoyageSimulation.PassengerSwimDepth, 0f);
+            for (int frame = 0; frame < 60; frame++) yield return null;
+            yield return CaptureWorld(hud, controller, "Logs/WorldPassengersSwim.png", ship.TransformPoint(new Vector3(-5.2f, 2.4f, -7f)), ship.TransformPoint(new Vector3(-7.2f, -1.0f, -1.5f)), 55);
+            sim.Passengers[0].Motion = PassengerMotion.OnDeck; sim.Passengers[1].Motion = PassengerMotion.OnDeck;
+            for (int p = 0; p < 2; p++) sim.Passengers[p].Position = new Vector3(sim.Seats[p].x, .5f, sim.Seats[p].y);
+            for (int frame = 0; frame < 30; frame++) yield return null;
+            yield return CaptureWorld(hud, controller, "Logs/WorldFloaties.png", ship.TransformPoint(new Vector3(2.2f, 1.9f, -6.2f)), ship.TransformPoint(new Vector3(0, 1.0f, -1f)), 55);
+
             // The gangway gate, closed and open.
             sim.State.Phase = VoyagePhase.Boarding;
             sim.Crew[0].Position = new Vector2(-3.4f, -6f);

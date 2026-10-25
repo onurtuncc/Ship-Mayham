@@ -52,6 +52,7 @@ namespace ShipMayham.Tests
         }
         private void ThrowOverboard()
         {
+            sim.Passengers[0].CanSwim = false;         // these tests are about the timed rescue of someone who cannot swim
             Near(0); Command(0, PassengerAction.CarryOrDrop);
             sim.Crew[0].Position = new Vector2(-5, -1.5f);
             Command(-1, PassengerAction.Throw, yaw: -90);

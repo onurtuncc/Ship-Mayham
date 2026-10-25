@@ -229,8 +229,8 @@ namespace ShipMayham
                     {
                         p.Motion = PassengerMotion.Rescuing;
                         p.Velocity = Vector3.zero;
-                        p.Position.y = -1.25f;
-                        p.RecoveryRemaining = 8;
+                        p.Position.y = SeaLevel + PassengerSwimDepth;
+                        p.RecoveryRemaining = p.CanSwim ? SwimBackSeconds(new Vector2(p.Position.x, p.Position.z)) : PassengerNonSwimmerWaitSeconds;
                         p.Satisfaction = Mathf.Max(0, p.Satisfaction - 20);
                         State.RescueCount++;
                     }
@@ -259,10 +259,22 @@ namespace ShipMayham
                 else if (p.Motion == PassengerMotion.Rescuing)
                 {
                     p.RecoveryRemaining = Mathf.Max(0, p.RecoveryRemaining - dt);
+                    Vector2 water = new Vector2(p.Position.x, p.Position.z);
+                    if (p.CanSwim && p.RecoveryRemaining > 0)
+                    {
+                        // A swimmer paddles to the nearest ladder instead of waiting to be hauled out.
+                        Vector2 goal = Ladders[NearestShipLadder(water)].Base;
+                        Vector2 next = Vector2.MoveTowards(water, goal, PassengerSwimSpeed * dt);
+                        p.Velocity = new Vector3(next.x - water.x, 0, next.y - water.y) / Mathf.Max(dt, .0001f);
+                        p.Position = new Vector3(next.x, p.Position.y, next.y);
+                    }
+                    else p.Velocity = Vector3.zero;
                     if (p.RecoveryRemaining == 0)
                     {
-                        // Hauled back onto the deck at the nearest edge, then walks to the seat like everyone else.
-                        var edge = new Vector2(Mathf.Clamp(p.Position.x, -DeckBounds.x, DeckBounds.x), Mathf.Clamp(p.Position.z, -DeckBounds.y, DeckBounds.y));
+                        // Out of the water at the ladder (a swimmer) or the nearest rail (hauled), then walks to the seat like everyone else.
+                        var edge = p.CanSwim ? Ladders[NearestShipLadder(water)].Top
+                            : new Vector2(Mathf.Clamp(p.Position.x, -DeckBounds.x, DeckBounds.x), Mathf.Clamp(p.Position.z, -DeckBounds.y, DeckBounds.y));
+                        p.Velocity = Vector3.zero;
                         p.Position = SafePassengerPosition(i, edge);
                         p.Motion = PassengerMotion.Dizzy;
                         p.RecoveryRemaining = DizzySeconds;

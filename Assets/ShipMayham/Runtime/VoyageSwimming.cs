@@ -39,6 +39,39 @@ namespace ShipMayham
             new Ladder("Quay ladder", new Vector2(5f, 5f), true, new Vector2(-7.2f, 5f)),
         };
 
+        /// <summary>Three in ten passengers never learned to swim; who they are changes from voyage to voyage.</summary>
+        public static bool PassengerSwims(int passenger, int voyage)
+        {
+            unchecked
+            {
+                uint h = (uint)passenger * 2654435761u ^ (uint)voyage * 40503u;
+                h ^= h >> 13; h *= 0x5bd1e995u; h ^= h >> 15;
+                return h % 10 >= 3;
+            }
+        }
+
+        public const float PassengerSwimSpeed = 1.4f, PassengerNonSwimmerWaitSeconds = 8f, PassengerSwimDepth = -.75f;
+
+        /// <summary>The ship ladder nearest to a point in the water, as an index into <see cref="Ladders"/>.</summary>
+        public static int NearestShipLadder(Vector2 point)
+        {
+            int best = 0;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < Ladders.Length; i++)
+            {
+                if (Ladders[i].OnQuay) continue;
+                float distance = Vector2.Distance(point, Ladders[i].Base);
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                best = i;
+            }
+            return best;
+        }
+
+        /// <summary>How long a swimmer needs to reach the nearest ladder, with a moment to climb.</summary>
+        public static float SwimBackSeconds(Vector2 from) =>
+            Mathf.Clamp(Vector2.Distance(from, Ladders[NearestShipLadder(from)].Base) / PassengerSwimSpeed + 1f, 3f, 8f);
+
         private readonly float[] ladderReady = new float[MaxCrew];
         private readonly float[] overboardClock = new float[MaxCrew];
 

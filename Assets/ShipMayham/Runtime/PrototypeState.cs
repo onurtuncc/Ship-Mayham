@@ -124,6 +124,8 @@ namespace ShipMayham
         public float Satisfaction, RequestTimer;
         public bool TicketChecked, FarePaid;
         public PassengerMotion Motion;
+        /// <summary>Whether this passenger can swim to a ladder when they end up in the water; the others float and wait to be hauled out.</summary>
+        public bool CanSwim;
         public int CarrierSlot;
         /// <summary>0 = the passenger's own seat (their index); n = seat n-1, claimed after being put down.</summary>
         public byte SeatClaim;
@@ -140,7 +142,7 @@ namespace ShipMayham
         {
             s.SerializeValue(ref Active); s.SerializeValue(ref Request);
             s.SerializeValue(ref Satisfaction); s.SerializeValue(ref RequestTimer);
-            s.SerializeValue(ref TicketChecked); s.SerializeValue(ref FarePaid); s.SerializeValue(ref Motion); s.SerializeValue(ref CarrierSlot);
+            s.SerializeValue(ref TicketChecked); s.SerializeValue(ref FarePaid); s.SerializeValue(ref Motion); s.SerializeValue(ref CanSwim); s.SerializeValue(ref CarrierSlot);
             s.SerializeValue(ref SeatClaim);
             s.SerializeValue(ref Position); s.SerializeValue(ref Velocity); s.SerializeValue(ref RecoveryRemaining);
             s.SerializeValue(ref Reaction); s.SerializeValue(ref ReactionRemaining);

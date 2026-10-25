@@ -202,7 +202,7 @@ namespace ShipMayham
         private MaterialPropertyBlock itemProperties;
         private Vector3[] passengerVisualOffsets, passengerLabelOffsets;
         private Quaternion[] passengerVisualRotations, passengerFacing;
-        private Transform[] passengerBuoys;
+        private Transform[] passengerBuoys, passengerFloaties;
         private bool[] displayedShore, crewActiveLastFrame;
         private MaterialPropertyBlock[] originalLiveryBlocks;
         private int displayedLivery = -1;
@@ -282,12 +282,14 @@ namespace ShipMayham
             passengerVisualRotations = new Quaternion[PassengerVisuals.Length];
             passengerFacing = new Quaternion[PassengerVisuals.Length];
             passengerBuoys = new Transform[PassengerVisuals.Length];
+            passengerFloaties = new Transform[PassengerVisuals.Length];
             for (int i = 0; i < PassengerVisuals.Length; i++)
             {
                 passengerVisualOffsets[i] = PassengerVisuals[i].localPosition;
                 passengerVisualRotations[i] = passengerFacing[i] = PassengerVisuals[i].localRotation;
                 passengerLabelOffsets[i] = PassengerLabels[i].transform.localPosition;
                 passengerBuoys[i] = PassengerVisuals[i].Find("RescueFloat_Visual");
+                passengerFloaties[i] = PassengerVisuals[i].Find("Floaties");
             }
             // Ship upgrades are sold by the purser, so the upgrade fittings stay out of the world.
             foreach (var station in Session.Stations)
@@ -500,6 +502,8 @@ namespace ShipMayham
                 int seat = p.SeatClaim == 0 ? index : p.SeatClaim - 1;
                 desired = passengerVisualRotations[Mathf.Clamp(seat, 0, passengerVisualRotations.Length - 1)];
             }
+            else if (p.Motion == PassengerMotion.Rescuing && p.CanSwim && new Vector2(p.Velocity.x, p.Velocity.z).sqrMagnitude > .04f)
+                desired = Quaternion.LookRotation(new Vector3(p.Velocity.x, 0, p.Velocity.z), Vector3.up);
             else if (p.Motion == PassengerMotion.Carried || p.Motion == PassengerMotion.Airborne || p.Motion == PassengerMotion.Rescuing)
                 return current;
             return Quaternion.Slerp(current, desired, 1 - Mathf.Exp(-12f * Time.deltaTime));
@@ -669,12 +673,13 @@ namespace ShipMayham
                     Vector3 direction = new Vector3(p.RoutineTarget.x - p.Position.x, 0, p.RoutineTarget.y - p.Position.z);
                     if (direction.sqrMagnitude > .01f) PassengerVisuals[i].rotation = ship.rotation * Quaternion.LookRotation(direction) * passengerVisualRotations[i];
                 }
-                if (passengerBuoys[i] != null) passengerBuoys[i].gameObject.SetActive(p.Motion == PassengerMotion.Rescuing);
+                if (passengerBuoys[i] != null) passengerBuoys[i].gameObject.SetActive(p.Motion == PassengerMotion.Rescuing && !p.CanSwim);
+                if (passengerFloaties[i] != null) passengerFloaties[i].gameObject.SetActive(!p.CanSwim);
                 bool focused = Target.IsPassenger(i);
                 bool rescuing = p.Motion == PassengerMotion.Rescuing;
                 PassengerLabels[i].gameObject.SetActive(!heldByMe && (rescuing || Vector3.Distance(Camera.transform.position, PassengerVisuals[i].position) < 7));
                 PassengerLabels[i].transform.position = PassengerVisuals[i].position + ship.rotation * passengerLabelOffsets[i];
-                PassengerLabels[i].text = $"{i + 1}: {(p.Request == ServiceItem.None ? "Happy" : p.Request.ToString())} / {p.Satisfaction:0}%\n{PassengerPresentation.TicketText(p)}";
+                PassengerLabels[i].text = $"{i + 1}: {(p.Request == ServiceItem.None ? "Happy" : p.Request.ToString())} / {p.Satisfaction:0}%{(p.CanSwim ? string.Empty : " (can't swim)")}\n{PassengerPresentation.TicketText(p)}";
                 if (focused || rescuing) PassengerLabels[i].text += "\n" + PassengerPresentation.ReactionText(p);
                 if (focused) PassengerLabels[i].text += $"\n{p.Personality} / {p.Routine}";
                 if (focused && p.Motion == PassengerMotion.OnDeck)

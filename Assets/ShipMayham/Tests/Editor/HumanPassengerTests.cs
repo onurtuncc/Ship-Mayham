@@ -21,7 +21,7 @@ namespace ShipMayham.Tests
         public void SuspiciousCuesFidget(PassengerCue cue) =>
             Assert.AreEqual(PassengerPose.Fidgeting, PassengerPresentation.PoseFor(Active(), cue));
 
-        [TestCase(PassengerMotion.Carried)] [TestCase(PassengerMotion.Airborne)] [TestCase(PassengerMotion.Rescuing)]
+        [TestCase(PassengerMotion.Carried)] [TestCase(PassengerMotion.Airborne)]
         public void PhysicalComedyPanicsRegardlessOfCue(PassengerMotion motion) =>
             Assert.AreEqual(PassengerPose.Panicked, PassengerPresentation.PoseFor(Active(motion), PassengerCue.Impatient));
 
