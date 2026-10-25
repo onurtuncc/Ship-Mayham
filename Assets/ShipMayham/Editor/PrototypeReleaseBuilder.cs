@@ -24,6 +24,7 @@ namespace ShipMayham.Editor
             ApplyLadders(session);
             ApplyFloaties(view);
             ApplyActivityProps(session, view);
+            ApplyCrewTools(view);
             EnsureCrewController();
             EnsurePassengerController();
             EditorSceneManager.MarkSceneDirty(scene);
@@ -42,6 +43,30 @@ namespace ShipMayham.Editor
                 if (found != null) return found;
             }
             return null;
+        }
+
+        // Tools for the skill games: one rod, shovel and hammer per crew slot, hidden until that crew member plays the matching game.
+        private static void ApplyCrewTools(PrototypeView view)
+        {
+            int slots = view.CrewRoots.Length;
+            var rods = new Transform[slots];
+            var shovels = new Transform[slots];
+            var hammers = new Transform[slots];
+            for (int i = 0; i < slots; i++)
+            {
+                var root = view.CrewRoots[i];
+                rods[i] = Holder(root, "Tool_Rod", "FishingRod", Vector3.zero, 1f, 0);
+                shovels[i] = Holder(root, "Tool_Shovel", "Shovel", Vector3.zero, 1f, 0);
+                hammers[i] = Holder(root, "Tool_Hammer", "RepairHammer", Vector3.zero, 1f, 0);
+                foreach (var tool in new[] { rods[i], shovels[i], hammers[i] }) tool.gameObject.SetActive(false);
+            }
+            var tools = view.GetComponent<PrototypeCrewTools>() ?? view.gameObject.AddComponent<PrototypeCrewTools>();
+            tools.View = view;
+            tools.CrewAnimator = view.GetComponent<PrototypeCrewAnimator>();
+            tools.Rods = rods;
+            tools.Shovels = shovels;
+            tools.Hammers = hammers;
+            EditorUtility.SetDirty(tools);
         }
 
         // The things to find in each port and in the water: mounds to dig, chests to open, rods on the quay edge and sunken coins.

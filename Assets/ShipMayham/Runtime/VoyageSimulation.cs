@@ -141,7 +141,7 @@ namespace ShipMayham
             int carriedPassenger = CarriedPassenger(i);
             if (carriedPassenger >= 0) ReturnPassengerToSeat(carriedPassenger);
             ReturnItem(i);
-            miniGames[i] = default;
+            ClearMiniGame(i);
             inputs[i] = Vector2.zero;
             inputExpires[i] = 0;
             interactionReady[i] = 0;

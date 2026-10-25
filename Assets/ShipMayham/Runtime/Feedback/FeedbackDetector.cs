@@ -7,7 +7,7 @@ namespace ShipMayham
         CoinsEarned, PassengerBoarded, ServiceDelivered, PassengerThanked, PassengerComplained, FareCollected, PassengerRescued,
         HullDamaged, LeakStarted, LeakFixed, VoyageStarted, VoyageArrived, VoyageFailed, ReputationGained, UpgradePurchased,
         DockJobDone, EventResolved, EventFailed, CannonFired, CannonballLanded, PirateHit, PirateDefeated, ItemPickedUp, ItemDelivered,
-        PassengerThrown, WaveWarning, WaveDodged, ShoalAhead, PassengerLanded
+        PassengerThrown, WaveWarning, WaveDodged, ShoalAhead, PassengerLanded, DivedIn, ClimbedOut
     }
 
     /// <summary>One cosmetic reaction to a replicated state change. Slot is a passenger or crew index when relevant.</summary>
@@ -37,11 +37,11 @@ namespace ShipMayham
         public int WavesDodged;
         public PassengerSnapshot[] Passengers;
         public ServiceItem[] Carrying;
-        public bool[] CrewActive;
+        public bool[] CrewActive, CrewSwimming;
 
         public static FeedbackSnapshot Create() => new FeedbackSnapshot
         {
-            Passengers = new PassengerSnapshot[MaxPassengers], Carrying = new ServiceItem[MaxCrew], CrewActive = new bool[MaxCrew]
+            Passengers = new PassengerSnapshot[MaxPassengers], Carrying = new ServiceItem[MaxCrew], CrewActive = new bool[MaxCrew], CrewSwimming = new bool[MaxCrew]
         };
     }
 
@@ -122,6 +122,8 @@ namespace ShipMayham
             for (int i = 0; i < FeedbackSnapshot.MaxCrew; i++)
             {
                 if (!previous.CrewActive[i] || !current.CrewActive[i]) continue;
+                if (!previous.CrewSwimming[i] && current.CrewSwimming[i]) output.Add(new FeedbackEvent(FeedbackKind.DivedIn, i));
+                else if (previous.CrewSwimming[i] && !current.CrewSwimming[i]) output.Add(new FeedbackEvent(FeedbackKind.ClimbedOut, i));
                 bool had = previous.Carrying[i] != ServiceItem.None, has = current.Carrying[i] != ServiceItem.None;
                 if (!had && has) output.Add(new FeedbackEvent(FeedbackKind.ItemPickedUp, i));
                 else if (had && !has) output.Add(new FeedbackEvent(FeedbackKind.ItemDelivered, i));

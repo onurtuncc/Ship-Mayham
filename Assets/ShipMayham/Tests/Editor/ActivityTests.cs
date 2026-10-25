@@ -457,6 +457,42 @@ namespace ShipMayham.Tests
             Assert.AreEqual(0, sim.State.DigMask);
         }
 
+        // ------------------------------------------------------------ what everyone else sees
+
+        [Test]
+        public void ThePlayerIsSeenDoingTheirGameUntilItEnds()
+        {
+            Ashore(VoyageSimulation.FishingSpots[0]);
+            Assert.AreEqual(MiniGameKind.None, sim.Crew[0].Doing);
+            Begin(MiniGameKind.Fishing, 0);
+            Assert.AreEqual(MiniGameKind.Fishing, sim.Crew[0].Doing);
+            Finish(MiniGameKind.Fishing, 0, MiniGameOutcome.Failed, 0, 4f);
+            Assert.AreEqual(MiniGameKind.None, sim.Crew[0].Doing);
+        }
+
+        [Test]
+        public void ThePlayerStandsStillWhileTheGameRuns()
+        {
+            Ashore(VoyageSimulation.DigSpots[0]);
+            Begin(MiniGameKind.Dig, 0);
+            Vector2 where = sim.Crew[0].Position;
+            for (int i = 0; i < 20; i++) { sim.SetInput(Host, Vector2.right); sim.Tick(.05f); }
+            Assert.AreEqual(where, sim.Crew[0].Position);
+            sim.ApplyMoveCommands(Host, MoveCommandPacket.Pack(new[] { MoveCommand.Create(1, Vector2.right, false), MoveCommand.Create(2, Vector2.right, false) }));
+            Assert.AreEqual(where, sim.Crew[0].Position, "movement commands are ignored too");
+        }
+
+        [Test]
+        public void EveryGameHasItsOwnPoseAndTheDoingFlagTravels()
+        {
+            Assert.AreEqual(CrewPose.LockPicking, CrewPresentation.PoseFor(new CrewState { Active = true, Doing = MiniGameKind.Lockpick }, 0));
+            Assert.AreEqual(CrewPose.Digging, CrewPresentation.PoseFor(new CrewState { Active = true, Doing = MiniGameKind.Dig }, 3f), "digging beats walking");
+            Assert.AreEqual(CrewPose.FishingIdle, CrewPresentation.PoseFor(new CrewState { Active = true, Doing = MiniGameKind.Fishing }, 0));
+            Assert.AreEqual(CrewPose.Hammering, CrewPresentation.PoseFor(new CrewState { Active = true, Doing = MiniGameKind.Hammer }, 0));
+            var busy = new CrewState { Active = true, Doing = MiniGameKind.Dig };
+            Assert.AreNotEqual(busy, new CrewState { Active = true });
+        }
+
         // ------------------------------------------------------------ network and migration
 
         [Test]

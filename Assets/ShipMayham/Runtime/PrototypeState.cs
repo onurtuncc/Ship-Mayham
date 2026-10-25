@@ -90,6 +90,8 @@ namespace ShipMayham
         public bool Active, AtHelm, AtCannon, OnShore, AtCrane;
         /// <summary>In the water around the ship; <see cref="Position"/> is then ship-local and never on the quay.</summary>
         public bool Swimming;
+        /// <summary>The skill game this crew member is playing, so everyone else sees them fishing, digging or picking a lock.</summary>
+        public MiniGameKind Doing;
         public ulong ClientId;
         public Vector2 Position;
         public ServiceItem Carrying;
@@ -110,12 +112,13 @@ namespace ShipMayham
             s.SerializeValue(ref OnShore);
             s.SerializeValue(ref AtCrane);
             s.SerializeValue(ref Swimming);
+            s.SerializeValue(ref Doing);
             s.SerializeValue(ref JumpHeight); s.SerializeValue(ref VerticalSpeed);
             s.SerializeValue(ref Velocity); s.SerializeValue(ref InputAck); s.SerializeValue(ref TimeMs);
         }
         public bool Equals(CrewState other) => Active == other.Active && AtHelm == other.AtHelm &&
             ClientId == other.ClientId && Position.Equals(other.Position) && Carrying == other.Carrying && AtCannon == other.AtCannon &&
-            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane && Swimming == other.Swimming &&
+            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane && Swimming == other.Swimming && Doing == other.Doing &&
             Velocity.Equals(other.Velocity) && InputAck == other.InputAck && ServiceUnits == other.ServiceUnits;
     }
 

@@ -5,7 +5,7 @@ namespace ShipMayham
     {
         Idle, Walking, Carrying, Jump, PickUp, Throw, Interact, Dance, Dance2, Victory, Defeated, Salute, Clap, LookAround,
         Wave, Bow, Point, Angry,
-        Swim, Tread, ClimbOut, FishingCast, FishingIdle, FishingReel, Digging, LockPicking, DoorOpen
+        Swim, Tread, ClimbOut, FishingCast, FishingIdle, FishingReel, Digging, LockPicking, DoorOpen, Hammering
     }
 
     public static class CrewPresentation
@@ -21,6 +21,13 @@ namespace ShipMayham
         /// </summary>
         public static CrewPose PoseFor(CrewState crew, float visualSpeed, VoyagePhase phase = VoyagePhase.Boarding, int slot = 0)
         {
+            switch (crew.Doing)
+            {
+                case MiniGameKind.Lockpick: return CrewPose.LockPicking;
+                case MiniGameKind.Dig: return CrewPose.Digging;
+                case MiniGameKind.Fishing: return CrewPose.FishingIdle;
+                case MiniGameKind.Hammer: return CrewPose.Hammering;
+            }
             if (crew.Swimming) return visualSpeed > WalkSpeedThreshold ? CrewPose.Swim : CrewPose.Tread;
             if (phase == VoyagePhase.Failed) return CrewPose.Defeated;
             if (phase == VoyagePhase.Arrived) return slot % 2 == 0 ? CrewPose.Dance : CrewPose.Dance2;

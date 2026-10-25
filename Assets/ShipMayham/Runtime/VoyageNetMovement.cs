@@ -78,6 +78,7 @@ namespace ShipMayham
         private void ExecuteMove(int i, MoveCommand command)
         {
             Vector2 input = command.Input;
+            if (Crew[i].Doing != MiniGameKind.None) input = Vector2.zero;       // busy with a skill game: standing still
             if (Crew[i].AtHelm || Crew[i].AtCrane || Crew[i].AtCannon)
             {
                 // Station modes keep the held-input model: the command just refreshes the held input.
@@ -90,6 +91,7 @@ namespace ShipMayham
 
         private void StepWalker(int i, Vector2 input, bool jump, float dt)
         {
+            if (Crew[i].Doing != MiniGameKind.None) { input = Vector2.zero; jump = false; }       // busy with a skill game: standing still
             var state = new CrewMotionState
             {
                 Position = Crew[i].Position, Velocity = Crew[i].Velocity, JumpHeight = Crew[i].JumpHeight, VerticalSpeed = Crew[i].VerticalSpeed

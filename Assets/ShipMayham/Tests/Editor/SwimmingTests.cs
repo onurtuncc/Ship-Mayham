@@ -373,6 +373,25 @@ namespace ShipMayham.Tests
         }
 
         [Test]
+        public void DivingAndClimbingMakeASplash()
+        {
+            var before = FeedbackSnapshot.Create();
+            var after = FeedbackSnapshot.Create();
+            before.Valid = after.Valid = true;
+            before.CrewActive[2] = after.CrewActive[2] = true;
+            after.CrewSwimming[2] = true;
+            var events = new System.Collections.Generic.List<FeedbackEvent>();
+            FeedbackDetector.Detect(before, after, events);
+            Assert.IsTrue(events.Exists(e => e.Kind == FeedbackKind.DivedIn && e.Slot == 2));
+            events.Clear();
+            FeedbackDetector.Detect(after, before, events);
+            Assert.IsTrue(events.Exists(e => e.Kind == FeedbackKind.ClimbedOut && e.Slot == 2));
+            events.Clear();
+            FeedbackDetector.Detect(after, after, events);
+            Assert.IsFalse(events.Exists(e => e.Kind == FeedbackKind.DivedIn || e.Kind == FeedbackKind.ClimbedOut));
+        }
+
+        [Test]
         public void EveryLadderIsReachableFromItsOwnSide()
         {
             foreach (var ladder in VoyageSimulation.Ladders)

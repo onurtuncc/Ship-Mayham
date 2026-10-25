@@ -469,7 +469,11 @@ namespace ShipMayham
                 "<b>PASSENGERS</b>\n" +
                 $"{K(HudControl.Check)}  Check ticket / collect fare\n" +
                 $"{K(HudControl.Carry)}  Lift or put down\n" +
-                $"{K(HudControl.Throw)}  Throw (hurts happiness)";
+                $"{K(HudControl.Throw)}  Throw (hurts happiness)\n\n" +
+                "<b>PORT AND WATER</b>\n" +
+                "Walk into the gate  Go ashore and back\n" +
+                $"{K(HudControl.Interact)}  Ladder: dive in, climb out\n" +
+                $"{K(HudControl.Interact)}  Chests, sand, fishing spots: skill games";
             right.text =
                 "<b>HELM</b>\n" +
                 $"{move}  Steer and throttle\n" +

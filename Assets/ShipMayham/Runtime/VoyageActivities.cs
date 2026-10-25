@@ -110,6 +110,8 @@ namespace ShipMayham
             }
             var start = new MiniGameStart { Kind = kind, Target = target, Seed = NextActivitySeed(), Difficulty = ActivityDifficulty };
             miniGames[slot] = new ActiveMiniGame { Kind = kind, Target = target, Seed = start.Seed, StartedAt = clock, Difficulty = start.Difficulty };
+            crew.Doing = kind;
+            crew.Velocity = Vector2.zero;
             MiniGameStarted?.Invoke(slot, start);
             return string.Empty;
         }
@@ -121,7 +123,7 @@ namespace ShipMayham
             if (slot < 0 || !InMiniGame(slot)) return string.Empty;
             var game = miniGames[slot];
             if (game.Kind != result.Kind || game.Target != result.Target) return string.Empty;
-            miniGames[slot] = default;
+            ClearMiniGame(slot);
             if (result.Outcome == MiniGameOutcome.Abandoned) return "You gave up.";
             float elapsed = clock - game.StartedAt;
             bool believable = elapsed >= MiniGameRules.MinimumSeconds(game.Kind) && elapsed <= MiniGameRules.MaximumSeconds(game.Kind) + 10f;
@@ -189,9 +191,16 @@ namespace ShipMayham
             }
         }
 
+        private void ClearMiniGame(int slot)
+        {
+            miniGames[slot] = default;
+            Crew[slot].Doing = MiniGameKind.None;
+        }
+
         private void ResetActivities()
         {
             Array.Clear(miniGames, 0, miniGames.Length);
+            for (int i = 0; i < MaxCrew; i++) Crew[i].Doing = MiniGameKind.None;
         }
 
         private void TickActivities(float dt)
@@ -200,7 +209,7 @@ namespace ShipMayham
             {
                 if (miniGames[i].Kind == MiniGameKind.None) continue;
                 bool gone = !Crew[i].Active || Crew[i].Swimming || clock - miniGames[i].StartedAt > MiniGameRules.MaximumSeconds(miniGames[i].Kind) + 15f;
-                if (gone) miniGames[i] = default;
+                if (gone) ClearMiniGame(i);
             }
             if (!HarborOpen) return;
             // Every port starts with untouched sand, chests and coins.

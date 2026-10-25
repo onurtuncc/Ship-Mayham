@@ -387,6 +387,18 @@ namespace ShipMayham.Tests
             var coinSpot = VoyageSimulation.CoinSpots[1];
             yield return CaptureWorld(hud, controller, "Logs/WorldCoin.png", ship.TransformPoint(new Vector3(coinSpot.x + 1.5f, .3f, coinSpot.y - 2.2f)), ship.TransformPoint(new Vector3(coinSpot.x, -1f, coinSpot.y)), 60);
 
+            // A second crew member busy with each skill game, seen by the first.
+            sim.Join(77);
+            sim.Crew[1].Position = new Vector2(1.5f, -5f);
+            foreach (var crewAnimator in hud.View.GetComponent<PrototypeCrewAnimator>().Animators) if (crewAnimator != null) crewAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            foreach (var (doing, file) in new[] { (MiniGameKind.Fishing, "Fishing"), (MiniGameKind.Dig, "Dig"), (MiniGameKind.Hammer, "Hammer"), (MiniGameKind.Lockpick, "Lock") })
+            {
+                sim.Crew[1].Doing = doing;
+                for (int frame = 0; frame < 60; frame++) yield return null;
+                yield return CaptureWorld(hud, controller, "Logs/WorldDoing" + file + ".png", ship.TransformPoint(new Vector3(1.5f, 1.5f, -8.2f)), ship.TransformPoint(new Vector3(1.5f, 1f, -5f)), 45);
+            }
+            sim.Crew[1].Doing = MiniGameKind.None;
+
             // The gangway gate, closed and open.
             sim.State.Phase = VoyagePhase.Boarding;
             sim.Crew[0].Position = new Vector2(-3.4f, -6f);

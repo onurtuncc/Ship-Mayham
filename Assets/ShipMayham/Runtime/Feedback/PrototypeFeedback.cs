@@ -143,6 +143,7 @@ namespace ShipMayham
             {
                 bool present = i < session.Crew.Count && session.Crew[i].Active && session.Crew[i].ClientId != ulong.MaxValue;
                 snapshot.CrewActive[i] = present;
+                snapshot.CrewSwimming[i] = present && session.Crew[i].Swimming;
                 snapshot.Carrying[i] = present ? session.Crew[i].Carrying : ServiceItem.None;
             }
         }
@@ -173,6 +174,10 @@ namespace ShipMayham
                     Fx.Burst(FxKind.Splash, passenger, 8); Sfx(SfxKind.Whoosh, .9f, 1.1f, passenger);
                     if (CrewAnimator != null) CrewAnimator.PlayOneShot(e.Value, CrewPose.Throw, 1.2f);
                     break;
+                case FeedbackKind.DivedIn:
+                    Fx.Burst(FxKind.Splash, crew, 22); Sfx(SfxKind.Splash, 1f, 1f, crew); break;
+                case FeedbackKind.ClimbedOut:
+                    Fx.Burst(FxKind.Splash, crew, 10); Sfx(SfxKind.Whoosh, .5f, 1.2f, crew); break;
                 case FeedbackKind.PassengerLanded:
                     Fx.Burst(FxKind.Smoke, passenger, 10); Fx.Popup("Oof!", passenger + Vector3.up * .5f, Gold, 1.2f); Sfx(SfxKind.Thud, .9f, .85f, passenger);
                     AddTrauma(.12f); Babble.Say(passenger, e.Slot, BabbleMood.Grumpy, .7f); break;

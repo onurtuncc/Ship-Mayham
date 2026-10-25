@@ -55,12 +55,14 @@ namespace ShipMayham
             return target;
         }
 
+        private static readonly MiniGameKind[] ShoreGames = { MiniGameKind.Lockpick, MiniGameKind.Dig, MiniGameKind.Fishing };
+
         /// <summary>Chests to open, sand to dig and quay edges to fish from.</summary>
         private static void FindActivity(PrototypeSession session, in CrewState crew, Vector3 eye, Vector3 forward, ref float best, ref InteractionTarget target)
         {
             var voyage = session.Voyage.Value;
             if (session.Harbor == null || !session.Harbor.IsOpen) return;
-            foreach (var kind in new[] { MiniGameKind.Lockpick, MiniGameKind.Dig, MiniGameKind.Fishing })
+            foreach (var kind in ShoreGames)
             {
                 var spots = VoyageSimulation.SpotsOf(kind);
                 for (int i = 0; i < spots.Length; i++)
