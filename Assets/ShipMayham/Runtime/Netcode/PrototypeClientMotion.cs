@@ -76,7 +76,7 @@ namespace ShipMayham
                 accumulator -= CrewLocomotion.StepSeconds;
                 float factor = crew.Swimming ? VoyageSimulation.SwimSpeedFactor : crew.OnShore ? 1 : session.LocalCarriedPassengerIndex >= 0 ? .7f : crew.Carrying == ServiceItem.Ammo ? .8f : 1;
                 int island = VoyageSimulation.DockedIsland(session.Voyage.Value);
-                ILocomotionWorld shipWorld = crew.Swimming ? VoyageSimulation.WaterWorldFor(island) : (deckWorld ?? (deckWorld = new DeckWorld(session)));
+                ILocomotionWorld shipWorld = crew.Swimming ? VoyageSimulation.WaterWorldFor(island, VoyageSimulation.OtherIsland(session.Voyage.Value)) : (deckWorld ?? (deckWorld = new DeckWorld(session)));
                 bool gate = VoyageSimulation.GateOpen(session.Harbor != null && session.Harbor.IsOpen, crew, session.LocalCarriedPassengerIndex >= 0);
                 var packet = core.StepFixed(latestInput, jumpLatched && !crew.Swimming, factor, shipWorld, VoyageSimulation.ShoreWorldFor(island), gate, diveHeld && crew.Swimming);
                 jumpLatched = false;

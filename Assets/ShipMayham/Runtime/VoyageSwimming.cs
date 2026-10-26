@@ -83,23 +83,34 @@ namespace ShipMayham
             get { int count = 0; foreach (var crew in Crew) if (crew.Active && crew.Swimming) count++; return count; }
         }
 
-        public static ILocomotionWorld WaterWorld { get; } = new WaterLocomotionWorld(-1);
+        public static ILocomotionWorld WaterWorld { get; } = new WaterLocomotionWorld(-1, -1);
 
         private static readonly ILocomotionWorld[] IslandWaterWorlds = BuildWaterWorlds();
 
         private static ILocomotionWorld[] BuildWaterWorlds()
         {
-            var worlds = new ILocomotionWorld[Campaign.Count];
-            for (int i = 0; i < worlds.Length; i++) worlds[i] = new WaterLocomotionWorld(i);
+            var worlds = new ILocomotionWorld[Campaign.Count * (Campaign.Count + 1)];
+            for (int i = 0; i < Campaign.Count; i++)
+                for (int other = -1; other < Campaign.Count; other++) worlds[i * (Campaign.Count + 1) + other + 1] = new WaterLocomotionWorld(i, other);
             return worlds;
         }
 
         /// <summary>The sea around an island: the bay's water minus the island's dry ground.</summary>
-        public static ILocomotionWorld WaterWorldFor(int island) => IslandWaterWorlds[Mathf.Clamp(island, 0, IslandWaterWorlds.Length - 1)];
+        public static ILocomotionWorld WaterWorldFor(int island, int other = -1) =>
+            IslandWaterWorlds[Mathf.Clamp(island, 0, Campaign.Count - 1) * (Campaign.Count + 1) + Mathf.Clamp(other, -1, Campaign.Count - 1) + 1];
+
+        /// <summary>The island the ship is not at (the destination while boarding, the origin after arriving): its ground is solid for swimmers too.</summary>
+        public static int OtherIsland(in VoyageState state) => state.Phase == VoyagePhase.Arrived ? state.Island : state.Target;
 
         /// <summary>Whether a swimmer may be at a ship-local point of an island's bay: open water, not on the island's ground.</summary>
-        public static bool WaterWalkable(Vector2 p, int island) =>
-            WaterWalkable(p) && IslandTerrain.For(island).Height(p - new Vector2(QuayOffsetX, 0)) < IslandTerrain.SeaLevel + .02f;
+        public static bool WaterWalkable(Vector2 p, int island, int other = -1)
+        {
+            if (!WaterWalkable(p) || IslandTerrain.For(island).Height(p - new Vector2(QuayOffsetX, 0)) >= IslandTerrain.SeaLevel + .02f) return false;
+            if (other < 0 || other == island) return true;
+            // The neighbouring island lies far off in the same world: its ground is where its own coordinates say.
+            Vector2 q = p - new Vector2(QuayOffsetX, 0) - (Campaign.World(other) - Campaign.World(island));
+            return IslandTerrain.For(other).Height(q) < IslandTerrain.SeaLevel + .02f;
+        }
 
         /// <summary>A swimmer may be anywhere in the round swim zone except inside the hull or under the quay.</summary>
         public static bool WaterWalkable(Vector2 p) =>
@@ -107,11 +118,11 @@ namespace ShipMayham
 
         private sealed class WaterLocomotionWorld : ILocomotionWorld
         {
-            private readonly int island;
-            public WaterLocomotionWorld(int island) { this.island = island; }
+            private readonly int island, other;
+            public WaterLocomotionWorld(int island, int other) { this.island = island; this.other = other; }
             public Vector2 Min => WaterMin;
             public Vector2 Max => WaterMax;
-            public bool Walkable(Vector2 position) => island < 0 ? WaterWalkable(position) : WaterWalkable(position, island);
+            public bool Walkable(Vector2 position) => island < 0 ? WaterWalkable(position) : WaterWalkable(position, island, other);
         }
 
         /// <summary>Where the top of a ladder stands, in ship-local coordinates (the quay is offset by the harbor's position).</summary>

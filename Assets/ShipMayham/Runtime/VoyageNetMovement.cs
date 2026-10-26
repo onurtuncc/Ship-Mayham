@@ -112,7 +112,7 @@ namespace ShipMayham
             // Teleports (ladders, respawn) must not carry the old momentum into the new place.
             if ((state.Position - lastWalkPosition[i]).sqrMagnitude > .0004f) state.Velocity = Vector2.zero;
             bool gate = GateIsOpenFor(i);
-            ILocomotionWorld world = Crew[i].Swimming ? WaterWorldFor(DockedIsland(State))
+            ILocomotionWorld world = Crew[i].Swimming ? WaterWorldFor(DockedIsland(State), OtherIsland(State))
                 : gangwayWorlds[i].Use(Crew[i].OnShore ? ShoreWorldFor(DockedIsland(State)) : DeckWorldInstance, gate, Crew[i].OnShore);
             CrewLocomotion.Step(ref state, input, jump && !Crew[i].Swimming, CrewKinematics.WalkSpeed * WalkSpeedFactor(i), dt, world);
             // Walking the gangway: halfway along the plank the crew member changes area without a button or a jump.

@@ -81,7 +81,7 @@ namespace ShipMayham
                 case TipId.Pirates: return "Pirates! Man the cannon with {Interact} and fire with {Fire}. Carry cannonballs from the magazine to the cannon.";
                 case TipId.Overboard: return "Overboard! Swim to a rope ladder on the hull and press {Interact} to climb out. Wait too long and you are hauled aboard for a small fine.";
                 case TipId.Explore: return "The island goes on past the town: chests, buried treasure and fishing spots are out there, and the beach leads straight into the sea. Walk in to swim.";
-                case TipId.Dive: return "Hold {Jump} to dive and let go to float up. Coins rest on the seabed: watch your breath, and stay inside the buoys.";
+                case TipId.Dive: return "Hold {Jump} to dive and let go to float up. Coins rest on the seabed: and watch your breath.";
                 case TipId.Ladder: return "Rope ladders let you dive in and swim: press {Interact} at the top. Sunken coins and a few passengers swimming back wait in the bay.";
                 case TipId.Activity: return "Chests, sand and quay edges hide skill games: press {Interact} to pick a lock, dig for treasure or go fishing for the galley.";
                 case TipId.Hazard: return "Hazard! Steer around the rocks of a shoal. Before a rogue wave hits, turn the ship's bow toward it.";

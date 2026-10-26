@@ -103,7 +103,7 @@ namespace ShipMayham
             for (int i = 0; i < SeabedProps; i++)
             {
                 uint h = (uint)(i * 2654435761u + 977u);
-                float angle = (h & 1023) / 1023f * Mathf.PI * 2, radius = 8 + ((h >> 10) & 1023) / 1023f * (VoyageSimulation.SwimZoneRadius + 20);
+                float angle = (h & 1023) / 1023f * Mathf.PI * 2, radius = 8 + ((h >> 10) & 1023) / 1023f * 180f;
                 var position = new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius);
                 if (VoyageSimulation.QuaySlab.Contains(new Vector2(position.x, position.z))) continue;
                 // Only where the floor is flat and deep: not under the island's ground or on its slopes.
@@ -118,21 +118,7 @@ namespace ShipMayham
                 prop.GetComponent<Renderer>().sharedMaterial = rock ? rockMaterial : weedMaterial;
             }
             buoyRing = new GameObject("SwimZoneBuoys") { hideFlags = HideFlags.HideAndDontSave };
-            buoys = new Transform[BuoyCount];
-            var red = Lit(shader, BuoyRed);
-            var white = Lit(shader, BuoyWhite);
-            for (int i = 0; i < BuoyCount; i++)
-            {
-                float angle = i * Mathf.PI * 2 / BuoyCount;
-                var buoy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                Destroy(buoy.GetComponent<Collider>());
-                buoy.name = "Buoy" + i;
-                buoy.transform.SetParent(buoyRing.transform, false);
-                buoy.transform.localPosition = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * VoyageSimulation.SwimZoneRadius;
-                buoy.transform.localScale = new Vector3(1.1f, 1.4f, 1.1f);
-                buoy.GetComponent<Renderer>().sharedMaterial = i % 2 == 0 ? red : white;
-                buoys[i] = buoy.transform;
-            }
+            buoys = new Transform[0];
         }
 
         private static Material Lit(Shader shader, Color color)

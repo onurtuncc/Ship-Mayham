@@ -15,8 +15,8 @@ namespace ShipMayham
         public const float BreathSeconds = 22f, BreathRecoverPerSecond = 3f, MinDiveBreathSeconds = 10f;
         /// <summary>Under this depth the head is still in the air or the spray: no breath is used.</summary>
         public const float SurfaceBand = .45f;
-        /// <summary>Radius of the swim zone around the ship; the buoys mark it and the current beyond is too strong to swim against.</summary>
-        public const float SwimZoneRadius = 160f;
+        /// <summary>How far from the ship one may swim: far enough to reach every neighbouring island. There are no buoys or walls.</summary>
+        public const float SwimZoneRadius = 700f;
         /// <summary>How far a swimmer's depth may differ from a sunken coin's for them to pick it up.</summary>
         public const float CoinDepthTolerance = 1.4f;
 

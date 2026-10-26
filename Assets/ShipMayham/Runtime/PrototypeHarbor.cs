@@ -19,6 +19,39 @@ namespace ShipMayham
         public Vector3 Point(HarborAction action) => action == HarborAction.GoAshore ? ShipGate.position :
             ShoreMarkers[PortIndex * HarborTownLayout.StationsPerPort + (int)action - 1].position;
         private TextMesh[] portLabels;
+        private bool residentsLabelled;
+
+        // Who the town residents are and what each one is for.
+        private static readonly (string resident, string name, string role)[] Residents =
+        {
+            ("Mara / Market", "MARA", "Market: sells food"),
+            ("Finn / Tavern", "FINN", "Tavern: sells drinks"),
+            ("Pip / Dockwright", "PIP", "Dockwright: mends the hull"),
+            ("Nell / Paint", "NELL", "Painter: new ship colours"),
+            ("Captain Ada / Harbor Master", "CAPTAIN ADA", "Harbor master: press E to plot a course"),
+            ("Ollie / Fisher", "OLLIE", "Fisher: fish market and crane jobs"),
+        };
+
+        /// <summary>Puts a name and a job above every resident so that it is clear who is who.</summary>
+        private void LabelResidents()
+        {
+            residentsLabelled = true;
+            if (Labels == null || Labels.Length == 0 || Labels[0] == null || PortRoots == null) return;
+            var added = new System.Collections.Generic.List<TextMesh>(Labels);
+            foreach (var root in PortRoots)
+                foreach (var (resident, name, role) in Residents)
+                {
+                    Transform npc = null;
+                    foreach (var t in root.GetComponentsInChildren<Transform>(true)) if (t.name == resident) { npc = t; break; }
+                    if (npc == null) continue;
+                    var label = Instantiate(Labels[0], npc);
+                    label.name = "ResidentLabel";
+                    label.transform.localPosition = new Vector3(0, 2.4f, 0);
+                    label.text = name + " - " + role;
+                    added.Add(label);
+                }
+            Labels = added.ToArray();
+        }
         private PrototypeIslandView islands;
 
         /// <summary>The ground and scenery of the islands around the two towns (created on first use).</summary>
@@ -61,6 +94,7 @@ namespace ShipMayham
         private void LateUpdate()
         {
             if (Session.IsSpawned) PlaceTowns(Session.Voyage.Value);
+            if (!residentsLabelled) LabelResidents();
             bool open = IsOpen;
             ShipGate.gameObject.SetActive(open);
             for (int i = 0; i < Walkways.Length; i++) Walkways[i].gameObject.SetActive(open && i == PortIndex);

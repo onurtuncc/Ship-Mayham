@@ -145,7 +145,8 @@ namespace ShipMayham.Tests
         {
             Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(0, 60)));
             Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(70, 0)));
-            Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(-60, 60)) == (new Vector2(-60, 60).magnitude <= VoyageSimulation.SwimZoneRadius));
+            Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(-60, 60)));
+            Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(0, 220)), "out at the next island's waters, with nothing to stop the swim");
             Assert.IsFalse(VoyageSimulation.WaterWalkable(new Vector2(VoyageSimulation.SwimZoneRadius + 1, 0)));
             Assert.IsFalse(VoyageSimulation.WaterWalkable(new Vector2(0, 0)), "inside the hull");
             Assert.IsFalse(VoyageSimulation.WaterWalkable(new Vector2(-30, 0)), "under the quay");
@@ -153,14 +154,19 @@ namespace ShipMayham.Tests
             Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(-60, 0)), "beyond the quay");
         }
 
-        [Test] public void ASwimmerCanCoverTheBayAndStopsAtTheBuoys()
+        [Test] public void ASwimmerCanSwimOffAsFarAsTheNextIsland()
         {
             sim.Crew[0].Position = new Vector2(8f, 12f);
-            Swim(40f, Vector2.up);
-            Assert.Greater(sim.Crew[0].Position.y, 40f, "free water far from the ship");
-            Swim(80f, Vector2.up);
-            Assert.LessOrEqual(sim.Crew[0].Position.magnitude, VoyageSimulation.SwimZoneRadius + .1f);
-            Assert.Greater(sim.Crew[0].Position.magnitude, VoyageSimulation.SwimZoneRadius - 3f);
+            Swim(60f, Vector2.up);
+            Assert.Greater(sim.Crew[0].Position.y, 100f, "free water far from the ship, no buoys and no walls");
+        }
+
+        [Test] public void TheNeighbouringIslandIsSolidForSwimmers()
+        {
+            // The destination island lies 220 m north: its platform and beach are land, the water beside them is not.
+            Assert.IsFalse(VoyageSimulation.WaterWalkable(new Vector2(-20, 220), Campaign.BrassQuay, Campaign.NorthHaven), "on its town platform");
+            Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(60, 220), Campaign.BrassQuay, Campaign.NorthHaven), "in the channel beside it");
+            Assert.IsTrue(VoyageSimulation.WaterWalkable(new Vector2(-20, 220), Campaign.BrassQuay), "without the neighbour it is open water");
         }
 
         [Test] public void EveryLadderBaseIsOpenWater()
