@@ -14,6 +14,8 @@ namespace ShipMayham
         public int ComfortLevel;
         public int GunneryLevel;
         public int BatteryLevel;
+        public int Island, TaskMask, VisitedMask, PortVisit, Cycle;
+        public bool Victory;
         public int DockJobsCompleted;
         public ShipLivery Livery;
         public ShipEquipment Equipment;
@@ -30,6 +32,9 @@ namespace ShipMayham
             ComfortLevel = Mathf.Clamp(state.ComfortLevel, 0, 1),
             GunneryLevel = Mathf.Clamp(state.GunneryLevel, 0, CannonProgression.MaxGunnery),
             BatteryLevel = Mathf.Clamp(state.BatteryLevel, 0, CannonProgression.MaxBattery),
+            Island = Campaign.Valid(VoyageSimulation.DockedIsland(state)) ? VoyageSimulation.DockedIsland(state) : 0,
+            TaskMask = state.TaskMask & ((1 << Campaign.Count) - 1), VisitedMask = state.VisitedMask & ((1 << Campaign.Count) - 1),
+            PortVisit = Mathf.Max(0, state.PortVisit), Cycle = Mathf.Max(0, state.Cycle), Victory = state.Victory,
             DockJobsCompleted = Mathf.Max(0, state.DockJobsCompleted),
             Livery = state.Livery <= ShipLivery.Sunset ? state.Livery : ShipLivery.Classic,
             Equipment = state.Equipment <= ShipEquipment.Workshop ? state.Equipment : ShipEquipment.Standard,
@@ -47,6 +52,11 @@ namespace ShipMayham
             state.ComfortLevel = Mathf.Clamp(ComfortLevel, 0, 1);
             state.GunneryLevel = Mathf.Clamp(GunneryLevel, 0, CannonProgression.MaxGunnery);
             state.BatteryLevel = Mathf.Clamp(BatteryLevel, 0, CannonProgression.MaxBattery);
+            state.TaskMask = TaskMask & ((1 << Campaign.Count) - 1); state.VisitedMask = (VisitedMask & ((1 << Campaign.Count) - 1)) | Campaign.StarterIslands;
+            state.PortVisit = Mathf.Max(0, PortVisit); state.Cycle = Mathf.Max(0, Cycle); state.Victory = Victory;
+            state.Island = Campaign.Valid(Island) ? Island : 0;
+            state.Target = Campaign.DefaultTarget(state.Island, state.TaskMask, state.Reputation, state.Victory);
+            state.Position = Campaign.World(state.Island);
             state.DockJobsCompleted = Mathf.Max(0, DockJobsCompleted);
             state.Livery = Livery <= ShipLivery.Sunset && state.Reputation >= VoyageSimulation.LiveryReputation(Livery)
                 ? Livery : ShipLivery.Classic;

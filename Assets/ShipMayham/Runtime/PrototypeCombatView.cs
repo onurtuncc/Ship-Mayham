@@ -19,7 +19,7 @@ namespace ShipMayham
         private readonly Transform[] extraBarrels = new Transform[CannonProgression.MaxBattery];
         private readonly Transform[] extraProjectiles = new Transform[CannonProgression.MaxBattery];
         private readonly LineRenderer[] extraTraces = new LineRenderer[CannonProgression.MaxBattery];
-        private const float BarrelSpacing = .62f;
+        private const float BarrelSpacing = .62f, BossScale = 1.7f;
 
         private void Awake()
         {
@@ -74,7 +74,9 @@ namespace ShipMayham
             PirateRoot.position = new Vector3(e.PiratePosition.x, 0, e.PiratePosition.y);
             Vector3 towardShip = Session.ShipRoot.position - PirateRoot.position;
             if (towardShip.sqrMagnitude > .01f) PirateRoot.rotation = Quaternion.LookRotation(towardShip);
-            PirateLabel.text = e.Pirate == PiratePhase.Warning ? $"PIRATES\nAttack in {e.WarningRemaining:0.0}s" : $"PIRATES {e.PirateHealth:0}%";
+            string raider = e.Boss ? "FLAGSHIP" : "PIRATES";
+            PirateLabel.text = e.Pirate == PiratePhase.Warning ? $"{raider}\nAttack in {e.WarningRemaining:0.0}s" : $"{raider} {e.PirateHealth:0}%";
+            PirateRoot.localScale = Vector3.one * (e.Boss ? BossScale : 1f);
             PirateLabel.transform.rotation = View.Camera.transform.rotation;
             PowerIndicator.GetPropertyBlock(properties);
             Color color = e.PowerOut ? new Color(1, .35f, .05f) : new Color(.15f, .8f, .4f);

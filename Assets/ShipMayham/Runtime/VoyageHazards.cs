@@ -27,7 +27,7 @@ namespace ShipMayham
         /// <summary>Lays out the shoals and schedules the first wave the first time the voyage is sailing.</summary>
         private void BeginHazards()
         {
-            shoalCount = HazardLogic.Generate(Hazards.Seed, State.Route, shoals);
+            shoalCount = HazardLogic.Generate(Hazards.Seed, State.Route, OriginPoint(), DestinationPoint(), shoals);
             float delay = HazardLogic.FirstWaveDelay(State.Route);
             Hazards.NextWaveAt = delay < 0 ? -1f : State.Elapsed + delay;
             Hazards.Wave = WavePhase.Idle;
@@ -42,7 +42,7 @@ namespace ShipMayham
             shoalCooldown = 0;
             if (State.Phase == VoyagePhase.Sailing)
             {
-                shoalCount = HazardLogic.Generate(Hazards.Seed, State.Route, shoals);
+                shoalCount = HazardLogic.Generate(Hazards.Seed, State.Route, OriginPoint(), DestinationPoint(), shoals);
                 hazardsReady = true;
             }
             else
@@ -101,7 +101,7 @@ namespace ShipMayham
             if (Hazards.NextWaveAt > State.Elapsed) Hazards.NextWaveAt += dt * (1 - CrewPressure);
             if (Hazards.NextWaveAt < 0 || State.Elapsed < Hazards.NextWaveAt) return;
             // The harbor entrance stays calm: a wave that is due close to the port waits.
-            if (Vector2.Distance(State.Position, Destination) < HazardLogic.SafeFromPort)
+            if (Vector2.Distance(State.Position, DestinationPoint()) < HazardLogic.SafeFromPort)
             {
                 Hazards.NextWaveAt = State.Elapsed + 5f;
                 return;

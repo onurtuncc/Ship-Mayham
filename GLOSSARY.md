@@ -141,6 +141,26 @@ _Avoid_: Blackout
 **Upgrade**:
 Gemiyi kalıcı güçlendiren beş yükseltmeden biri: Engine, Capacity (seats), Comfort, Gunnery, Extra barrels. Purser'dan, yalnızca limandayken satın alınır.
 
+**Island**:
+Sefer zincirindeki altı duraktan biri (`Campaign`). Kendi adı, konumu, görevi ve kilidi vardır; gemi vardığı adada kalır.
+_Avoid_: Port (liman adanın yerleşimidir), level
+
+**Captain's task**:
+Bir adada yapılınca token kazandıran iş (iş bitir, inci çıkar, sandık aç, fırtınayı atlat). Final için dört token gerekir.
+_Avoid_: Quest, görev zinciri
+
+**Token**:
+Biten ada görevlerinin sayısı; adaların kilidini ve finali açar.
+_Avoid_: Rozet, yıldız
+
+**Flagship**:
+Skull Atoll'e giderken saldıran kaçmayan korsan komuta gemisi (`Encounter.Boss`). Batınca oyun kazanılır (Victory).
+_Avoid_: Boss (kodda `Boss`, oyuncuya "flagship")
+
+**Cycle**:
+Zaferden sonra "NEW CYCLE" ile başlayan, bayrak gemisi daha sert yeni tur; gemi, coin ve itibar korunur.
+_Avoid_: New Game+
+
 **Gunnery**:
 Top mürettebatının eğitimi (2 seviye): dolum 2,5 → 2,0 → 1,5 sn, raf 3 → 4 → 5 mermi, ana namlu vuruşu 34 → 40 → 50 hasar.
 _Avoid_: Cannon upgrade (iki yükseltme de topu geliştirir)

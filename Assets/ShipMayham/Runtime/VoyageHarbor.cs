@@ -28,7 +28,7 @@ namespace ShipMayham
             }
         }
 
-        public static Vector3 HarborOrigin(VoyageState state) => new Vector3(-14, 0, state.Phase == VoyagePhase.Arrived ? 220 : 0);
+        public static Vector3 HarborOrigin(VoyageState state) => IslandHarborOrigin(DockedIsland(state));
         public bool HarborOpen => HarborEnabled && (State.Phase == VoyagePhase.Boarding || State.Phase == VoyagePhase.Arrived);
         public int CrewAshore
         {
@@ -41,7 +41,8 @@ namespace ShipMayham
         public static int RouteReputation(RouteProfile route) => route == RouteProfile.MarketRun
             ? 2 : route == RouteProfile.StormPassage ? 5 : 0;
 
-        private int CurrentPortKey => State.Voyage * 2 + (State.Phase == VoyagePhase.Arrived ? 1 : 0);
+        /// <summary>Identifies one stay at an island: the same from arriving until the ship sails away, so loot and port jobs are not renewed by starting a new voyage.</summary>
+        private int CurrentPortKey => State.PortVisit + 1;
 
         public static int LiveryReputation(ShipLivery livery) => livery == ShipLivery.Seafoam ? 2 : livery == ShipLivery.Sunset ? 5 : 0;
 
@@ -63,16 +64,31 @@ namespace ShipMayham
             if (!Crew[slot].OnShore) return "Go ashore to use the contract board.";
             if ((int)route < 0 || route > RouteProfile.StormPassage) return "Unknown route contract.";
             if (State.Boarded > 0) return "The passenger manifest is locked. Choose the route before boarding passengers.";
+            if (Campaign.Island(State.Target).Theme == IslandTheme.Storm && route != RouteProfile.StormPassage)
+                return $"The sea around {Campaign.Name(State.Target)} is always stormy. Pick another island to change the contract.";
             int required = RouteReputation(route);
             if (State.Reputation < required) return $"{RouteName(route)} unlocks at {required} reputation. Complete ferry voyages or harbor cargo relays.";
-            State.Route = route;
-            nextLeak = route == RouteProfile.StormPassage ? 16 : 25;
-            Event.NextIn = route == RouteProfile.StormPassage ? 12 : route == RouteProfile.MarketRun ? 16 : FirstEventDelay;
+            SetRoute(route);
             return route == RouteProfile.MarketRun
                 ? "Market Run selected: serve 3 orders for a 35-coin contract bonus."
                 : route == RouteProfile.StormPassage
                     ? "Storm Passage selected: earlier crises and leaks; arrive above 70 hull for 50 coins."
                     : "Coastal Ferry selected: standard risk with no contract condition.";
+        }
+
+        /// <summary>Applies a route contract's pressure: how soon the first leak and the first ship event come.</summary>
+        private void SetRoute(RouteProfile route)
+        {
+            State.Route = route;
+            nextLeak = route == RouteProfile.StormPassage ? 16 : 25;
+            Event.NextIn = route == RouteProfile.StormPassage ? 12 : route == RouteProfile.MarketRun ? 16 : FirstEventDelay;
+        }
+
+        /// <summary>The stormy island forces the storm contract on the voyage to it; leaving that target restores the plain ferry.</summary>
+        private void ApplyIslandRoute(int previousTarget)
+        {
+            if (Campaign.Island(State.Target).Theme == IslandTheme.Storm) SetRoute(RouteProfile.StormPassage);
+            else if (Campaign.Island(previousTarget).Theme == IslandTheme.Storm && State.Route == RouteProfile.StormPassage) SetRoute(RouteProfile.CoastalFerry);
         }
 
         public string ToggleDockJob(ulong clientId, DockJobKind kind = DockJobKind.CargoRelay)

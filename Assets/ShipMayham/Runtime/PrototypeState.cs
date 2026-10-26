@@ -57,6 +57,9 @@ namespace ShipMayham
         public int CheckedTickets, CollectedFares, RescueCount, LastUnpaid, LastMissing, LastRescueCosts;
         /// <summary>Which dig spots and chests of this port are used up and which sunken coins are taken (bit per spot); reset when a new port is reached.</summary>
         public int DigMask, ChestMask, CoinMask, ActivityPortKey;
+        /// <summary>The voyage chain: the island the voyage leaves from and the one it sails to, the finished island tasks and visited islands (a bit each), arrivals so far, finished cycles and whether the flagship is sunk.</summary>
+        public int Island, Target, TaskMask, VisitedMask, PortVisit, Cycle;
+        public bool Victory;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref Phase); s.SerializeValue(ref SessionPhase); s.SerializeValue(ref Position);
@@ -86,6 +89,8 @@ namespace ShipMayham
             s.SerializeValue(ref CheckedTickets); s.SerializeValue(ref CollectedFares); s.SerializeValue(ref RescueCount);
             s.SerializeValue(ref LastUnpaid); s.SerializeValue(ref LastMissing); s.SerializeValue(ref LastRescueCosts);
             s.SerializeValue(ref DigMask); s.SerializeValue(ref ChestMask); s.SerializeValue(ref CoinMask); s.SerializeValue(ref ActivityPortKey);
+            s.SerializeValue(ref Island); s.SerializeValue(ref Target); s.SerializeValue(ref TaskMask); s.SerializeValue(ref VisitedMask);
+            s.SerializeValue(ref PortVisit); s.SerializeValue(ref Cycle); s.SerializeValue(ref Victory);
         }
         public bool Equals(VoyageState other) { other.TimeMs = TimeMs; return ValueType.Equals(this, other); }
     }

@@ -185,7 +185,8 @@ namespace ShipMayham.Tests
             Harbor(HarborAction.GoAshore); Use(0);
             Assert.AreEqual(1, sim.State.Voyage);
             Harbor(HarborAction.BoardShip); Use(0);
-            Assert.AreEqual(2, sim.State.Voyage); Assert.AreEqual(Vector2.zero, sim.State.Position);
+            Assert.AreEqual(2, sim.State.Voyage); Assert.AreEqual(VoyageSimulation.Destination, sim.State.Position, "the ship stays at the island it reached");
+            Assert.AreEqual(Campaign.NorthHaven, sim.State.Island);
         }
         [Test] public void ArrivalPurchasesSurviveNewVoyageAndFreeBaselinePreventsSoftlock()
         {

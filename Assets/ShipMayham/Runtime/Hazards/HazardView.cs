@@ -23,6 +23,7 @@ namespace ShipMayham
         private GameObject root;
         private uint builtSeed;
         private RouteProfile builtRoute;
+        private Vector2 builtFrom, builtTo;
         private bool hasBuilt;
         private MaterialPropertyBlock block;
 
@@ -57,17 +58,21 @@ namespace ShipMayham
             bool show = session != null && session.IsSpawned && !session.InLobby && session.Voyage.Value.Phase == VoyagePhase.Sailing;
             if (!show) { Clear(); return; }
             var hazards = session.Hazards.Value;
-            var route = session.Voyage.Value.Route;
-            if (hasBuilt && builtSeed == hazards.Seed && builtRoute == route) return;
-            Build(hazards.Seed, route);
+            var voyage = session.Voyage.Value;
+            var route = voyage.Route;
+            Vector2 from = VoyageSimulation.OriginPoint(voyage), to = VoyageSimulation.DestinationPoint(voyage);
+            if (hasBuilt && builtSeed == hazards.Seed && builtRoute == route && builtFrom == from && builtTo == to) return;
+            Build(hazards.Seed, route, from, to);
         }
 
-        private void Build(uint seed, RouteProfile route)
+        private void Build(uint seed, RouteProfile route, Vector2 from, Vector2 to)
         {
+            builtFrom = from;
+            builtTo = to;
             Clear();
             block = block ?? new MaterialPropertyBlock();
             root = new GameObject("Shoals") { hideFlags = HideFlags.HideAndDontSave };
-            int count = ShoalSet.For(seed, route);
+            int count = ShoalSet.For(seed, route, builtFrom, builtTo);
             for (int i = 0; i < count; i++) BuildShoal(ShoalSet.Shoals[i], i);
             builtSeed = seed;
             builtRoute = route;

@@ -85,7 +85,7 @@ namespace ShipMayham
                     target.TicketChecked = true;
                     State.CheckedTickets++;
                     React(passenger, target.FarePaid ? PassengerReaction.Thanks : PassengerReaction.TicketDue);
-                    string ticket = target.FarePaid ? "Ticket valid. Destination: North Port." : "No payment! F / Y again to collect 40 coins (paid on arrival).";
+                    string ticket = target.FarePaid ? $"Ticket valid. Destination: {Campaign.Name(State.Target)}." : "No payment! F / Y again to collect 40 coins (paid on arrival).";
                     return ticket + inspection;
                 }
                 if (target.FarePaid) return "Already paid. No duplicate charge." + inspection;

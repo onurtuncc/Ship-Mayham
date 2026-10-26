@@ -418,6 +418,27 @@ namespace ShipMayham.Tests
             for (int frame = 0; frame < 40; frame++) yield return null;
             yield return CaptureWorld(hud, controller, "Logs/WorldGateOpen.png", ship.TransformPoint(new Vector3(-0.5f, 2.2f, -9.5f)), ship.TransformPoint(new Vector3(-5f, 1.2f, -6f)), 60);
 
+            // The voyage chain: the port office with the island list, the route map toward the next island and the towns far apart.
+            sim.State.Phase = VoyagePhase.Boarding;
+            sim.State.Boarded = 0;
+            sim.State.Island = Campaign.NorthHaven; sim.State.Target = Campaign.CoralCay;
+            sim.State.TaskMask = 1 << Campaign.NorthHaven; sim.State.Reputation = 3;
+            sim.State.Position = Campaign.World(Campaign.NorthHaven);
+            sim.Crew[0].OnShore = true; sim.Crew[0].Position = VoyageSimulation.HarborPoint(HarborAction.HarborMaster);
+            for (int frame = 0; frame < 40; frame++) yield return null;
+            yield return Capture(hud, controller, "Logs/HudOffice.png");
+            hud.View.OpenMap();
+            for (int frame = 0; frame < 20; frame++) yield return null;
+            yield return Capture(hud, controller, "Logs/HudMap.png");
+            hud.View.CloseMap();
+            sim.Crew[0].OnShore = false; sim.Crew[0].Position = new Vector2(0, -6);
+            sim.State.Phase = VoyagePhase.Sailing;
+            sim.State.Position = Vector2.Lerp(Campaign.World(Campaign.NorthHaven), Campaign.World(Campaign.CoralCay), .4f);
+            for (int frame = 0; frame < 30; frame++) yield return null;
+            yield return Capture(hud, controller, "Logs/HudRoute.png");
+            yield return CaptureWorld(hud, controller, "Logs/WorldChain.png", new Vector3(60f, 260f, 140f), new Vector3(80f, 0f, 290f), 65);
+            sim.State.Island = Campaign.BrassQuay; sim.State.Target = Campaign.NorthHaven; sim.State.TaskMask = 0; sim.State.Position = Vector2.zero;
+
             // Captain hazards: a shoal ahead with the rogue wave warning up.
             sim.State.Route = RouteProfile.StormPassage;
             sim.State.Phase = VoyagePhase.Sailing;

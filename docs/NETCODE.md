@@ -1,7 +1,7 @@
 # Movement netcode
 
-Network protocol version **29**, migration snapshot **25** (`PrototypeHud.NetworkProtocolVersion`).
-Release pass additions: 23 `CrewState.Swimming` and `LadderRpc`; 24 `PassengerState.CanSwim`; 25 `VoyageState` activity masks, `ActivityRpc`, `MiniGameStartRpc`, `MiniGameResultRpc`; 26 `CrewState.Doing`; 27 (gangway walk, ship handling); 28 `VoyageState.GunneryLevel/BatteryLevel` and `EncounterState.CrewBallB/CrewBallC`; 29 `CrewState.Depth/BreathUsed` and `MoveCommand.Dive` (bit 1 of the flags byte: held while swimming to sink). Passenger boarding/leaving walks and the saved world add no network state (the saved world is a host-migration snapshot).
+Network protocol version **30**, migration snapshot **26** (`PrototypeHud.NetworkProtocolVersion`).
+Release pass additions: 23 `CrewState.Swimming` and `LadderRpc`; 24 `PassengerState.CanSwim`; 25 `VoyageState` activity masks, `ActivityRpc`, `MiniGameStartRpc`, `MiniGameResultRpc`; 26 `CrewState.Doing`; 27 (gangway walk, ship handling); 28 `VoyageState.GunneryLevel/BatteryLevel` and `EncounterState.CrewBallB/CrewBallC`; 29 `CrewState.Depth/BreathUsed` and `MoveCommand.Dive` (bit 1 of the flags byte: held while swimming to sink); 30 the voyage chain: `VoyageState.Island/Target/TaskMask/VisitedMask/PortVisit/Cycle/Victory`, `EncounterState.Boss`, `SelectDestinationRpc`, `StartNewCycleRpc`. Passenger boarding/leaving walks and the saved world add no network state (the saved world is a host-migration snapshot).
 The main-branch HazardState remains the single captain-hazard authority. Phases 2–6 add passenger routines and deck work, electrical fire/valves, sea recovery,
 equipment, tray quantities and passage checkpoints. `DeckCommandRpc` and `PrepareVoyageRpc` are reliable
 client-to-host commands validated against the sender's crew slot, phase, hands, station and range.

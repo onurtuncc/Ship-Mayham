@@ -86,20 +86,28 @@ namespace ShipMayham
         }
 
         /// <summary>Fills <paramref name="buffer"/> with the shoals of a voyage and returns how many were placed.</summary>
-        public static int Generate(uint seed, RouteProfile route, Shoal[] buffer)
+        public static int Generate(uint seed, RouteProfile route, Shoal[] buffer) => Generate(seed, route, Vector2.zero, VoyageSimulation.Destination, buffer);
+
+        /// <summary>Shoals between two islands: laid out along the route and turned into world positions.</summary>
+        public static int Generate(uint seed, RouteProfile route, Vector2 from, Vector2 to, Shoal[] buffer)
         {
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
             int want = Mathf.Min(ShoalCount(route), buffer.Length);
-            float minY = SafeFromStart, maxY = VoyageSimulation.Destination.y - SafeFromPort;
+            Vector2 along = to - from;
+            float length = along.magnitude;
+            if (length < 1f) return 0;
+            Vector2 direction = along / length, side = new Vector2(direction.y, -direction.x);
+            float minY = SafeFromStart, maxY = length - SafeFromPort;
             uint state = seed == 0 ? 1u : seed;
             int count = 0;
             for (int attempt = 0; attempt < want * 40 && count < want; attempt++)
             {
-                var center = new Vector2(Mathf.Lerp(-MaxOffset, MaxOffset, Unit(ref state)), Mathf.Lerp(minY, maxY, Unit(ref state)));
+                float lateral = Mathf.Lerp(-MaxOffset, MaxOffset, Unit(ref state)), forward = Mathf.Lerp(minY, maxY, Unit(ref state));
+                var center = from + direction * forward + side * lateral;
                 float radius = Mathf.Lerp(MinRadius, MaxRadius, Unit(ref state));
                 // The safe zones are measured to the shoal's edge, so the harbor entrance stays open whatever the radius.
-                bool free = center.magnitude >= SafeFromStart + radius &&
-                    Vector2.Distance(center, VoyageSimulation.Destination) >= SafeFromPort + radius;
+                bool free = Vector2.Distance(center, from) >= SafeFromStart + radius &&
+                    Vector2.Distance(center, to) >= SafeFromPort + radius;
                 for (int j = 0; j < count && free; j++)
                     free = Vector2.Distance(center, buffer[j].Center) >= radius + buffer[j].Radius + MinGap;
                 if (free) buffer[count++] = new Shoal(center, radius);
@@ -182,18 +190,23 @@ namespace ShipMayham
         private static readonly Shoal[] Items = new Shoal[HazardLogic.MaxShoals];
         private static uint cachedSeed;
         private static RouteProfile cachedRoute;
+        private static Vector2 cachedFrom, cachedTo;
         private static bool cached;
         private static int count;
 
         public static Shoal[] Shoals => Items;
 
         /// <summary>Returns the number of shoals for this voyage and fills <see cref="Shoals"/>.</summary>
-        public static int For(uint seed, RouteProfile route)
+        public static int For(uint seed, RouteProfile route) => For(seed, route, Vector2.zero, VoyageSimulation.Destination);
+
+        public static int For(uint seed, RouteProfile route, Vector2 from, Vector2 to)
         {
-            if (cached && cachedSeed == seed && cachedRoute == route) return count;
-            count = HazardLogic.Generate(seed, route, Items);
+            if (cached && cachedSeed == seed && cachedRoute == route && cachedFrom == from && cachedTo == to) return count;
+            count = HazardLogic.Generate(seed, route, from, to, Items);
             cachedSeed = seed;
             cachedRoute = route;
+            cachedFrom = from;
+            cachedTo = to;
             cached = true;
             return count;
         }

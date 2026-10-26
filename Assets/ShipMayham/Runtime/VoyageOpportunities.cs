@@ -25,7 +25,7 @@ namespace ShipMayham
     {
         public VoyageOpportunityState Opportunity;
         public static readonly Vector2 PlugLocker = new Vector2(2.4f, -6), RescueRope = new Vector2(-5, -1);
-        private void ResetOpportunities() => Opportunity = new VoyageOpportunityState { PlugsAvailable = 2, ChestPosition = new Vector2(-25, 125) };
+        private void ResetOpportunities() => Opportunity = new VoyageOpportunityState { PlugsAvailable = 2, ChestPosition = RouteChestPosition() };
         private void TickOpportunities(float dt)
         {
             Opportunity.PlugRemaining = Mathf.Max(0, Opportunity.PlugRemaining - dt);

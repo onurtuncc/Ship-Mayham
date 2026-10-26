@@ -140,7 +140,7 @@ namespace ShipMayham
                 case HarborAction.BoardShip: return ForGate(action == HarborAction.GoAshore, crew);
                 case HarborAction.BuyFood: return InteractionPrompt.Target("Food stall", "Buy food", "+8 food. Storage holds 32", "12 coins");
                 case HarborAction.BuyDrink: return InteractionPrompt.Target("Drink stall", "Buy drinks", "+8 drinks. Storage holds 32", "12 coins");
-                case HarborAction.HarborMaster: return InteractionPrompt.Target("Port office", "Talk to harbor master", "Choose a route or a town job");
+                case HarborAction.HarborMaster: return InteractionPrompt.Target("Port office", "Talk to harbor master", "Plot a course to the next island");
                 case HarborAction.PaintShop: return InteractionPrompt.Target("Paint dock", "Choose ship colors", "Livery unlocks with reputation");
                 case HarborAction.FishMarket: return InteractionPrompt.Target("Fish market", "Take fish crate", "Needed for crane loading");
                 case HarborAction.CraneLoadingPad: return InteractionPrompt.Target("Load pad", "Deliver fish crate");

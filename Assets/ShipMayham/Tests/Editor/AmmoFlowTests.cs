@@ -238,7 +238,7 @@ namespace ShipMayham.Tests
 
         [Test] public void PreAmmoSnapshotVersionIsRejected()
         {
-            string old = Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":25", "\"Version\":10");
+            string old = Encoding.UTF8.GetString(sim.ExportMigrationData()).Replace("\"Version\":26", "\"Version\":10");
             Assert.That(old, Does.Contain("\"Version\":10"));
 
             Assert.Throws<InvalidOperationException>(() => sim.ImportMigrationData(Encoding.UTF8.GetBytes(old)));

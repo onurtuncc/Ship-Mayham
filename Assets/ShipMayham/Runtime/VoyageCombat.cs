@@ -13,7 +13,7 @@ namespace ShipMayham
 
         private void ResetEncounter()
         {
-            Encounter = new EncounterState { Ammo = VoyageAmmo, MagazineAmmo = VoyageAmmo - 1, CannonLoaded = true, CannonYaw = 45, PirateHealth = 100 };
+            Encounter = new EncounterState { Ammo = VoyageAmmo, MagazineAmmo = VoyageAmmo - 1, CannonLoaded = true, CannonYaw = 45, PirateHealth = 100, Boss = FlagshipVoyage(State) };
             scheduledPowerFault = false;
         }
 
@@ -66,7 +66,7 @@ namespace ShipMayham
                 scheduledPowerFault = true;
                 CutPower();
             }
-            if (Encounter.Pirate == PiratePhase.Waiting && State.Elapsed >= pirateAt)
+            if (Encounter.Pirate == PiratePhase.Waiting && State.Elapsed >= (Encounter.Boss ? Mathf.Min(pirateAt, BossArrivalSeconds) : pirateAt))
             {
                 Encounter.Pirate = PiratePhase.Warning;
                 Encounter.WarningRemaining = 6;
@@ -84,11 +84,11 @@ namespace ShipMayham
             if (Encounter.Pirate != PiratePhase.Attacking) return;
             Vector3 escort = DeckToWorld(State, new Vector3(26, 0, 25));
             Encounter.PiratePosition = Vector2.MoveTowards(Encounter.PiratePosition, new Vector2(escort.x, escort.z), dt * 7);
-            Encounter.AttackRemaining = Mathf.Max(0, Encounter.AttackRemaining - dt);
-            if (Encounter.AttackRemaining == 0) { Encounter.Pirate = PiratePhase.Escaped; return; }
+            if (!Encounter.Boss) Encounter.AttackRemaining = Mathf.Max(0, Encounter.AttackRemaining - dt);
+            if (Encounter.AttackRemaining == 0 && !Encounter.Boss) { Encounter.Pirate = PiratePhase.Escaped; return; }
             Encounter.EnemyShotRemaining = Mathf.Max(0, Encounter.EnemyShotRemaining - dt);
             if (Encounter.EnemyShotRemaining > 0 || Vector2.Distance(Encounter.PiratePosition, State.Position) > 70) return;
-            Encounter.EnemyShotRemaining = PirateShotInterval;
+            Encounter.EnemyShotRemaining = PirateShotInterval * (Encounter.Boss ? BossShotIntervalFactor : 1f);
             Encounter.PirateShotsFired++;
             Encounter.EnemyShotFrom = new Vector3(Encounter.PiratePosition.x, 1.5f, Encounter.PiratePosition.y);
             Encounter.EnemyShotTo = DeckToWorld(State, new Vector3(4, 1, -3));

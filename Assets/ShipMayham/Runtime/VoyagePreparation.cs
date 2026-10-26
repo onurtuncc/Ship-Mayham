@@ -22,19 +22,29 @@ namespace ShipMayham
         public VoyageJourneyState Journey;
         public static int RepairBufferLimit(VoyageState state) => state.Equipment == ShipEquipment.Workshop ? 3 : RepairKitBufferCapacity;
         public static int RepairKitLimit(VoyageState state) => state.Equipment == ShipEquipment.Workshop ? 5 : VoyageRepairKits;
-        public static Vector2 CourseGate(PassageCourse course, int index)
+        public static Vector2 CourseGate(PassageCourse course, int index) => CourseGate(course, index, Vector2.zero, Destination);
+
+        /// <summary>
+        /// A passage gate between two islands. The safe course swings 70 m to the left of the route (the shoals lie on the straight
+        /// line), the shortcut 20 m to the right; the gates sit at fixed fractions of the route's length.
+        /// </summary>
+        public static Vector2 CourseGate(PassageCourse course, int index, Vector2 from, Vector2 to)
         {
             if (index < 0 || index > 1) throw new ArgumentOutOfRangeException(nameof(index));
-            // Turn west before the first shoal, and stay west until the last shoal is behind us.
-            return course == PassageCourse.Safe ? new Vector2(-70, index == 0 ? 20 : 200) :
-                new Vector2(20, index == 0 ? 70 : 150);
+            Vector2 along = to - from;
+            float length = along.magnitude;
+            if (length < 1f) return from;
+            Vector2 direction = along / length, side = new Vector2(direction.y, -direction.x);
+            bool safe = course == PassageCourse.Safe;
+            float fraction = safe ? (index == 0 ? 20f : 200f) / 220f : (index == 0 ? 70f : 150f) / 220f;
+            return from + direction * (length * fraction) + side * (safe ? -70f : 20f);
         }
         private void ResetJourney() => Journey = default;
         private void TickJourney()
         {
             GrantWorkshopKits();
             if (State.Phase != VoyagePhase.Sailing || Journey.Course == PassageCourse.Direct || Journey.Checkpoints >= 2) return;
-            if (Vector2.Distance(State.Position, CourseGate(Journey.Course, Journey.Checkpoints)) <= 18) Journey.Checkpoints++;
+            if (Vector2.Distance(State.Position, CourseGate(Journey.Course, Journey.Checkpoints, OriginPoint(), DestinationPoint())) <= 18) Journey.Checkpoints++;
         }
         private void GrantWorkshopKits()
         {

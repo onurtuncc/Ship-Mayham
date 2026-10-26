@@ -453,7 +453,7 @@ namespace ShipMayham.Tests
             Assert.AreNotEqual(0, sim.State.ChestMask);
             Assert.AreNotEqual(0, sim.State.CoinMask);
             sim.Crew[0].Swimming = false;
-            sim.State.Phase = VoyagePhase.Arrived;                    // the destination port is a different port
+            sim.State.PortVisit++;                                    // arriving somewhere else is a different port
             Advance(.2f);
             Assert.AreEqual(0, sim.State.ChestMask);
             Assert.AreEqual(0, sim.State.CoinMask);

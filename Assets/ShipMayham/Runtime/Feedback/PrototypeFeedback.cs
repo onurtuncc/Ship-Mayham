@@ -127,7 +127,7 @@ namespace ShipMayham
             snapshot.ShoalNear = false;
             if (voyage.Phase == VoyagePhase.Sailing)
             {
-                int shoalCount = ShoalSet.For(hazards.Seed, voyage.Route);
+                int shoalCount = ShoalSet.For(hazards.Seed, voyage.Route, VoyageSimulation.OriginPoint(voyage), VoyageSimulation.DestinationPoint(voyage));
                 snapshot.ShoalNear = HazardLogic.NearestAhead(voyage.Position, voyage.Heading, ShoalSet.Shoals, shoalCount, out _) >= 0;
             }
             snapshot.Pirate = encounter.Pirate; snapshot.PirateHealth = encounter.PirateHealth;

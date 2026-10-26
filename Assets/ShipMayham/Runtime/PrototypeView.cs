@@ -128,6 +128,10 @@ namespace ShipMayham
 
         /// <summary>True while the purser's desk is open; the cursor is free and the crew member stands still.</summary>
         public bool PurserOpen { get; private set; }
+        /// <summary>True while the harbor master's chart is open (choosing the next island).</summary>
+        public bool MapOpen { get; private set; }
+        /// <summary>A desk-like panel (purser or chart) holds the cursor.</summary>
+        public bool DeskOpen => PurserOpen || MapOpen;
         /// <summary>True while a skill game is on screen: the crew member stands still, the look is frozen and the game reads the keys.</summary>
         public bool MiniGameOpen { get; set; }
 
@@ -137,6 +141,23 @@ namespace ShipMayham
             PurserOpen = true;
             CancelSignal();
             CaptureCursor(false);
+        }
+
+        public void OpenMap()
+        {
+            if (MapOpen) return;
+            MapOpen = true;
+            CancelSignal();
+            CaptureCursor(false);
+        }
+
+        public void CloseMap()
+        {
+            if (!MapOpen) return;
+            MapOpen = false;
+#if !(UNITY_WEBGL && !UNITY_EDITOR)
+            CaptureCursor(Application.isFocused && !Application.isBatchMode);
+#endif
         }
 
         public void ClosePurser()
@@ -401,6 +422,14 @@ namespace ShipMayham
                 if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
                 return;
             }
+            if (MapOpen)
+            {
+                bool leave = Session.Voyage.Value.Phase == VoyagePhase.Sailing || !Session.Crew[local].OnShore;
+                if (leave || keyboard?.escapeKey.wasPressedThisFrame == true || keyboard?.eKey.wasPressedThisFrame == true || pad?.buttonEast.wasPressedThisFrame == true)
+                    CloseMap();
+                if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
+                return;
+            }
             if (MiniGameOpen)
             {
                 if (clientMotion != null) clientMotion.SetInput(Vector2.zero, false);
@@ -488,6 +517,7 @@ namespace ShipMayham
                         var action = Target.HarborAction;
                         if (Session.Voyage.Value.DockJobActive && (action == HarborAction.BuyFood || VoyageSimulation.IsPortCargo(Session.Crew[local].Carrying)))
                             Session.DockItemCommandRpc(action, Session.Voyage.Value.DockJobType);
+                        else if (action == HarborAction.HarborMaster) OpenMap();
                         else if (action != HarborAction.GoAshore && action != HarborAction.BoardShip) Session.HarborCommandRpc(action);   // the gate opens by walking into it
                     }
                     else Session.InteractRpc(Target.InteractionId(Session.Stations.Length), false);

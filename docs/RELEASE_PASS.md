@@ -36,10 +36,17 @@ Yaptığını gösterme: oynayan oyuncu olta/kazma/kilit/çekiç pozunda, elinde
 
 Kaynaklar: Nomoto modeli için [NTNU IFAC 2005](https://skoge.folk.ntnu.no/prost/proceedings/ifac2005/Fullpapers/02331.pdf); oyun tarafında hıza bağlı dümen etkisi ve yanal sürtünme için [Uppsala oyun tasarımı yazısı](https://babel.speldesign.uu.se/?p=1979238).
 
+## Döngü: ada zinciri (26 Ekim)
+
+Sefer artık başa dönmez: gemi vardığı adada kalır ve sonraki ada liman memurundan seçilir. Altı ada, her birinin görevi ve kilidi, bayrak gemisi finali ve yeni tur için [ISLANDS_PLAN.md](ISLANDS_PLAN.md) dilim C'ye bakın. İlk oyun: Brass Quay → North Haven (iş bitir) → Coral Cay (6 inci, dalarak) veya Smugglers' Cove (2 sandık) → Storm Reef (fırtınalı sefer, ≥%50 gövde) → Skull Atoll (bayrak gemisi).
+
+Dalma, geniş yüzme alanı (90 m), derin coin'ler ve top yükseltmeleri de bu geçişin parçasıdır (bkz. yukarıdaki tablo).
+
 ## Elle kabul edilmesi gerekenler
 
 Otomatik testler (694 test) kuralları, ağ durumunu, kaydı ve sahne bağlantılarını kapsar; şunlar insanlı denemeyle onaylanmalıdır:
 
+0. Baştan sona bir oyun: altı adayı gezip bayrak gemisini batırmak kaç dakika sürüyor, hangi ada sıkıcı, kilit şartları (token/itibar) dengeli mi, bayrak gemisi çok kolay/zor mu.
 1. Dört kişiyle yüzme, merdivenden çıkış ve rogue wave ile denize savrulma hissi; 30 sn limitin ve 5 coin cezasının doğru dengede olup olmadığı.
 2. Her mini oyunun zorluğu ve süresi (özellikle olta ve kilit); gamepad ile oynanış.
 3. Yolcu yürüyüşlerinin kalabalık koridorda takılmaması; kapının açılış zamanlaması; online istemcide gangway yürüyüşünün akıcılığı.

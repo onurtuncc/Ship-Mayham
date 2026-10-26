@@ -29,7 +29,7 @@ namespace ShipMayham
             Stations = stations;
             Seats = seats;
             HarborEnabled = harborEnabled;
-            State = new VoyageState { Health = 100, Voyage = 1, FoodStock = 16, DrinkStock = 16, RepairKitStock = VoyageRepairKits };
+            State = new VoyageState { Health = 100, Voyage = 1, FoodStock = 16, DrinkStock = 16, RepairKitStock = VoyageRepairKits, Island = Campaign.BrassQuay, Target = Campaign.NorthHaven, VisitedMask = Campaign.StarterIslands };
             eventRandomState = eventSeed == 0 ? 1u : eventSeed;
             hazardSessionSeed = eventRandomState;
             ResetHazards();
@@ -203,14 +203,15 @@ namespace ShipMayham
             TickPassengers(dt);
             TickSwimmers(dt);
             TickActivities(dt);
+            TickCampaign();
             if (State.DockJobActive && State.DockJobType == DockJobKind.CraneLoading && HarborOpen) State.CraneSwayTime += dt;
             if (State.Phase != VoyagePhase.Sailing) return;
             State.Elapsed += dt;
             Vector2 previousShip = State.Position, previousPirate = Encounter.PiratePosition;
             State.Position += ShipSteering.Velocity(ShipMotionState, State.Heading) * dt;
             // Prototype sailing area: visible map bounds, no possibility of sailing away forever.
-            State.Position.x = Mathf.Clamp(State.Position.x, -90, 90);
-            State.Position.y = Mathf.Clamp(State.Position.y, -20, 250);
+            State.Position.x = Mathf.Clamp(State.Position.x, Campaign.WorldMin.x, Campaign.WorldMax.x);
+            State.Position.y = Mathf.Clamp(State.Position.y, Campaign.WorldMin.y, Campaign.WorldMax.y);
             if (!workloadReady) BeginWorkload();
             TickHazards(dt);
             TickEncounter(dt);
@@ -292,7 +293,7 @@ namespace ShipMayham
                         if (CrewAshore > 0) return "Wait for all crew to board before preparing a new voyage.";
                         if (State.DockJobActive) return "Finish or cancel the cargo relay before preparing a new voyage.";
                         if (AnyPassengerLeaving) return "Wait until the passengers have left the ship.";
-                        ResetVoyage(); return "Back at the departure port. Board new passengers.";
+                        ResetVoyage(); return $"Back at the departure port, {Campaign.Name(State.Island)}. Plan the next course at the harbor master, then board passengers.";
                     }
                     if (State.Phase != VoyagePhase.Boarding) return "Manifest is available at port.";
                     if (State.DockJobActive) return "Finish or cancel the cargo relay before boarding passengers.";
@@ -379,7 +380,8 @@ namespace ShipMayham
                 return "Under way! W sets the engine ahead; she gathers way slowly. Serve passengers and watch the hull.";
             }
             if (State.Phase != VoyagePhase.Sailing) return "Use the manifest to prepare another voyage.";
-            if (Vector2.Distance(State.Position, Destination) > DockRadius) return "Get within 12 m of the destination marker.";
+            if (Vector2.Distance(State.Position, DestinationPoint()) > DockRadius) return "Get within 12 m of the destination marker.";
+            if (Encounter.Boss && Encounter.Pirate != PiratePhase.Defeated) return "The pirate flagship bars the harbor. Sink it first!";
             if (Mathf.Abs(State.Speed) > 1) return "Too fast to dock. Pull the lever to ASTERN to take the way off below 1 m/s.";
             if (Journey.Course != PassageCourse.Direct && Journey.Checkpoints < 2) return "Visit both marked passage gates before docking.";
             Settle(true);
@@ -515,7 +517,7 @@ namespace ShipMayham
             EndHazards();
             ShipMotionState = default;
             // A fixed berth aligns the gangway with the destination pier.
-            if (success && HarborEnabled) { State.Position = Destination; State.Heading = 0; }
+            if (success && HarborEnabled) { State.Position = DestinationPoint(); State.Heading = 0; }
             State.LastTickets = 0;
             State.LastUnpaid = 0;
             State.LastMissing = 0;
@@ -534,7 +536,7 @@ namespace ShipMayham
             State.LastCosts = State.Served * 2 + Mathf.CeilToInt((100 - State.Health) * .5f) + State.LastRescueCosts;
             State.LastBounty = success ? Encounter.Bounty : 0;
             State.LastEventBonus = success ? Event.Reward + Opportunity.ChestReward : 0;
-            State.LastRouteBonus = success ? RouteBonus() + PassageBonus() : 0;
+            State.LastRouteBonus = success ? RouteBonus() + PassageBonus() + ArrivalBonus() : 0;
             State.LastReputation = success ? RouteReputation() : 0;
             State.Reputation += State.LastReputation;
             State.LastNet = State.LastTickets + State.LastServices + State.LastTips + State.LastBounty + State.LastEventBonus + State.LastRouteBonus - State.LastCosts;
@@ -555,7 +557,13 @@ namespace ShipMayham
                 Equipment = old.Equipment, OwnedEquipment = old.OwnedEquipment, OwnedPennant = old.OwnedPennant, PennantVisible = old.PennantVisible,
                 FoodStock = Mathf.Max(16, old.FoodStock), DrinkStock = Mathf.Max(16, old.DrinkStock), HullShield = old.HullShield,
                 RepairKitStock = VoyageRepairKits,
-                Reputation = old.Reputation, Livery = old.Livery, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted };
+                Reputation = old.Reputation, Livery = old.Livery, DockJobPortKey = old.DockJobPortKey, DockJobsCompleted = old.DockJobsCompleted,
+                TaskMask = old.TaskMask, VisitedMask = old.VisitedMask, PortVisit = old.PortVisit, Cycle = old.Cycle, Victory = old.Victory,
+                DigMask = old.DigMask, ChestMask = old.ChestMask, CoinMask = old.CoinMask, ActivityPortKey = old.ActivityPortKey };
+            // The next voyage starts where the ship lies: a failed one back at its own island, a finished one at the island it reached.
+            State.Island = DockedIsland(old);
+            State.Target = Campaign.DefaultTarget(State.Island, State.TaskMask, State.Reputation, State.Victory);
+            State.Position = OriginPoint();
             Array.Clear(Passengers, 0, Passengers.Length);
             ResetTallies();
             nextLeak = 25;
@@ -583,6 +591,7 @@ namespace ShipMayham
                 Crew[i].VerticalSpeed = 0;
                 inputs[i] = Vector2.zero;
             }
+            if (Campaign.Island(State.Target).Theme == IslandTheme.Storm) SetRoute(RouteProfile.StormPassage);
         }
 
         private int RouteBonus()

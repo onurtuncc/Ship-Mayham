@@ -69,6 +69,10 @@ their caption, and every alert card repeats its severity as a shape on the right
 green good a square, blue information a circle (`IconShapes`, drawn as small generated sprites). Food and drinks are also told apart by
 words on the passenger labels, station labels, prompts and the carry pill. There is no colour-blind mode to switch on: the shapes are always shown.
 
+## The harbor master's chart
+
+Talking to the harbor master (E at the port office) opens `MapPanel`: the log line (what to do next), six island rows (name, blurb, task, distance, fare bonus, or why it is locked) and a SET COURSE button each; after the victory a NEW CYCLE button. Courses can be set only while the ship is boarding and before passengers come aboard. The voyage card shows "Island to Island" and the distance to the target island; the route map fits the two islands, the shoals, the gates and the pirates into one frame; a flagship shows up as FLAGSHIP on the map and in the alerts. The end-of-voyage report prints the log line and, after the final, "THE BLACK PENNANT IS SUNK!".
+
 ## Mini-games and the saved world
 
 `MiniGameOverlay` plays the skill game the host opened (`PrototypeSession.MiniGameOpened`): the lock (move the pick, hold to turn), the

@@ -19,6 +19,8 @@ namespace ShipMayham
         /// <summary>The extra barrels' rounds of a volley (see <see cref="CannonProgression"/>).</summary>
         public CannonballState CrewBallB, CrewBallC;
         public int PirateHits;
+        /// <summary>The pirate is the flagship of the final voyage: it does not leave, hits harder and takes many shots to sink.</summary>
+        public bool Boss;
 
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
@@ -32,6 +34,7 @@ namespace ShipMayham
             s.SerializeValue(ref ShotFrom); s.SerializeValue(ref ShotTo); s.SerializeValue(ref EnemyShotFrom); s.SerializeValue(ref EnemyShotTo);
             s.SerializeValue(ref CrewBall); s.SerializeValue(ref PirateBall); s.SerializeValue(ref PirateHits);
             s.SerializeValue(ref CrewBallB); s.SerializeValue(ref CrewBallC);
+            s.SerializeValue(ref Boss);
         }
         public bool Equals(EncounterState other) => ValueType.Equals(this, other);
     }

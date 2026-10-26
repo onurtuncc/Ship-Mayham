@@ -31,7 +31,7 @@ Koordinat çerçevesi aynı kalır (gemi-yerel çerçeve + `QuayOffsetX`), böyl
 | --- | --- | --- | --- |
 | A ✅ | Dalma ve açık su | `CrewState.Depth` ve nefes; Space basılı = dal, bırak = yüzeye çık; deniz tabanı; su altı kamera/sis; geniş yüzme alanı, yumuşak sınır ("akıntı geri taşır" + yön göstergesi); batık paralar ve hazineler derinde | testler yeşil, dalış capture'ı, protokol bump |
 | B | Ada zemini | `IslandTerrain` + mesh view; platform çevresinde plaj, kayalık, deniz tabanı; yürüyerek suya girme/çıkma; kara alanı platformun ötesine genişler | kıyıdan serbest geçiş, görünmez duvarsız |
-| C | Kampanya | `Campaign` (adalar, sıra, açılma koşulu, hikaye parçası), hedef adayı seçme (harita arayüzü), ada başına liman anahtarı, final, yeni oyun+, kayıt | baştan sona oynanabilir döngü testi |
+| C ✅ | Kampanya | `Campaign` (adalar, sıra, açılma koşulu, hikaye parçası), hedef adayı seçme (harita arayüzü), ada başına liman anahtarı, final, yeni oyun+, kayıt | baştan sona oynanabilir döngü testi |
 | D | Ada içeriği | Ada başına veri: zemin parametreleri, prop yerleşimi, aktivite seti (sandık/kazı/olta/NPC görevi/yağma), dükkân alt kümesi, korsan/tehlike yoğunluğu | her adada ayrı iş seti |
 | E | Cila | Ada müziği/gökyüzü, ipuçları, HUD haritası, dokümantasyon, yayın | web yayını doğrulanmış |
 
@@ -42,6 +42,17 @@ Koordinat çerçevesi aynı kalır (gemi-yerel çerçeve + `QuayOffsetX`), böyl
 - Sunken coin sayısı 8 → 14, hepsi 3,2–5 m derinlikte ve ancak o derinlikte toplanır; dış 6 coin uzak yüzme ister.
 - Su altı görünümü (`SwimZoneView`): sis + düz zemin rengi, kum tabanı, taş ve yosunlar; HUD'da nefes/derinlik uyarısı; ipucu `Dive`.
 - Protokol 29 / snapshot 25.
+
+## Dilim C — uygulandı (26 Ekim 2026)
+
+- **Ada zinciri** (`Campaign`): Brass Quay (0,0) → North Haven (0,220) → Coral Cay (240,330) / Smugglers' Cove (-250,370) → Storm Reef (0,520) → Skull Atoll (0,820). Gemi artık vardığı adada kalır; sefer bitince başa ışınlanma yoktur (`ResetVoyage` gemiyi vardığı adada bırakır, başarısız sefer çıktığı adaya döner).
+- **Kilitler**: her adanın `MinTokens` (biten ada görevi sayısı) ve `MinReputation` şartı vardır. Görevler: North Haven iş bitir, Coral Cay 6 inci (batık coin) çıkar, Smugglers' Cove 2 sandığın kilidini aç, Storm Reef ≥%50 gövdeyle var, Skull Atoll bayrak gemisini batır. Görev ödülü 60 coin + 1 itibar; yeni ada keşfi +40, ada fare bonusu +20/30/45/100.
+- **Limanlar iki sahne kökü olarak kalır**: `PortRoots[0]` çıkış adasında, `PortRoots[1]` hedef adada durur; `PrototypeHarbor` kökleri durumdan konumlandırır (yeni sefer başında kök 0 öncekinin hedefine gelir, görünüm aynı kaldığı için geçiş fark edilmez). Etiketler ada adlarını gösterir.
+- **Rota**: hedef ada liman memurundan seçilir (`MapPanel`, E): `SelectDestination` yalnız kıyıda, Boarding ve yolcu binmeden önce; kilitli adalar sebebiyle reddedilir. Shoal'lar, geçit kapıları ve sürüklenen sandık rota boyuna yerleşir. Deniz sınırı artık adaların dışında 140 m. Storm Reef'in hedef olduğu seferde storm sözleşmesi zorunludur.
+- **Final**: Skull Atoll'e gidilirken `Encounter.Boss`: bayrak gemisi 12. saniyede gelir, kaçmaz, %220 toughness (döngü başına +%35), daha sık ve daha sert ateş eder; batırılana kadar liman kapalıdır. Batırıp yanaşınca `Victory`: bütün ada zinciri açılır; "NEW CYCLE" görev ve ziyaret bitlerini sıfırlar, `Cycle++`.
+- Liman anahtarı: `State.PortVisit` (vardıkça artar); aynı adada yeni sefer başlatmak yağmayı veya liman işini yenilemez.
+- Protokol 30 / snapshot 26.
+- Henüz yok (dilim D): adaya özel kara biçimi, prop'lar ve iş setleri; bütün adalar şimdilik aynı kasaba iskeletinde.
 
 ## Riskler
 

@@ -47,7 +47,7 @@ namespace ShipMayham
             for (int i = 0; i < gates.Length; i++)
             {
                 gates[i].gameObject.SetActive(active && journey.Course != PassageCourse.Direct && i >= journey.Checkpoints);
-                Vector2 point = VoyageSimulation.CourseGate(journey.Course, i);
+                Vector2 point = VoyageSimulation.CourseGate(journey.Course, i, VoyageSimulation.OriginPoint(session.Voyage.Value), VoyageSimulation.DestinationPoint(session.Voyage.Value));
                 gates[i].position = new Vector3(point.x, -.65f, point.y);
             }
             var emergency = session.Emergency.Value;

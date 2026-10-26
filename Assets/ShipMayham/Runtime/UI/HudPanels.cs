@@ -43,7 +43,7 @@ namespace ShipMayham
             var s = session.Voyage.Value;
             if (local >= 0 && session.Crew[local].OnShore)
             {
-                HudKit.SetText(title, session.Harbor.PortIndex == 0 ? "BRASS QUAY" : "NORTH HAVEN");
+                HudKit.SetText(title, Campaign.Name(VoyageSimulation.DockedIsland(s)).ToUpperInvariant());
                 Town(VoyageSimulation.HarborPoint(HarborAction.BoardShip), "SHIP", Color.white);
                 Town(VoyageSimulation.HarborPoint(HarborAction.BuyFood), "FOOD", HudKit.Food);
                 Town(VoyageSimulation.HarborPoint(HarborAction.BuyDrink), "DRINK", HudKit.Drink);
@@ -64,44 +64,69 @@ namespace ShipMayham
             else
             {
                 HudKit.SetText(title, "ROUTE");
-                Place(60, 48, "DESTINATION", HudKit.Accent, false, 12);
-                Place(60, MapHeight - 22, "DEPARTURE", HudKit.TextMuted, false, 12);
-                if (s.Phase == VoyagePhase.Sailing) PlaceShoals(session, s);
-                Place(90 + s.Position.x * .75f, 235 - s.Position.y * .9f, null, Color.white, true, 15);
+                Vector2 from = VoyageSimulation.OriginPoint(s), to = VoyageSimulation.DestinationPoint(s);
+                var frame = new RouteFrame(from, to, MapWidth, MapHeight);
+                Place(frame.Project(to), Campaign.Name(s.Target), HudKit.Accent, true, 13);
+                Place(frame.Project(from), Campaign.Name(s.Island), HudKit.TextMuted, true, 10);
+                if (s.Phase == VoyagePhase.Sailing) PlaceShoals(session, s, frame);
+                Place(frame.Project(s.Position), null, Color.white, true, 15);
                 var encounter = session.Encounter.Value;
                 var opportunity = session.Opportunity.Value;
                 var journey = session.Journey.Value;
                 if (journey.Course != PassageCourse.Direct)
                     for (int gate = journey.Checkpoints; gate < 2; gate++)
                     {
-                        Vector2 point = VoyageSimulation.CourseGate(journey.Course, gate);
-                        Place(90 + point.x * .75f, 235 - point.y * .9f, "GATE " + (gate + 1), HudKit.Good, true, 13);
+                        Vector2 point = VoyageSimulation.CourseGate(journey.Course, gate, from, to);
+                        Place(frame.Project(point), "GATE " + (gate + 1), HudKit.Good, true, 13);
                     }
                 if (opportunity.ChestAvailable)
-                    Place(90 + opportunity.ChestPosition.x * .75f, 235 - opportunity.ChestPosition.y * .9f, "CHEST", HudKit.Coin, true, 11);
+                    Place(frame.Project(opportunity.ChestPosition), "CHEST", HudKit.Coin, true, 11);
                 if (encounter.Pirate == PiratePhase.Warning || encounter.Pirate == PiratePhase.Attacking)
                 {
                     Vector2 pirate = encounter.PiratePosition;
-                    Place(Mathf.Clamp(90 + pirate.x * .75f, 10, MapWidth - 10), Mathf.Clamp(235 - pirate.y * .9f, 30, MapHeight - 12), "PIRATES", HudKit.Danger, true, 13);
+                    Vector2 mapped = frame.Project(pirate);
+                    Place(Mathf.Clamp(mapped.x, 10, MapWidth - 10), Mathf.Clamp(mapped.y, 30, MapHeight - 12), encounter.Boss ? "FLAGSHIP" : "PIRATES", HudKit.Danger, true, encounter.Boss ? 16 : 13);
                 }
             }
             for (int i = used; i < markers.Length; i++) HudKit.SetActive(markers[i].Root, false);
         }
 
         /// <summary>Shoals appear only once the ship is within <see cref="HazardLogic.MapRange"/> of them.</summary>
-        private void PlaceShoals(PrototypeSession session, in VoyageState s)
+        private void PlaceShoals(PrototypeSession session, in VoyageState s, in RouteFrame frame)
         {
             var hazards = session.Hazards.Value;
-            int count = ShoalSet.For(hazards.Seed, s.Route);
+            int count = ShoalSet.For(hazards.Seed, s.Route, VoyageSimulation.OriginPoint(s), VoyageSimulation.DestinationPoint(s));
             var shoals = ShoalSet.Shoals;
             for (int i = 0; i < count; i++)
             {
                 if (Vector2.Distance(s.Position, shoals[i].Center) > HazardLogic.MapRange + shoals[i].Radius) continue;
-                Place(90 + shoals[i].Center.x * .75f, 235 - shoals[i].Center.y * .9f, null, ShoalColor, true, Mathf.Clamp(shoals[i].Radius * 1.8f, 10, 16));
+                Place(frame.Project(shoals[i].Center), null, ShoalColor, true, Mathf.Clamp(shoals[i].Radius * 1.8f, 10, 16));
             }
         }
 
         private static readonly Color ShoalColor = new Color(.85f, .62f, .38f);
+
+        private void Place(Vector2 point, string label, Color color, bool showDot, float size) => Place(point.x, point.y, label, color, showDot, size);
+
+        /// <summary>Fits the route between two islands into the map: north up, one scale for both axes, room around both ends.</summary>
+        public readonly struct RouteFrame
+        {
+            private readonly Vector2 middle;
+            private readonly float scale, centerX, centerY;
+
+            public RouteFrame(Vector2 from, Vector2 to, float width, float height)
+            {
+                const float margin = 45f, top = 34f, bottom = 18f, side = 14f;
+                Vector2 low = Vector2.Min(from, to) - Vector2.one * margin, high = Vector2.Max(from, to) + Vector2.one * margin;
+                middle = (low + high) * .5f;
+                scale = Mathf.Min((width - side * 2) / Mathf.Max(1f, high.x - low.x), (height - top - bottom) / Mathf.Max(1f, high.y - low.y));
+                centerX = width * .5f;
+                centerY = top + (height - top - bottom) * .5f;
+            }
+
+            /// <summary>World position to map pixels (y grows downward on the map).</summary>
+            public Vector2 Project(Vector2 world) => new Vector2(centerX + (world.x - middle.x) * scale, centerY - (world.y - middle.y) * scale);
+        }
 
         private void Town(Vector2 point, string label, Color color, float size = 12)
         {
@@ -242,11 +267,12 @@ namespace ShipMayham
             sig = sig * 31 + s.CraneStock; sig = sig * 31 + s.CraneReady; sig = sig * 31 + (s.CraneHolding ? 1 : 0);
             sig = sig * 31 + (ashore ? 1 : 0) + (atOffice ? 2 : 0) + (atPaint ? 4 : 0) + (cursorLocked ? 8 : 0);
             sig = sig * 31 + crewAshore + session.Harbor.PortIndex * 7 + (int)s.LastRescueCosts;
+            sig = sig * 31 + s.Island * 17 + s.Target * 5 + s.TaskMask * 3 + s.Cycle + (s.Victory ? 1 : 0);
             if (sig == signature) return;
             signature = sig;
 
-            HudKit.SetText(header, session.Harbor.PortIndex == 0 ? "BRASS QUAY" : "NORTH HAVEN");
-            HudKit.SetText(status, $"Route: {VoyageSimulation.RouteName(s.Route)}\nCrew ashore: {crewAshore}   •   Hull shield {s.HullShield:0}/20");
+            HudKit.SetText(header, Campaign.Name(VoyageSimulation.DockedIsland(s)).ToUpperInvariant());
+            HudKit.SetText(status, $"Course: {Campaign.Name(s.Island)} to {Campaign.Name(s.Target)}\nRoute: {VoyageSimulation.RouteName(s.Route)}\nCrew ashore: {crewAshore}   •   Hull shield {s.HullShield:0}/20");
 
             bool canChoose = s.Phase == VoyagePhase.Boarding && s.Boarded == 0 && atOffice;
             HudKit.SetActive(routeSection, atOffice);
@@ -285,7 +311,7 @@ namespace ShipMayham
             }
 
             HudKit.SetActive(tipRoot, !jobVisible && !atPaint);
-            tip.text = ashore ? "Visit the port office to pick a route or a town job." : "Step ashore from the gangway to shop and take jobs.";
+            tip.text = ashore ? "Visit the port office to pick a route, a town job or the next island." : "Step ashore from the gangway to shop and take jobs.";
             bool needsMouse = (atOffice || atPaint || (s.DockJobActive && ashore)) && cursorLocked;
             HudKit.SetActive(mouseHint.gameObject, needsMouse);
             mouseHint.text = Application.platform == RuntimePlatform.WebGLPlayer ? "Press Esc to use the mouse" : "Press Esc to use the mouse, click to resume";
@@ -370,12 +396,13 @@ namespace ShipMayham
                 if (i < session.Profiles.Count) sig = sig * 31 + session.Profiles[i].Name.GetHashCode();
             }
             sig = sig * 31 + s.LastTickets + s.LastServices * 3 + s.LastTips * 5 + s.LastBounty * 7 + s.LastEventBonus * 11 + s.LastRouteBonus * 13 + s.LastCosts * 17;
-            sig = sig * 31 + s.LastUnpaid + s.LastMissing * 3 + s.LastRescueCosts * 5 + s.LastReputation * 7;
+            sig = sig * 31 + s.LastUnpaid + s.LastMissing * 3 + s.LastRescueCosts * 5 + s.LastReputation * 7 + s.TaskMask * 11 + (s.Victory ? 1 : 0);
             if (sig == signature) return;
             signature = sig;
 
             bool failed = s.Phase == VoyagePhase.Failed;
-            title.text = failed ? "VOYAGE FAILED" : "VOYAGE COMPLETE";
+            bool won = s.Victory && !failed && VoyageSimulation.DockedIsland(s) == Campaign.SkullAtoll;
+            title.text = failed ? "VOYAGE FAILED" : won ? "THE BLACK PENNANT IS SUNK!" : "VOYAGE COMPLETE";
             title.color = failed ? HudKit.Danger : HudKit.Good;
             rows.Begin();
             rows.Add("Tickets", Coins(s.LastTickets));
@@ -392,7 +419,7 @@ namespace ShipMayham
             if (s.LastMissing != 0) rows.Add("Passengers lost", s.LastMissing.ToString(), HudKit.Danger);
             rows.End();
             ShowAwards(session, local);
-            footer.text = "Visit the purser to prepare the next voyage.";
+            footer.text = (failed ? string.Empty : $"Log: {Campaign.Objective(s.TaskMask, s.Reputation, s.Victory)}\n") + "Visit the purser to prepare the next voyage.";
         }
 
         private void ShowAwards(PrototypeSession session, int local)

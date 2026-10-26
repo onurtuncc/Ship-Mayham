@@ -35,6 +35,7 @@ namespace ShipMayham
         private readonly HarborPanel harbor;
         private readonly HelpOverlay help;
         private readonly PurserPanel purser;
+        private readonly MapPanel chart;
         private readonly PauseMenu pause;
         private readonly SignalLayer signals;
         private readonly SignalWheel wheel;
@@ -195,6 +196,7 @@ namespace ShipMayham
             wheel = new SignalWheel(screen);
             if (hud.Session != null) hud.Session.SignalReceived += signals.Add;
             purser = new PurserPanel(hud, screen);
+            chart = new MapPanel(hud, screen);
             pause = new PauseMenu(hud, screen);
             miniGame = new MiniGameOverlay(hud, screen);
             if (hud.Session != null) hud.Session.MiniGameOpened += miniGame.Open;
@@ -248,14 +250,15 @@ namespace ShipMayham
             TickContextHints(firstPerson && locked, prompt, gamepad);
             TickNotice(session, dt);
             TickCarry(session, local);
-            TickResume(firstPerson && !locked && !view.MenuOpen && !view.PurserOpen);
+            TickResume(firstPerson && !locked && !view.MenuOpen && !view.DeskOpen);
             help.Tick(gamepad);
             purser.Tick();
+            chart.Tick();
             pause.Tick();
             signals.Tick(hud);
             wheel.Tick(view);
             miniGame.Tick(Time.unscaledDeltaTime);
-            tips.Tick(Time.unscaledTime, tipContext, gamepad, view != null && (view.MenuOpen || view.PurserOpen || view.WheelOpen) || help.Visible);
+            tips.Tick(Time.unscaledTime, tipContext, gamepad, view != null && (view.MenuOpen || view.DeskOpen || view.WheelOpen) || help.Visible);
             for (int i = 0; i < pills.Length; i++) pills[i].Tick(dt);
         }
 
@@ -269,7 +272,7 @@ namespace ShipMayham
                 InVoyage = local >= 0 && s.SessionPhase == SessionPhase.Voyage,
                 Phase = s.Phase,
                 Boarded = s.Boarded,
-                DistanceToPort = Vector2.Distance(s.Position, VoyageSimulation.Destination),
+                DistanceToPort = Vector2.Distance(s.Position, VoyageSimulation.DestinationPoint(s)),
                 Leak = s.Leak != 0,
             };
             var hazards = session.Hazards.Value;
@@ -297,10 +300,10 @@ namespace ShipMayham
 
         private void TickVoyageCard(in VoyageState s)
         {
-            float dist = Vector2.Distance(s.Position, VoyageSimulation.Destination);
+            float dist = Vector2.Distance(s.Position, VoyageSimulation.DestinationPoint(s));
             int sig = HashCode(s.Voyage, (int)s.Phase, (int)s.Route, Mathf.RoundToInt(s.Health), (int)s.HullShield,
                 Mathf.RoundToInt(s.Speed * 2), Mathf.RoundToInt(dist / 5), s.Boarded);
-            sig = sig * 31 + s.CheckedTickets + s.Served * 7;
+            sig = sig * 31 + s.CheckedTickets + s.Served * 7 + s.Island * 13 + s.Target * 29;
             sig = sig * 31 + Mathf.RoundToInt(s.Throttle * 20) * 97 + Mathf.RoundToInt(s.Rudder * ShipSteering.MaxRudderDegrees / 5);
             if (sig == voyageSignature) return;
             voyageSignature = sig;
@@ -309,13 +312,13 @@ namespace ShipMayham
                 s.Phase == VoyagePhase.Arrived ? HudKit.Good : HudKit.Danger;
             phaseChip.color = chip;
             phaseText.text = s.Phase.ToString().ToUpperInvariant();
-            routeText.text = VoyageSimulation.RouteName(s.Route);
+            routeText.text = $"{Campaign.Name(s.Island)} to {Campaign.Name(s.Target)}";
             float hull = Mathf.Clamp01(s.Health / 100f);
             hullFill.rectTransform.anchorMax = new Vector2(hull, 1);
             hullFill.color = hull > .6f ? HudKit.Good : hull > .3f ? HudKit.Warning : HudKit.Danger;
             hullValue.text = s.HullShield > 0 ? $"{s.Health:0}% +{s.HullShield:0}" : $"{s.Health:0}%";
             statusLine.text = s.Phase == VoyagePhase.Sailing
-                ? $"{s.Speed:0.0} m/s   •   {dist:0} m to port   •   {s.Heading:0}°"
+                ? $"{s.Speed:0.0} m/s   •   {dist:0} m to {Campaign.Name(s.Target)}   •   {s.Heading:0}°"
                 : s.Phase == VoyagePhase.Boarding
                     ? $"{s.Boarded} passengers   •   tickets {s.CheckedTickets}/{s.Boarded}"
                     : $"{s.Boarded} passengers   •   {s.Served} orders served";
@@ -356,8 +359,9 @@ namespace ShipMayham
         {
             bool onShore = local >= 0 && session.Crew[local].OnShore;
             bool atHelm = local >= 0 && session.Crew[local].AtHelm;
-            float dist = Vector2.Distance(s.Position, VoyageSimulation.Destination);
+            float dist = Vector2.Distance(s.Position, VoyageSimulation.DestinationPoint(s));
             int sig = HashCode((int)s.Phase, s.Boarded, onShore ? 1 : 0, atHelm ? 1 : 0, Mathf.RoundToInt(dist / 10), s.DockJobActive ? 1 : 0);
+            sig = sig * 31 + HashCode(s.Island, s.Target, s.TaskMask, s.Victory ? 1 : 0);
             if (sig != objectiveSignature)
             {
                 objectiveSignature = sig;
@@ -366,10 +370,10 @@ namespace ShipMayham
                 else switch (s.Phase)
                 {
                     case VoyagePhase.Boarding:
-                        text = s.Boarded == 0 ? "Talk to the purser to board passengers" : atHelm ? "Everyone aboard? Depart from the helm" : "Take the helm when the crew is ready";
+                        text = s.Boarded == 0 ? $"Board passengers for {Campaign.Name(s.Target)}, or plot another course at the port office" : atHelm ? "Everyone aboard? Depart from the helm" : "Take the helm when the crew is ready";
                         break;
                     case VoyagePhase.Sailing:
-                        text = dist < VoyageSimulation.DockRadius * 3 ? "Almost there: slow down and dock" : "Keep passengers happy on the way to port";
+                        text = dist < VoyageSimulation.DockRadius * 3 ? "Almost there: slow down and dock" : $"Keep passengers happy on the way to {Campaign.Name(s.Target)}";
                         break;
                     default:
                         text = "Talk to the purser to start the next voyage";
@@ -421,9 +425,9 @@ namespace ShipMayham
             if (voyageOpen && e.PowerOut)
                 alerts.Add(HudKit.Warning, "POWER OUT", $"Reset the breakers {e.PowerRepairSteps}/3. Food and drinks are blocked.");
             if (voyageOpen && e.Pirate == PiratePhase.Warning)
-                alerts.Add(HudKit.Danger, "PIRATES INBOUND", $"Contact in {e.WarningRemaining:0}s. Man the cannon and load it!");
+                alerts.Add(HudKit.Danger, e.Boss ? "FLAGSHIP INBOUND" : "PIRATES INBOUND", e.Boss ? $"The Black Pennant is {e.WarningRemaining:0}s away. Load every cannon round you can carry!" : $"Contact in {e.WarningRemaining:0}s. Man the cannon and load it!");
             else if (voyageOpen && e.Pirate == PiratePhase.Attacking)
-                alerts.Add(HudKit.Danger, "PIRATE ATTACK", $"Enemy ship {e.PirateHealth:0}%. Next shot in {e.EnemyShotRemaining:0.0}s.");
+                alerts.Add(HudKit.Danger, e.Boss ? "FLAGSHIP ATTACK" : "PIRATE ATTACK", $"{(e.Boss ? "Flagship" : "Enemy ship")} {e.PirateHealth:0}%. Next shot in {e.EnemyShotRemaining:0.0}s.");
             if (voyageOpen && (e.Pirate == PiratePhase.Warning || e.Pirate == PiratePhase.Attacking))
             {
                 string rack = e.ReloadRemaining > 0 ? $"{e.ReadyAmmo}+1" : e.ReadyAmmo.ToString();

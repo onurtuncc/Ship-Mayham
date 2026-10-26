@@ -53,7 +53,7 @@ namespace ShipMayham
                 {
                     Encounter.EnemyShotTo = ball.Position;
                     Encounter.PirateHits++;
-                    DamageHull(8);
+                    DamageHull(Encounter.Boss ? 12 + 2 * State.Cycle : 8);
                     if (Encounter.PirateHits == 1) CutPower();
                 }
                 else
@@ -61,8 +61,8 @@ namespace ShipMayham
                     Encounter.ShotTo = ball.Position;
                     Encounter.Hits++;
                     Tally(crewBallOwner, TallyKind.Hits);
-                    Encounter.PirateHealth = Mathf.Max(0, Encounter.PirateHealth - damage);
-                    if (Encounter.PirateHealth == 0) { Encounter.Pirate = PiratePhase.Defeated; Encounter.Bounty = 50; }
+                    Encounter.PirateHealth = Mathf.Max(0, Encounter.PirateHealth - damage / (Encounter.Boss ? BossToughness + BossCycleToughness * State.Cycle : 1f));
+                    if (Encounter.PirateHealth == 0) { Encounter.Pirate = PiratePhase.Defeated; Encounter.Bounty = Encounter.Boss ? BossBounty : 50; }
                 }
                 return;
             }

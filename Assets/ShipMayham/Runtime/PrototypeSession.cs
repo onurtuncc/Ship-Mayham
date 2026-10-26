@@ -383,6 +383,26 @@ namespace ShipMayham
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void SelectDestinationRpc(int island, RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.SelectDestination(sender, island);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(Fit(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void StartNewCycleRpc(RpcParams rpc = default)
+        {
+            if (!GameplayOpen) return;
+            ulong sender = rpc.Receive.SenderClientId;
+            string result = Simulation.StartNewCycle(sender);
+            if (!string.IsNullOrEmpty(result)) NoticeRpc(Fit(result), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            Publish();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void SelectLiveryRpc(ShipLivery livery, RpcParams rpc = default)
         {
             if (!GameplayOpen) return;
@@ -424,7 +444,15 @@ namespace ShipMayham
         private void OnCrewNotice(int slot, string text)
         {
             ulong id = Simulation.Crew[slot].ClientId;
-            if (id != ulong.MaxValue) NoticeRpc(new FixedString128Bytes(text), RpcTarget.Single(id, RpcTargetUse.Temp));
+            if (id != ulong.MaxValue) NoticeRpc(Fit(text), RpcTarget.Single(id, RpcTargetUse.Temp));
+        }
+
+        /// <summary>A notice that never overflows the fixed-size string: a long text is cut off instead of throwing.</summary>
+        private static FixedString128Bytes Fit(string text)
+        {
+            var fixedText = new FixedString128Bytes();
+            fixedText.CopyFromTruncated(text ?? string.Empty);
+            return fixedText;
         }
 
         [Rpc(SendTo.SpecifiedInParams)]
