@@ -91,6 +91,17 @@ namespace ShipMayham
             lastSavedJson = json;
         }
 
+        /// <summary>Whether a career (coins, reputation, upgrades, islands) is saved on this device.</summary>
+        public static bool Exists => !Application.isBatchMode && PlayerPrefs.HasKey(PlayerPrefsKey);
+
+        /// <summary>Forgets the career: the next game starts from the beginning of the campaign.</summary>
+        public static void Clear()
+        {
+            PlayerPrefs.DeleteKey(PlayerPrefsKey);
+            PlayerPrefs.Save();
+            lastSavedJson = null;
+        }
+
         public static bool TryDecode(string json, out CareerProgress progress)
         {
             progress = default;

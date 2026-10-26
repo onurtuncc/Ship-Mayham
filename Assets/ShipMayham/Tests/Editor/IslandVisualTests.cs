@@ -135,6 +135,20 @@ namespace ShipMayham.Tests
             }
         }
 
+        [Test] public void BuildingAnIslandIsFastEnoughToDoWhenTheVoyageStarts()
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < Campaign.Count; i++)
+            {
+                var terrain = IslandTerrain.For(i);
+                Object.DestroyImmediate(IslandMeshes.BuildTerrain(terrain));
+                Object.DestroyImmediate(IslandMeshes.BuildDecor(terrain));
+            }
+            watch.Stop();
+            Debug.Log("ISLANDBUILD six islands, ground and scenery: " + watch.ElapsedMilliseconds + " ms (" + watch.ElapsedMilliseconds / Campaign.Count + " ms each)");
+            Assert.Less(watch.ElapsedMilliseconds / Campaign.Count, 400, "an island is built in well under half a second even in the editor");
+        }
+
         [Test] public void PalettesHaveEveryColour()
         {
             foreach (IslandTheme theme in System.Enum.GetValues(typeof(IslandTheme)))

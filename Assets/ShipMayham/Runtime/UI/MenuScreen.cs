@@ -63,7 +63,8 @@ namespace ShipMayham
             // ---- Settings
             var settings = NewPage(screen, Page.Settings, "SETTINGS", null);
             settingsPanel = new SettingsPanel(settings);
-            if (WorldSave.Exists) buttons.Add(BuildEraseButton(settings));
+            if (WorldSave.Exists) buttons.Add(BuildEraseButton(settings, "EraseSave", "ERASE SAVED WORLD", "SAVED WORLD ERASED", WorldSave.Clear));
+            if (CareerProgressStore.Exists) buttons.Add(BuildEraseButton(settings, "EraseCareer", "RESTART THE CAMPAIGN", "CAMPAIGN RESTARTS NEXT GAME", CareerProgressStore.Clear));
             buttons.Add(AddButton(settings, "BackFromSettings", "BACK", new Color(1, 1, 1, .14f), 22, 50, () => Show(Page.Main)));
             actionButtons = buttons.ToArray();
 
@@ -118,17 +119,17 @@ namespace ShipMayham
             Debug.LogWarning("The saved world could not be loaded and was ignored.");
         }
 
-        private Button BuildEraseButton(RectTransform settings)
+        private Button BuildEraseButton(RectTransform settings, string name, string text, string doneText, System.Action erased)
         {
-            var erase = HudKit.MakeButton(settings, "EraseSave", "ERASE SAVED WORLD", new Color(.8f, .3f, .3f, .55f), 20);
+            var erase = HudKit.MakeButton(settings, name, text, new Color(.8f, .3f, .3f, .55f), 20);
             HudKit.Size(erase, height: 46);
             var label = erase.GetComponentInChildren<Text>();
             bool armed = false;
             erase.onClick.AddListener(() =>
             {
                 if (!armed) { armed = true; label.text = "CLICK AGAIN TO ERASE"; return; }
-                WorldSave.Clear();
-                label.text = "SAVED WORLD ERASED";
+                erased();
+                label.text = doneText;
                 erase.interactable = false;
             });
             return erase;
