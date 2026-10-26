@@ -323,6 +323,8 @@ namespace ShipMayham.Tests
             yield return CaptureWorld(hud, controller, "Logs/WorldPurser.png", ship.TransformPoint(new Vector3(-1.8f, 1.9f, -3.2f)), ship.TransformPoint(new Vector3(-4.9f, 1.3f, -4f)), 50);
             yield return CaptureWorld(hud, controller, "Logs/WorldGangway.png", new Vector3(-12f, 2.2f, -10f), new Vector3(-9f, .3f, -6f), 60);
             yield return CaptureWorld(hud, controller, "Logs/WorldGangwayLow.png", new Vector3(-10.5f, .9f, -4.5f), new Vector3(-8.7f, .3f, -6f), 60);
+            yield return CaptureWorld(hud, controller, "Logs/WorldAerialQuay.png", new Vector3(-24f, 70f, -45f), new Vector3(-24f, 0f, 0f), 60);
+            yield return CaptureWorld(hud, controller, "Logs/WorldAerialSea.png", new Vector3(0f, 40f, -80f), new Vector3(-10f, -1f, 10f), 70);
             yield return CaptureWorld(hud, controller, "Logs/WorldResident.png", new Vector3(-21f, 1.7f, -9f), new Vector3(-24f, 1.3f, -12f), 50);
 
             // Passenger handling poses: lying after a throw, dizzy, walking back.
