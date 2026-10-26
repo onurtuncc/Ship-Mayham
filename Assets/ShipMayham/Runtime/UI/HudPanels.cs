@@ -10,7 +10,11 @@ namespace ShipMayham
         private const float MapWidth = 190f, MapHeight = 270f, Scale = 1.1f;
         private readonly Marker[] markers = new Marker[20];
         private readonly Text title;
+        private readonly RawImage land;
+        private int landIsland = -1;
+        private RouteFrame townFrame;
         private int used;
+        private static readonly System.Collections.Generic.Dictionary<int, Texture2D> LandTextures = new System.Collections.Generic.Dictionary<int, Texture2D>();
 
         public RectTransform Root { get; }
 
@@ -24,6 +28,13 @@ namespace ShipMayham
             inner.localScale = Vector3.one * Scale;
             title = HudKit.Label(inner, "Title", 16, HudKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Bold);
             HudKit.Anchor(title.rectTransform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -4), new Vector2(MapWidth - 12, 22));
+            var landNode = new GameObject("Land", typeof(RectTransform), typeof(RawImage));
+            landNode.transform.SetParent(inner, false);
+            land = landNode.GetComponent<RawImage>();
+            land.raycastTarget = false;
+            var landRect = land.rectTransform;
+            landRect.anchorMin = landRect.anchorMax = landRect.pivot = new Vector2(0, 1);
+            landNode.SetActive(false);
             for (int i = 0; i < markers.Length; i++)
             {
                 var node = HudKit.Node(inner, "Marker" + i);
@@ -41,9 +52,13 @@ namespace ShipMayham
         {
             used = 0;
             var s = session.Voyage.Value;
-            if (local >= 0 && session.Crew[local].OnShore)
+            bool ashore = local >= 0 && session.Crew[local].OnShore;
+            land.gameObject.SetActive(ashore);
+            if (ashore)
             {
-                HudKit.SetText(title, Campaign.Name(VoyageSimulation.DockedIsland(s)).ToUpperInvariant());
+                int island = VoyageSimulation.DockedIsland(s);
+                if (island != landIsland) ShowLand(island);
+                HudKit.SetText(title, Campaign.Name(island).ToUpperInvariant());
                 Town(VoyageSimulation.HarborPoint(HarborAction.BoardShip), "SHIP", Color.white);
                 Town(VoyageSimulation.HarborPoint(HarborAction.BuyFood), "FOOD", HudKit.Food);
                 Town(VoyageSimulation.HarborPoint(HarborAction.BuyDrink), "DRINK", HudKit.Drink);
@@ -114,10 +129,14 @@ namespace ShipMayham
             private readonly Vector2 middle;
             private readonly float scale, centerX, centerY;
 
-            public RouteFrame(Vector2 from, Vector2 to, float width, float height)
+            public RouteFrame(Vector2 from, Vector2 to, float width, float height) : this(Vector2.Min(from, to) - Vector2.one * 45f, Vector2.Max(from, to) + Vector2.one * 45f, width, height, true) { }
+
+            /// <summary>Frames a rectangle of the world (an island) with no extra margin.</summary>
+            public RouteFrame(Rect world, float width, float height) : this(world.min, world.max, width, height, true) { }
+
+            private RouteFrame(Vector2 low, Vector2 high, float width, float height, bool framed)
             {
-                const float margin = 45f, top = 34f, bottom = 18f, side = 14f;
-                Vector2 low = Vector2.Min(from, to) - Vector2.one * margin, high = Vector2.Max(from, to) + Vector2.one * margin;
+                const float top = 34f, bottom = 18f, side = 14f;
                 middle = (low + high) * .5f;
                 scale = Mathf.Min((width - side * 2) / Mathf.Max(1f, high.x - low.x), (height - top - bottom) / Mathf.Max(1f, high.y - low.y));
                 centerX = width * .5f;
@@ -128,11 +147,45 @@ namespace ShipMayham
             public Vector2 Project(Vector2 world) => new Vector2(centerX + (world.x - middle.x) * scale, centerY - (world.y - middle.y) * scale);
         }
 
-        private void Town(Vector2 point, string label, Color color, float size = 12)
+        private void Town(Vector2 point, string label, Color color, float size = 12) => Place(townFrame.Project(point), label, color, true, size);
+
+        /// <summary>Frames the island the ship lies at and paints its land under the markers.</summary>
+        private void ShowLand(int island)
         {
-            float x = 8 + (point.x - HarborTownLayout.Bounds.xMin) / HarborTownLayout.Bounds.width * 133;
-            float y = 40 + (HarborTownLayout.Bounds.yMax - point.y) / HarborTownLayout.Bounds.height * 205;
-            Place(x, y, label, color, true, size);
+            landIsland = island;
+            var terrain = IslandTerrain.For(island);
+            Rect world = terrain.Bounds;
+            townFrame = new RouteFrame(world, MapWidth, MapHeight);
+            Vector2 topLeft = townFrame.Project(new Vector2(world.xMin, world.yMax)), bottomRight = townFrame.Project(new Vector2(world.xMax, world.yMin));
+            var rect = land.rectTransform;
+            rect.anchoredPosition = new Vector2(topLeft.x, -topLeft.y);
+            rect.sizeDelta = new Vector2(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+            land.texture = LandTexture(island, terrain);
+        }
+
+        private static Texture2D LandTexture(int island, IslandTerrain terrain)
+        {
+            if (LandTextures.TryGetValue(island, out var cached) && cached != null) return cached;
+            const int width = 96, height = 96;
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.HideAndDontSave };
+            var pixels = new Color32[width * height];
+            Rect world = terrain.Bounds;
+            for (int j = 0; j < height; j++)
+                for (int i = 0; i < width; i++)
+                {
+                    var p = new Vector2(world.xMin + (i + .5f) / width * world.width, world.yMin + (j + .5f) / height * world.height);
+                    float h = IslandTerrain.OnPlatform(p) ? IslandTerrain.PlatformHeight : terrain.Height(p);
+                    Color color;
+                    if (IslandTerrain.OnPlatform(p)) color = new Color(.72f, .7f, .62f, .75f);
+                    else if (h >= IslandTerrain.SeaLevel + 1.2f) color = new Color(.45f, .65f, .35f, .6f);
+                    else if (h >= IslandTerrain.SeaLevel) color = new Color(.88f, .8f, .55f, .6f);
+                    else if (h >= IslandTerrain.SeaLevel - 1.6f) color = new Color(.4f, .72f, .82f, .35f);
+                    else color = new Color(0, 0, 0, 0);
+                    pixels[j * width + i] = color;
+                }
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            return LandTextures[island] = texture;
         }
 
         private void Place(float x, float y, string label, Color color, bool showDot, float size)

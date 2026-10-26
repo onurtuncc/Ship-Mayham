@@ -555,12 +555,12 @@ namespace ShipMayham
         /// back to the seat's orientation once seated. Smoothed so the turn on arrival is not a snap.
         /// </summary>
         /// <summary>Standing height in a walking area: the deck, the quay, or the slope of the gangway plank between them.</summary>
-        private static float WalkHeight(Vector2 position, bool onShore)
+        private static float WalkHeight(Vector2 position, bool onShore, int island)
         {
             Vector2 shipLocal = onShore ? GangwayPassage.ShoreToShip(position) : position;
             if (GangwayPassage.InLane(shipLocal) && shipLocal.x < GangwayPassage.DeckEdgeX)
                 return GangwayPassage.PlankHeight(shipLocal, .5f, VoyageSimulation.ShoreHeight);
-            return onShore ? VoyageSimulation.ShoreHeight : .5f;
+            return onShore ? IslandTerrain.For(island).Height(position) : .5f;
         }
 
         private Quaternion PassengerFacing(int index, in PassengerState p, Quaternion current, Vector3 walkVelocity)
@@ -664,9 +664,10 @@ namespace ShipMayham
                 // The predicted or interpolated position can be in the other area a moment before the crew list says so (walking
                 // the gangway): place the body in the area its coordinates belong to.
                 bool onShore = fromNet ? netShore : crew.OnShore;
+                int dockedIsland = VoyageSimulation.DockedIsland(state);
                 crewDepth[i] = Mathf.Lerp(crewDepth[i], crew.Swimming ? crew.Depth : 0, 1f - Mathf.Exp(-14f * dt));
                 float swimHeight = VoyageSimulation.SeaLevel + SwimBodyOffset - crewDepth[i];
-                var target = new Vector3(crew.Position.x, (crew.Swimming ? swimHeight : WalkHeight(crew.Position, crew.OnShore)) + crew.JumpHeight, crew.Position.y);
+                var target = new Vector3(crew.Position.x, (crew.Swimming ? swimHeight : WalkHeight(crew.Position, crew.OnShore, dockedIsland)) + crew.JumpHeight, crew.Position.y);
                 // Smooth in the frame the crew member walks in (deck or quay), then place that frame; smoothing in world space made
                 // crew slide across the deck whenever the ship moved. The area change at the gangway is exact, so a snap is invisible.
                 var motion = crewMotion[i];
@@ -676,7 +677,7 @@ namespace ShipMayham
                 if (fromNet)
                 {
                     var flat = new Vector2(netPosition.x, netPosition.z);
-                    local3 = new Vector3(netPosition.x, (crew.Swimming ? swimHeight : WalkHeight(flat, onShore)) + netPosition.y, netPosition.z);
+                    local3 = new Vector3(netPosition.x, (crew.Swimming ? swimHeight : WalkHeight(flat, onShore, dockedIsland)) + netPosition.y, netPosition.z);
                     if (!crewFromNet[i]) crewBlend[i] = BlendFrom(crewLastRender[i], local3);
                 }
                 else if (crewFromNet[i]) crewBlend[i] = BlendFrom(crewLastRender[i], local3);

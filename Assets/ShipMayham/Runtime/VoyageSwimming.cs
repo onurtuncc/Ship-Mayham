@@ -83,7 +83,23 @@ namespace ShipMayham
             get { int count = 0; foreach (var crew in Crew) if (crew.Active && crew.Swimming) count++; return count; }
         }
 
-        public static ILocomotionWorld WaterWorld { get; } = new WaterLocomotionWorld();
+        public static ILocomotionWorld WaterWorld { get; } = new WaterLocomotionWorld(-1);
+
+        private static readonly ILocomotionWorld[] IslandWaterWorlds = BuildWaterWorlds();
+
+        private static ILocomotionWorld[] BuildWaterWorlds()
+        {
+            var worlds = new ILocomotionWorld[Campaign.Count];
+            for (int i = 0; i < worlds.Length; i++) worlds[i] = new WaterLocomotionWorld(i);
+            return worlds;
+        }
+
+        /// <summary>The sea around an island: the bay's water minus the island's dry ground.</summary>
+        public static ILocomotionWorld WaterWorldFor(int island) => IslandWaterWorlds[Mathf.Clamp(island, 0, IslandWaterWorlds.Length - 1)];
+
+        /// <summary>Whether a swimmer may be at a ship-local point of an island's bay: open water, not on the island's ground.</summary>
+        public static bool WaterWalkable(Vector2 p, int island) =>
+            WaterWalkable(p) && IslandTerrain.For(island).Height(p - new Vector2(QuayOffsetX, 0)) < IslandTerrain.SeaLevel + .02f;
 
         /// <summary>A swimmer may be anywhere in the round swim zone except inside the hull or under the quay.</summary>
         public static bool WaterWalkable(Vector2 p) =>
@@ -91,9 +107,11 @@ namespace ShipMayham
 
         private sealed class WaterLocomotionWorld : ILocomotionWorld
         {
+            private readonly int island;
+            public WaterLocomotionWorld(int island) { this.island = island; }
             public Vector2 Min => WaterMin;
             public Vector2 Max => WaterMax;
-            public bool Walkable(Vector2 position) => WaterWalkable(position);
+            public bool Walkable(Vector2 position) => island < 0 ? WaterWalkable(position) : WaterWalkable(position, island);
         }
 
         /// <summary>Where the top of a ladder stands, in ship-local coordinates (the quay is offset by the harbor's position).</summary>
@@ -210,9 +228,7 @@ namespace ShipMayham
 
         private bool StandsFree(Vector2 p, bool onShore)
         {
-            if (onShore)
-                return p.x >= HarborTownLayout.Bounds.xMin && p.x <= HarborTownLayout.Bounds.xMax &&
-                       p.y >= HarborTownLayout.Bounds.yMin && p.y <= HarborTownLayout.Bounds.yMax && ShoreWalkable(p);
+            if (onShore) return ShoreStandable(DockedIsland(State), p);
             return Mathf.Abs(p.x) <= DeckBounds.x && Mathf.Abs(p.y) <= DeckBounds.y && Walkable(p);
         }
 

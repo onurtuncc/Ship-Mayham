@@ -392,6 +392,7 @@ namespace ShipMayham.Tests
 
         private void Swim(Vector2 at, int slot = 0)
         {
+            sim.Crew[slot].OnShore = false;
             sim.Crew[slot].Swimming = true;
             sim.Crew[slot].Position = at;
             // Coins rest below the surface: dive to the one that is here.

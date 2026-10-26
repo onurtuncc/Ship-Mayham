@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ShipMayham
 {
     /// <summary>First-time tips. The enum order is the priority order.</summary>
-    public enum TipId : byte { Welcome, TakeHelm, Harbor, Leak, Pirates, Docking, ServeOrders, CheckTickets, Signals, Hazard, Ladder, Overboard, Activity, Dive }
+    public enum TipId : byte { Welcome, TakeHelm, Harbor, Leak, Pirates, Docking, ServeOrders, CheckTickets, Signals, Hazard, Ladder, Overboard, Activity, Dive, Explore }
 
     /// <summary>What the tip logic needs to know about the local crew member's situation.</summary>
     public struct TipContext
@@ -31,7 +31,7 @@ namespace ShipMayham
         /// <summary>Priority order. The enum keeps the stored bit of each tip stable, so new tips are appended there and slotted in here.</summary>
         public static readonly TipId[] Order =
         {
-            TipId.Welcome, TipId.TakeHelm, TipId.Overboard, TipId.Harbor, TipId.Leak, TipId.Pirates, TipId.Hazard, TipId.Ladder, TipId.Dive, TipId.Activity,
+            TipId.Welcome, TipId.TakeHelm, TipId.Overboard, TipId.Harbor, TipId.Leak, TipId.Pirates, TipId.Hazard, TipId.Ladder, TipId.Dive, TipId.Activity, TipId.Explore,
             TipId.Docking, TipId.ServeOrders, TipId.CheckTickets, TipId.Signals
         };
 
@@ -62,6 +62,7 @@ namespace ShipMayham
                 case TipId.Signals: return c.Phase == VoyagePhase.Sailing && aboard && !c.Swimming;
                 case TipId.Overboard: return c.Swimming && c.Phase == VoyagePhase.Sailing;
                 case TipId.Dive: return c.Swimming && c.Phase != VoyagePhase.Sailing;
+                case TipId.Explore: return c.OnShore && !c.Swimming && c.Phase == VoyagePhase.Boarding;
                 case TipId.Ladder: return c.NearLadder && !c.Swimming && (c.Phase == VoyagePhase.Boarding || c.Phase == VoyagePhase.Arrived);
                 case TipId.Activity: return c.NearActivity && c.OnShore && !c.Swimming && !c.Carrying;
                 default: return false;
@@ -79,6 +80,7 @@ namespace ShipMayham
                 case TipId.Leak: return "Leak! Patch it at the repair bench with {Interact}, four times. A quick-patch kit makes it instant.";
                 case TipId.Pirates: return "Pirates! Man the cannon with {Interact} and fire with {Fire}. Carry cannonballs from the magazine to the cannon.";
                 case TipId.Overboard: return "Overboard! Swim to a rope ladder on the hull and press {Interact} to climb out. Wait too long and you are hauled aboard for a small fine.";
+                case TipId.Explore: return "The island goes on past the town: chests, buried treasure and fishing spots are out there, and the beach leads straight into the sea. Walk in to swim.";
                 case TipId.Dive: return "Hold {Jump} to dive and let go to float up. Coins rest on the seabed: watch your breath, and stay inside the buoys.";
                 case TipId.Ladder: return "Rope ladders let you dive in and swim: press {Interact} at the top. Sunken coins and a few passengers swimming back wait in the bay.";
                 case TipId.Activity: return "Chests, sand and quay edges hide skill games: press {Interact} to pick a lock, dig for treasure or go fishing for the galley.";

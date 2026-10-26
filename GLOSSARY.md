@@ -141,6 +141,10 @@ _Avoid_: Blackout
 **Upgrade**:
 Gemiyi kalıcı güçlendiren beş yükseltmeden biri: Engine, Capacity (seats), Comfort, Gunnery, Extra barrels. Purser'dan, yalnızca limandayken satın alınır.
 
+**Beach**:
+Adanın kıyıya doğru alçalan zemini. Sığ yerde yürünür (wading), derinde yürüyen Crew member yüzmeye başlar; yüzen sığa gelince ayağa kalkar. Merdiven artık tek yol değildir.
+_Avoid_: Kıyı duvarı, rampa
+
 **Island**:
 Sefer zincirindeki altı duraktan biri (`Campaign`). Kendi adı, konumu, görevi ve kilidi vardır; gemi vardığı adada kalır.
 _Avoid_: Port (liman adanın yerleşimidir), level

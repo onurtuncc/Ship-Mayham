@@ -16,12 +16,58 @@ namespace ShipMayham
         /// <summary>Under this depth the head is still in the air or the spray: no breath is used.</summary>
         public const float SurfaceBand = .45f;
         /// <summary>Radius of the swim zone around the ship; the buoys mark it and the current beyond is too strong to swim against.</summary>
-        public const float SwimZoneRadius = 90f;
+        public const float SwimZoneRadius = 160f;
         /// <summary>How far a swimmer's depth may differ from a sunken coin's for them to pick it up.</summary>
         public const float CoinDepthTolerance = 1.4f;
 
         /// <summary>The depth of the floor below a crew member in the water.</summary>
-        public float SeabedDepthAt(Vector2 position) => HarborOpen ? BaySeabedDepth : OpenSeaDepth;
+        public float SeabedDepthAt(Vector2 position)
+        {
+            if (!HarborOpen) return OpenSeaDepth;
+            // The floor follows the island's beach: shallow near the shore, down to the bay's depth further out.
+            float ground = IslandTerrain.For(DockedIsland(State)).Height(position - new Vector2(QuayOffsetX, 0));
+            return Mathf.Clamp(IslandTerrain.SeaLevel - ground, .3f, BaySeabedDepth);
+        }
+
+        /// <summary>
+        /// Wading: a walker who steps into deep water starts to swim, a swimmer who reaches ground shallow enough stands up. The
+        /// coordinates change with them: the island's own, or the ship's.
+        /// </summary>
+        private void TickShoreline(int i, Vector2 previousShore)
+        {
+            if (!HarborOpen || InLobby) return;
+            ref var crew = ref Crew[i];
+            var terrain = IslandTerrain.For(DockedIsland(State));
+            Vector2 offset = new Vector2(QuayOffsetX, 0);
+            if (crew.OnShore)
+            {
+                if (!terrain.DeepEnoughToSwim(crew.Position)) return;
+                bool carrying = crew.Carrying != ServiceItem.None || CarriedPassenger(i) >= 0 || crew.AtCrane || InMiniGame(i);
+                Vector2 water = crew.Position + offset;
+                if (carrying || !WaterWalkable(water, DockedIsland(State)))
+                {
+                    crew.Position = previousShore;
+                    crew.Velocity = Vector2.zero;
+                    return;
+                }
+                crew.OnShore = false;
+                crew.Swimming = true;
+                crew.Position = water;
+                crew.JumpHeight = crew.VerticalSpeed = 0;
+                overboardClock[i] = 0;
+                ResetDive(i);
+            }
+            else if (crew.Swimming && crew.Depth <= LadderClimbDepth)
+            {
+                Vector2 land = crew.Position - offset;
+                if (!terrain.ShallowEnoughToStand(land) || !ShoreStandable(DockedIsland(State), land)) return;
+                crew.Swimming = false;
+                crew.OnShore = true;
+                crew.Position = land;
+                crew.JumpHeight = crew.VerticalSpeed = 0;
+                ResetDive(i);
+            }
+        }
 
         /// <summary>Seconds of breath a swimmer has left.</summary>
         public static float BreathLeft(in CrewState crew) => Mathf.Max(0, BreathSeconds - crew.BreathUsed);

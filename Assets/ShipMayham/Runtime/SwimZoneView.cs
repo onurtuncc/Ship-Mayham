@@ -9,7 +9,7 @@ namespace ShipMayham
     /// </summary>
     public sealed class SwimZoneView : MonoBehaviour
     {
-        private const int BuoyCount = 40, SeabedProps = 90;
+        private const int BuoyCount = 64, SeabedProps = 90;
         private static readonly Color SandColor = new Color(.82f, .74f, .5f), BuoyRed = new Color(.9f, .2f, .15f), BuoyWhite = new Color(.95f, .95f, .9f);
         private static readonly Color UnderwaterColor = new Color(.04f, .32f, .42f);
         private const float UnderwaterFogDensity = .05f;
@@ -19,6 +19,7 @@ namespace ShipMayham
         private PrototypeView view;
         private float nextLookup;
         private GameObject seabed, buoyRing;
+        private int builtIsland = -1;
         private Transform[] buoys;
         private bool underwaterApplied;
         private bool savedFog;
@@ -62,7 +63,12 @@ namespace ShipMayham
                 if (session == null || view == null) return;
             }
             bool harbor = session.IsSpawned && !session.InLobby && session.Harbor != null && session.Harbor.IsOpen && session.ShipRoot != null;
-            if (harbor && seabed == null) Build();
+            int island = harbor ? VoyageSimulation.DockedIsland(session.Voyage.Value) : -1;
+            if (harbor && (seabed == null || builtIsland != island))
+            {
+                if (seabed != null) { Destroy(seabed); Destroy(buoyRing); }
+                Build(island);
+            }
             if (seabed != null)
             {
                 seabed.SetActive(harbor);
@@ -70,7 +76,7 @@ namespace ShipMayham
                 if (harbor)
                 {
                     Vector3 ship = session.ShipRoot.position;
-                    seabed.transform.position = new Vector3(ship.x, VoyageSimulation.SeaLevel - VoyageSimulation.BaySeabedDepth, ship.z);
+                    seabed.transform.position = new Vector3(ship.x, VoyageSimulation.SeaLevel - VoyageSimulation.BaySeabedDepth - .1f, ship.z);
                     buoyRing.transform.position = new Vector3(ship.x, VoyageSimulation.SeaLevel, ship.z);
                     BobBuoys();
                 }
@@ -78,8 +84,10 @@ namespace ShipMayham
             ApplyUnderwater(session.IsSpawned && view.LocalEyeDepth > .02f ? view.LocalEyeDepth : 0);
         }
 
-        private void Build()
+        private void Build(int island)
         {
+            builtIsland = island;
+            var terrain = IslandTerrain.For(island);
             var shader = Shader.Find("Universal Render Pipeline/Lit");
             seabed = new GameObject("Seabed");
             seabed.hideFlags = HideFlags.HideAndDontSave;
@@ -98,6 +106,8 @@ namespace ShipMayham
                 float angle = (h & 1023) / 1023f * Mathf.PI * 2, radius = 8 + ((h >> 10) & 1023) / 1023f * (VoyageSimulation.SwimZoneRadius + 20);
                 var position = new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius);
                 if (VoyageSimulation.QuaySlab.Contains(new Vector2(position.x, position.z))) continue;
+                // Only where the floor is flat and deep: not under the island's ground or on its slopes.
+                if (terrain.Height(new Vector2(position.x, position.z) - new Vector2(VoyageSimulation.QuayOffsetX, 0)) > IslandTerrain.FloorHeight + .2f) continue;
                 bool rock = (h >> 20 & 3) != 0;
                 var prop = GameObject.CreatePrimitive(rock ? PrimitiveType.Sphere : PrimitiveType.Capsule);
                 Destroy(prop.GetComponent<Collider>());

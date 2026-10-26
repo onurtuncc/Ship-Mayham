@@ -436,6 +436,22 @@ namespace ShipMayham.Tests
             sim.State.Position = Vector2.Lerp(Campaign.World(Campaign.NorthHaven), Campaign.World(Campaign.CoralCay), .4f);
             for (int frame = 0; frame < 30; frame++) yield return null;
             yield return Capture(hud, controller, "Logs/HudRoute.png");
+            // The island around the town, from above and from the beach.
+            sim.State.Island = Campaign.CoralCay; sim.State.Target = Campaign.NorthHaven; sim.State.Phase = VoyagePhase.Boarding;
+            sim.State.Position = Campaign.World(Campaign.CoralCay);
+            for (int frame = 0; frame < 40; frame++) yield return null;
+            Vector3 cay = VoyageSimulation.IslandHarborOrigin(Campaign.CoralCay);
+            yield return CaptureWorld(hud, controller, "Logs/WorldIslandAerial.png", cay + new Vector3(30f, 140f, -150f), cay + new Vector3(-50f, 0f, 0f), 60);
+            yield return CaptureWorld(hud, controller, "Logs/WorldIslandBeach.png", cay + new Vector3(-62f, 3.2f, -30f), cay + new Vector3(-85f, 0f, -5f), 65);
+            for (int island = 0; island < Campaign.Count; island++)
+            {
+                sim.State.Island = island; sim.State.Position = Campaign.World(island);
+                for (int frame = 0; frame < 40; frame++) yield return null;
+                Vector3 origin2 = VoyageSimulation.IslandHarborOrigin(island);
+                yield return CaptureWorld(hud, controller, "Logs/WorldIsland" + island + ".png", origin2 + new Vector3(30f, 110f, -120f), origin2 + new Vector3(-50f, 0f, 0f), 60);
+            }
+            sim.State.Island = Campaign.NorthHaven; sim.State.Target = Campaign.CoralCay; sim.State.Position = Campaign.World(Campaign.NorthHaven);
+            for (int frame = 0; frame < 30; frame++) yield return null;
             yield return CaptureWorld(hud, controller, "Logs/WorldChain.png", new Vector3(60f, 260f, 140f), new Vector3(80f, 0f, 290f), 65);
             sim.State.Island = Campaign.BrassQuay; sim.State.Target = Campaign.NorthHaven; sim.State.TaskMask = 0; sim.State.Position = Vector2.zero;
 

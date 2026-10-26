@@ -22,6 +22,8 @@ Bu belge, prototipi oynanabilir ve yayın içeriği üretebilir hâle getiren ge
 | Çekiç | Sızıntıya tahta çak (kit/vana yoksa) | 3 çivi, 3 ıska; başarısızlık 1 adım verir |
 | Batık paralar | 8/liman, yüzerek | 5 coin; sekizinci +25 ve itibar |
 | Top yükseltmeleri | Purser'dan Gunnery (2 seviye) ve Extra barrels (2 seviye) | dolum 2,5→1,5 sn, raf 3→5, vuruş 34→50; ek namlu yarı hasar, ±3,5°; fiyat 120/240 ve 180/360 |
+| Gerçek adalar | Kasaba bir adanın doğusundadır; çevresinde plaj, tepe, palmiye/kaya/mercan/kemik süsleri; kıyıdan yürüyerek suya girilir, sığa gelince çıkılır | ada yarıçapı 56–70 m, wading ≤ 0,75 m, yüzme alanı 160 m |
+| Ada etkinlikleri | Her adanın kendi kazı/sandık/olta noktaları | Reef 5 olta, Cove 4 sandık, Skull 4 kazı |
 | Kayıt / devam | Menüden solo veya online devam | yalnız limanda yazılır |
 
 Yaptığını gösterme: oynayan oyuncu olta/kazma/kilit/çekiç pozunda, elinde aracıyla görünür.

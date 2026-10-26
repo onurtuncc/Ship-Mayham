@@ -124,6 +124,10 @@ namespace ShipMayham
             return "Cargo relay started: carry 3 crates from FOOD pickup to HULL delivery. Multiple crew can relay together.";
         }
 
+        /// <summary>Whether a walker may stand at a point of an island: the platform follows the town's rules, the rest the terrain's.</summary>
+        public static bool ShoreStandable(int island, Vector2 p) =>
+            IslandTerrain.For(island).Walkable(p) && (!IslandTerrain.OnPlatform(p) || ShoreWalkable(p));
+
         private static bool ShoreWalkable(Vector2 p)
         {
             if (!HarborTownLayout.Walkable(p)) return false;

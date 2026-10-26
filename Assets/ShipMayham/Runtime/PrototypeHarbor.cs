@@ -19,6 +19,10 @@ namespace ShipMayham
         public Vector3 Point(HarborAction action) => action == HarborAction.GoAshore ? ShipGate.position :
             ShoreMarkers[PortIndex * HarborTownLayout.StationsPerPort + (int)action - 1].position;
         private TextMesh[] portLabels;
+        private PrototypeIslandView islands;
+
+        /// <summary>The ground and scenery of the islands around the two towns (created on first use).</summary>
+        public PrototypeIslandView Islands => islands != null ? islands : islands = gameObject.AddComponent<PrototypeIslandView>();
         private int placedIsland0 = -1, placedIsland1 = -1;
 
         /// <summary>The island the departure town stands at and the one the destination town stands at, from the replicated voyage.</summary>
@@ -46,6 +50,7 @@ namespace ShipMayham
                 PortRoots[1].position = VoyageSimulation.IslandHarborOrigin(voyage.Target);
                 if (portLabels[1] != null) portLabels[1].text = Campaign.Name(voyage.Target).ToUpperInvariant();
             }
+            Islands.Present(PortRoots, voyage);
             if (View != null && View.DestinationMarker != null)
             {
                 Vector2 target = Campaign.World(voyage.Target);

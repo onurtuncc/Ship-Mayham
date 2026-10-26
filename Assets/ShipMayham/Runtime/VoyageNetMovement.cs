@@ -23,10 +23,20 @@ namespace ShipMayham
         private ILocomotionWorld deckWorld;
 
         private ILocomotionWorld DeckWorldInstance => deckWorld ?? (deckWorld = new DeckLocomotionWorld(this));
-        private static readonly ILocomotionWorld ShoreWorldInstance = new ShoreLocomotionWorld();
+        private static readonly ILocomotionWorld[] ShoreWorlds = BuildShoreWorlds();
 
-        /// <summary>The quay, shared with client prediction.</summary>
-        public static ILocomotionWorld ShoreWorld => ShoreWorldInstance;
+        private static ILocomotionWorld[] BuildShoreWorlds()
+        {
+            var worlds = new ILocomotionWorld[Campaign.Count];
+            for (int i = 0; i < worlds.Length; i++) worlds[i] = new ShoreLocomotionWorld(i);
+            return worlds;
+        }
+
+        /// <summary>The ground of one island (town platform and the land around it), shared with client prediction.</summary>
+        public static ILocomotionWorld ShoreWorldFor(int island) => ShoreWorlds[Mathf.Clamp(island, 0, ShoreWorlds.Length - 1)];
+
+        /// <summary>The ground of the home island; the platform is the same on every island.</summary>
+        public static ILocomotionWorld ShoreWorld => ShoreWorlds[Campaign.BrassQuay];
 
         /// <summary>Game time in whole milliseconds; stamped on replicated motion so clients can interpolate on the server clock.</summary>
         public uint ClockMs => (uint)(clock * 1000f);
@@ -98,11 +108,12 @@ namespace ShipMayham
                 Position = Crew[i].Position, Velocity = Crew[i].Velocity, JumpHeight = Crew[i].JumpHeight, VerticalSpeed = Crew[i].VerticalSpeed,
                 OnShore = Crew[i].OnShore
             };
+            Vector2 previousPosition = state.Position;
             // Teleports (ladders, respawn) must not carry the old momentum into the new place.
             if ((state.Position - lastWalkPosition[i]).sqrMagnitude > .0004f) state.Velocity = Vector2.zero;
             bool gate = GateIsOpenFor(i);
-            ILocomotionWorld world = Crew[i].Swimming ? WaterWorld
-                : gangwayWorlds[i].Use(Crew[i].OnShore ? ShoreWorldInstance : DeckWorldInstance, gate, Crew[i].OnShore);
+            ILocomotionWorld world = Crew[i].Swimming ? WaterWorldFor(DockedIsland(State))
+                : gangwayWorlds[i].Use(Crew[i].OnShore ? ShoreWorldFor(DockedIsland(State)) : DeckWorldInstance, gate, Crew[i].OnShore);
             CrewLocomotion.Step(ref state, input, jump && !Crew[i].Swimming, CrewKinematics.WalkSpeed * WalkSpeedFactor(i), dt, world);
             // Walking the gangway: halfway along the plank the crew member changes area without a button or a jump.
             if (gate) GangwayPassage.Handover(ref state);
@@ -111,6 +122,7 @@ namespace ShipMayham
             Crew[i].OnShore = state.OnShore;
             lastWalkPosition[i] = state.Position;
             if (Crew[i].Swimming) StepDive(i, dive, dt);
+            if (!(gate && GangwayPassage.InLane(Crew[i].Position, Crew[i].OnShore))) TickShoreline(i, previousPosition);
         }
 
         // One crew member's share of Tick: stations use the held input, walkers are advanced here only when no command stream
@@ -143,9 +155,11 @@ namespace ShipMayham
 
         private sealed class ShoreLocomotionWorld : ILocomotionWorld
         {
-            public Vector2 Min => new Vector2(HarborTownLayout.Bounds.xMin, HarborTownLayout.Bounds.yMin);
-            public Vector2 Max => new Vector2(HarborTownLayout.Bounds.xMax, HarborTownLayout.Bounds.yMax);
-            public bool Walkable(Vector2 position) => ShoreWalkable(position);
+            private readonly int island;
+            public ShoreLocomotionWorld(int island) { this.island = island; }
+            public Vector2 Min => IslandTerrain.For(island).Bounds.min;
+            public Vector2 Max => IslandTerrain.For(island).Bounds.max;
+            public bool Walkable(Vector2 position) => ShoreStandable(island, position);
         }
     }
 }

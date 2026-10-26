@@ -64,7 +64,7 @@ namespace ShipMayham
             if (session.Harbor == null || !session.Harbor.IsOpen) return;
             foreach (var kind in ShoreGames)
             {
-                var spots = VoyageSimulation.SpotsOf(kind);
+                var spots = VoyageSimulation.SpotsOf(kind, VoyageSimulation.DockedIsland(voyage));
                 for (int i = 0; i < spots.Length; i++)
                 {
                     bool fresh = kind == MiniGameKind.Lockpick ? (voyage.ChestMask & (1 << i)) == 0 :

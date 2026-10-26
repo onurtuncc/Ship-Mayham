@@ -29,7 +29,7 @@ namespace ShipMayham
             new Vector2(-7.1f, -10f), new Vector2(-7.1f, 0f), new Vector2(-7.1f, 11f), new Vector2(7.6f, -4f),
             new Vector2(7.6f, 6f), new Vector2(10.5f, 0f), new Vector2(3f, -11.5f), new Vector2(-3f, 12f),
             // Farther out in the wide bay: worth the swim.
-            new Vector2(22f, -24f), new Vector2(34f, 12f), new Vector2(18f, 30f), new Vector2(-12f, 38f), new Vector2(-30f, -34f), new Vector2(48f, -8f)
+            new Vector2(22f, -24f), new Vector2(34f, 12f), new Vector2(18f, 30f), new Vector2(12f, 42f), new Vector2(-4f, -38f), new Vector2(48f, -8f)
         };
 
         public const float ActivityReach = 1.9f, CoinReach = 1f;
@@ -57,6 +57,27 @@ namespace ShipMayham
 
         public static Vector2[] SpotsOf(MiniGameKind kind) =>
             kind == MiniGameKind.Lockpick ? ChestSpots : kind == MiniGameKind.Dig ? DigSpots : kind == MiniGameKind.Fishing ? FishingSpots : Array.Empty<Vector2>();
+
+        private static readonly Vector2[][] IslandSpotCache = new Vector2[Campaign.Count * 3][];
+
+        /// <summary>Everything to find on an island: the town's own spots first, then the ones out on the island.</summary>
+        public static Vector2[] SpotsOf(MiniGameKind kind, int island)
+        {
+            int slot = kind == MiniGameKind.Lockpick ? 0 : kind == MiniGameKind.Dig ? 1 : kind == MiniGameKind.Fishing ? 2 : -1;
+            if (slot < 0) return Array.Empty<Vector2>();
+            island = Mathf.Clamp(island, 0, Campaign.Count - 1);
+            lock (IslandSpotCache)
+            {
+                var cached = IslandSpotCache[island * 3 + slot];
+                if (cached != null) return cached;
+                var terrain = IslandTerrain.For(island);
+                Vector2[] town = SpotsOf(kind), extra = slot == 0 ? terrain.ChestSpots : slot == 1 ? terrain.DigSpots : terrain.FishingSpots;
+                var all = new Vector2[town.Length + extra.Length];
+                town.CopyTo(all, 0);
+                extra.CopyTo(all, town.Length);
+                return IslandSpotCache[island * 3 + slot] = all;
+            }
+        }
 
         public bool SpotIsFresh(MiniGameKind kind, int index) =>
             kind == MiniGameKind.Lockpick ? (State.ChestMask & (1 << index)) == 0 :
@@ -105,7 +126,7 @@ namespace ShipMayham
             else
             {
                 if (!HarborOpen || !crew.OnShore) return "Go ashore to try your luck.";
-                Vector2[] spots = SpotsOf(kind);
+                Vector2[] spots = SpotsOf(kind, DockedIsland(State));
                 if (target < 0 || target >= spots.Length) return "There is nothing there.";
                 if (Vector2.Distance(crew.Position, spots[target]) > ActivityReach) return "Move closer.";
                 if (!SpotIsFresh(kind, target)) return kind == MiniGameKind.Lockpick ? "This chest is already open." : "Somebody dug here already.";

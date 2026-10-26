@@ -111,9 +111,11 @@ namespace ShipMayham.Tests
             sim.SetInput(Client, Vector2.right); sim.Tick(.1f);
             Assert.Greater(sim.Crew[1].JumpHeight, 0);
             Assert.LessOrEqual(sim.Crew[1].Position.x, HarborTownLayout.Bounds.xMax);
-            sim.Crew[1].Position = new Vector2(2, HarborTownLayout.Bounds.yMax - .01f);
+            // The town platform is part of an island now: past its north edge there is beach, bounded only by the island itself.
+            var island = IslandTerrain.For(sim.State.Island);
+            sim.Crew[1].Position = new Vector2(2, island.Bounds.yMax - .01f);
             sim.SetInput(Client, Vector2.up); sim.Tick(.1f);
-            Assert.LessOrEqual(sim.Crew[1].Position.y, HarborTownLayout.Bounds.yMax);
+            Assert.LessOrEqual(sim.Crew[1].Position.y, island.Bounds.yMax);
         }
         [Test] public void ShorePlayerCannotUseShipOrPassengerCommandsAtMatchingCoordinates()
         {

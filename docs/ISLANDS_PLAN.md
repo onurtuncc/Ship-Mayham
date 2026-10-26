@@ -30,9 +30,9 @@ Koordinat çerçevesi aynı kalır (gemi-yerel çerçeve + `QuayOffsetX`), böyl
 | # | Dilim | İçerik | Bitti sayılır |
 | --- | --- | --- | --- |
 | A ✅ | Dalma ve açık su | `CrewState.Depth` ve nefes; Space basılı = dal, bırak = yüzeye çık; deniz tabanı; su altı kamera/sis; geniş yüzme alanı, yumuşak sınır ("akıntı geri taşır" + yön göstergesi); batık paralar ve hazineler derinde | testler yeşil, dalış capture'ı, protokol bump |
-| B | Ada zemini | `IslandTerrain` + mesh view; platform çevresinde plaj, kayalık, deniz tabanı; yürüyerek suya girme/çıkma; kara alanı platformun ötesine genişler | kıyıdan serbest geçiş, görünmez duvarsız |
+| B ✅ | Ada zemini | `IslandTerrain` + mesh view; platform çevresinde plaj, kayalık, deniz tabanı; yürüyerek suya girme/çıkma; kara alanı platformun ötesine genişler | kıyıdan serbest geçiş, görünmez duvarsız |
 | C ✅ | Kampanya | `Campaign` (adalar, sıra, açılma koşulu, hikaye parçası), hedef adayı seçme (harita arayüzü), ada başına liman anahtarı, final, yeni oyun+, kayıt | baştan sona oynanabilir döngü testi |
-| D | Ada içeriği | Ada başına veri: zemin parametreleri, prop yerleşimi, aktivite seti (sandık/kazı/olta/NPC görevi/yağma), dükkân alt kümesi, korsan/tehlike yoğunluğu | her adada ayrı iş seti |
+| D ◐ | Ada içeriği | Ada başına veri: zemin parametreleri, prop yerleşimi, aktivite seti (sandık/kazı/olta/NPC görevi/yağma), dükkân alt kümesi, korsan/tehlike yoğunluğu | her adada ayrı iş seti |
 | E | Cila | Ada müziği/gökyüzü, ipuçları, HUD haritası, dokümantasyon, yayın | web yayını doğrulanmış |
 
 ## Dilim A — uygulandı (26 Ekim 2026)
@@ -53,6 +53,14 @@ Koordinat çerçevesi aynı kalır (gemi-yerel çerçeve + `QuayOffsetX`), böyl
 - Liman anahtarı: `State.PortVisit` (vardıkça artar); aynı adada yeni sefer başlatmak yağmayı veya liman işini yenilemez.
 - Protokol 30 / snapshot 26.
 - Henüz yok (dilim D): adaya özel kara biçimi, prop'lar ve iş setleri; bütün adalar şimdilik aynı kasaba iskeletinde.
+
+## Dilim B ve D'nin ilk yarısı — uygulandı (26 Ekim 2026)
+
+- **`IslandTerrain`** (saf C#): her adanın zemini harbor koordinatlarında bir yükseklik fonksiyonudur; kasaba platformu doğu kıyıda düz (0,3 m), çevresinde seed'li kıvrık bir kara ve plaj vardır. Kıyı çizgisi kuraldır değil sonuçtur: plaj kıyıdan içeri yükselir, denize doğru 0,25 eğimle taban (−7 m) olur; sığ suda yürünür (≤ 0,75 m derin), daha derinde yürüyen yüzmeye başlar, yüzen sığa gelince ayağa kalkar (`TickShoreline`, kare dönüşümü kara ↔ gemi-yerel). Dik yamaçlar (> 1,1 eğim) geçilmez; gemi tarafındaki rıhtım kenarı duvardır (gangway şeridi hariç).
+- **Ada başına dünya nesneleri**: `ShoreWorldFor(island)`, `WaterWorldFor(island)`; istemci tahmini aynı fonksiyonları kullanır. Yüzme alanı 160 m yarıçaplıya genişledi (ada dahil), deniz tabanı kıyıyla birlikte derinleşir.
+- **Etkinlik noktaları**: her ada kendi kazı/sandık/olta noktalarını taşır (`IslandTerrain.DigSpots/ChestSpots/FishingSpots`, kasaba noktalarının ardına eklenir): Town 3/1/3, Reef 3/0/5, Cove 2/4/2, Storm 1/2/0, Skull 4/3/0. `SpotsOf(kind, island)` birleşik dizidir; maskeler indekse bağlıdır.
+- **Görünüm**: `PrototypeIslandView` iki kasaba kökünü adayla giydirir: zemin mesh'i (`IslandMeshes.BuildTerrain`, 2,5 m hücre, palet dokusu), süsler tek birleşik mesh (`IslandDecor`: palmiye, kaya, mercan, kunduz kulübe, varil, enkaz, kemik, kafatası kayası), deniz duvarları gizlenir, ada noktaları için çukur/tümsek/sandık/olta klonları. Mesh'ler ada başına bir kez üretilir ve önbelleklenir. Mini harita karada adanın kara maskesini çizer.
+- **Henüz yok**: adaya özel NPC görevleri, ada müziği/gökyüzü, ada kıyısına yanaşabilen ikinci gemi iskelesi, haritada gizli "keşfedilecek" yerler.
 
 ## Riskler
 
