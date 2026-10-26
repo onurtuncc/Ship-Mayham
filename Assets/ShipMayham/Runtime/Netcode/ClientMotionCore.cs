@@ -67,9 +67,9 @@ namespace ShipMayham
             StepFixed(input, jump, speedFactor, world, world, false);
 
         /// <summary>One fixed step with both areas and the gangway rule, so prediction walks through the gate like the server.</summary>
-        public MoveCommandPacket StepFixed(Vector2 input, bool jump, float speedFactor, ILocomotionWorld shipWorld, ILocomotionWorld shoreWorld, bool gateOpen)
+        public MoveCommandPacket StepFixed(Vector2 input, bool jump, float speedFactor, ILocomotionWorld shipWorld, ILocomotionWorld shoreWorld, bool gateOpen, bool dive = false)
         {
-            MoveCommand command = Predicting ? Predictor.Step(input, jump, speedFactor, shipWorld, shoreWorld, gateOpen) : Predictor.Issue(input, jump);
+            MoveCommand command = Predicting ? Predictor.Step(input, jump, speedFactor, shipWorld, shoreWorld, gateOpen, dive) : Predictor.Issue(input, jump, dive);
             recent.Add(command);
             if (recent.Count > MoveCommandPacket.MaxCommands) recent.RemoveAt(0);
             return MoveCommandPacket.Pack(recent);

@@ -359,6 +359,14 @@ namespace ShipMayham.Tests
             yield return CaptureWorld(hud, controller, "Logs/WorldSwimmerTread.png", ship.TransformPoint(new Vector3(-10f, 1.2f, -2f)), ship.TransformPoint(new Vector3(-7.9f, -1.1f, 3f)), 50);
             yield return CaptureWorld(hud, controller, "Logs/WorldLadder.png", ship.TransformPoint(new Vector3(-9.5f, .5f, 8f)), ship.TransformPoint(new Vector3(-5.4f, -.4f, 3f)), 55);
             yield return Capture(hud, controller, "Logs/HudSwim.png");
+            // Diving: under the surface in the open bay, and the whole bay with its buoys from above.
+            sim.Crew[0].Position = new Vector2(14f, 22f);
+            for (int frame = 0; frame < 45; frame++) { sim.Crew[0].Depth = 3.5f; yield return null; }
+            yield return Capture(hud, controller, "Logs/HudDive.png");
+            sim.Crew[0].Depth = 0;
+            for (int frame = 0; frame < 20; frame++) yield return null;
+            yield return CaptureWorld(hud, controller, "Logs/WorldBay.png", ship.TransformPoint(new Vector3(30f, 55f, -75f)), ship.TransformPoint(new Vector3(0f, -1f, 10f)), 70);
+            yield return CaptureWorld(hud, controller, "Logs/WorldBayLow.png", ship.TransformPoint(new Vector3(18f, 1.5f, 22f)), ship.TransformPoint(new Vector3(40f, -1f, 60f)), 60);
             sim.Crew[0].Swimming = false;
 
             // Passengers who swim and who do not: one treading water next to a flailing one.

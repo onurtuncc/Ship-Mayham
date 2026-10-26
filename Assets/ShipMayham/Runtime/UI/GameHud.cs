@@ -398,6 +398,17 @@ namespace ShipMayham
 
             alerts.Begin();
             if (voyageOpen && s.Phase == VoyagePhase.Sailing) AddHazards(s, hz, shoalIndex, shoalGap);
+            if (local >= 0 && session.Crew[local].Swimming && s.Phase != VoyagePhase.Sailing)
+            {
+                var swimmer = session.Crew[local];
+                float breath = VoyageSimulation.BreathLeft(swimmer);
+                if (VoyageSimulation.Submerged(swimmer) || swimmer.BreathUsed > 1)
+                    alerts.Add(breath < 6 ? HudKit.Danger : HudKit.Info, $"BREATH   {breath:0}s   •   depth {swimmer.Depth:0.0} m",
+                        breath < 6 ? "Swim up for air now!" : "Release the dive key to float up.");
+                else alerts.Add(HudKit.Info, "SWIMMING", "Hold the jump key to dive. Stay inside the buoys; ladders let you climb out.");
+                if (swimmer.Position.magnitude > VoyageSimulation.SwimZoneRadius - 12)
+                    alerts.Add(HudKit.Warning, "CURRENT AHEAD", "The buoys mark the edge of the bay. Beyond them the current is too strong; turn back.");
+            }
             if (voyageOpen && s.Phase == VoyagePhase.Sailing && local >= 0 && session.Crew[local].Swimming)
                 alerts.Add(HudKit.Danger, "OVERBOARD!", "Swim to a rope ladder on the hull and press E to climb out. Otherwise you are hauled aboard, for a small fine.");
             if (atCrane)

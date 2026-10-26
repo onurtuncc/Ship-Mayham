@@ -71,7 +71,7 @@ namespace ShipMayham
         }
 
         /// <summary>A numbered command without prediction (the player is at a station, or this is the host).</summary>
-        public MoveCommand Issue(Vector2 input, bool jump) => MoveCommand.Create(nextSeq++, input, jump);
+        public MoveCommand Issue(Vector2 input, bool jump, bool dive = false) => MoveCommand.Create(nextSeq++, input, jump, dive);
 
         /// <summary>One fixed step in a single world (no gangway): creates the command to send and predicts it locally.</summary>
         public MoveCommand Step(Vector2 input, bool jump, float speedFactor, ILocomotionWorld world) =>
@@ -81,9 +81,9 @@ namespace ShipMayham
         /// One fixed step: creates the command to send and predicts it locally. The walker moves in the ship or the quay world
         /// depending on which area the prediction is in, and walks the gangway exactly as the server does when the gate is open.
         /// </summary>
-        public MoveCommand Step(Vector2 input, bool jump, float speedFactor, ILocomotionWorld shipWorld, ILocomotionWorld shoreWorld, bool gateOpen)
+        public MoveCommand Step(Vector2 input, bool jump, float speedFactor, ILocomotionWorld shipWorld, ILocomotionWorld shoreWorld, bool gateOpen, bool dive = false)
         {
-            var command = MoveCommand.Create(nextSeq++, input, jump);
+            var command = MoveCommand.Create(nextSeq++, input, jump, dive);
             previousPosition = State.Position; previousJump = State.JumpHeight;
             var entry = new Pending { Command = command, SpeedFactor = speedFactor, ShipWorld = shipWorld, ShoreWorld = shoreWorld, GateOpen = gateOpen };
             Simulate(entry);

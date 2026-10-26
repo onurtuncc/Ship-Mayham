@@ -29,11 +29,19 @@ Koordinat çerçevesi aynı kalır (gemi-yerel çerçeve + `QuayOffsetX`), böyl
 
 | # | Dilim | İçerik | Bitti sayılır |
 | --- | --- | --- | --- |
-| A | Dalma ve açık su | `CrewState.Depth` ve nefes; Space basılı = dal, bırak = yüzeye çık; deniz tabanı; su altı kamera/sis; geniş yüzme alanı, yumuşak sınır ("akıntı geri taşır" + yön göstergesi); batık paralar ve hazineler derinde | testler yeşil, dalış capture'ı, protokol bump |
+| A ✅ | Dalma ve açık su | `CrewState.Depth` ve nefes; Space basılı = dal, bırak = yüzeye çık; deniz tabanı; su altı kamera/sis; geniş yüzme alanı, yumuşak sınır ("akıntı geri taşır" + yön göstergesi); batık paralar ve hazineler derinde | testler yeşil, dalış capture'ı, protokol bump |
 | B | Ada zemini | `IslandTerrain` + mesh view; platform çevresinde plaj, kayalık, deniz tabanı; yürüyerek suya girme/çıkma; kara alanı platformun ötesine genişler | kıyıdan serbest geçiş, görünmez duvarsız |
 | C | Kampanya | `Campaign` (adalar, sıra, açılma koşulu, hikaye parçası), hedef adayı seçme (harita arayüzü), ada başına liman anahtarı, final, yeni oyun+, kayıt | baştan sona oynanabilir döngü testi |
 | D | Ada içeriği | Ada başına veri: zemin parametreleri, prop yerleşimi, aktivite seti (sandık/kazı/olta/NPC görevi/yağma), dükkân alt kümesi, korsan/tehlike yoğunluğu | her adada ayrı iş seti |
 | E | Cila | Ada müziği/gökyüzü, ipuçları, HUD haritası, dokümantasyon, yayın | web yayını doğrulanmış |
+
+## Dilim A — uygulandı (26 Ekim 2026)
+
+- Dalma: yüzerken Space (gamepad X/West) basılı = dal (1,7 m/s), bırak = yüzeye çık (2,4 m/s). Taban 6 m (limanda), açık denizde 14 m. 22 sn nefes; boğulma yok: nefesi biten zorla yüzeye çıkar, 10 sn'lik nefes toparlanana kadar yeniden dalamaz. Dalmışken merdiven kullanılamaz.
+- Yüzme alanı 90 m yarıçaplı yuvarlak bir bölge (eskiden 20×28 m kutu); sınırı şamandıra halkası gösterir; kara platformunun altına ve gövdeye girilmez.
+- Sunken coin sayısı 8 → 14, hepsi 3,2–5 m derinlikte ve ancak o derinlikte toplanır; dış 6 coin uzak yüzme ister.
+- Su altı görünümü (`SwimZoneView`): sis + düz zemin rengi, kum tabanı, taş ve yosunlar; HUD'da nefes/derinlik uyarısı; ipucu `Dive`.
+- Protokol 29 / snapshot 25.
 
 ## Riskler
 

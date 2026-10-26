@@ -96,7 +96,7 @@ namespace ShipMayham.Tests
                 Assert.That(spot.x, Is.InRange(VoyageSimulation.WaterMin.x, VoyageSimulation.WaterMax.x));
                 Assert.That(spot.y, Is.InRange(VoyageSimulation.WaterMin.y, VoyageSimulation.WaterMax.y));
             }
-            Assert.AreEqual(8, VoyageSimulation.CoinSpots.Length);
+            Assert.AreEqual(14, VoyageSimulation.CoinSpots.Length);
         }
 
         // ------------------------------------------------------------ opening a game
@@ -394,6 +394,9 @@ namespace ShipMayham.Tests
         {
             sim.Crew[slot].Swimming = true;
             sim.Crew[slot].Position = at;
+            // Coins rest below the surface: dive to the one that is here.
+            int coin = System.Array.FindIndex(VoyageSimulation.CoinSpots, spot => spot == at);
+            sim.Crew[slot].Depth = coin >= 0 ? VoyageSimulation.CoinDepth(coin) : 0;
             Advance(.2f);
         }
 

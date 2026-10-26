@@ -15,6 +15,31 @@ namespace ShipMayham
 
         public float CoinSpinDegreesPerSecond = 90f;
 
+        private void Awake() => LayOutCoins();
+
+        /// <summary>Sunken coins rest at their own depth below the surface; spots beyond the authored coins get copies of the first.</summary>
+        public void LayOutCoins()
+        {
+            int spots = VoyageSimulation.CoinSpots.Length;
+            if (Coins.Length > 0 && Coins[0] != null && Coins.Length < spots)
+            {
+                var all = new Transform[spots];
+                System.Array.Copy(Coins, all, Coins.Length);
+                for (int i = Coins.Length; i < spots; i++)
+                {
+                    all[i] = Instantiate(Coins[0], Coins[0].parent);
+                    all[i].name = "SunkenCoin_" + i;
+                }
+                Coins = all;
+            }
+            for (int i = 0; i < Coins.Length && i < spots; i++)
+            {
+                if (Coins[i] == null) continue;
+                var spot = VoyageSimulation.CoinSpots[i];
+                Coins[i].localPosition = new Vector3(spot.x, VoyageSimulation.SeaLevel - VoyageSimulation.CoinDepth(i), spot.y);
+            }
+        }
+
         private void LateUpdate()
         {
             if (Session == null || !Session.IsSpawned) return;

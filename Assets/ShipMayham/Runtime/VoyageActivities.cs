@@ -27,7 +27,9 @@ namespace ShipMayham
         public static readonly Vector2[] CoinSpots =
         {
             new Vector2(-7.1f, -10f), new Vector2(-7.1f, 0f), new Vector2(-7.1f, 11f), new Vector2(7.6f, -4f),
-            new Vector2(7.6f, 6f), new Vector2(10.5f, 0f), new Vector2(3f, -11.5f), new Vector2(-3f, 12f)
+            new Vector2(7.6f, 6f), new Vector2(10.5f, 0f), new Vector2(3f, -11.5f), new Vector2(-3f, 12f),
+            // Farther out in the wide bay: worth the swim.
+            new Vector2(22f, -24f), new Vector2(34f, 12f), new Vector2(18f, 30f), new Vector2(-12f, 38f), new Vector2(-30f, -34f), new Vector2(48f, -8f)
         };
 
         public const float ActivityReach = 1.9f, CoinReach = 1f;
@@ -224,7 +226,8 @@ namespace ShipMayham
                 if (!Crew[i].Active || !Crew[i].Swimming) continue;
                 for (int c = 0; c < CoinSpots.Length; c++)
                 {
-                    if ((State.CoinMask & (1 << c)) != 0 || Vector2.Distance(Crew[i].Position, CoinSpots[c]) > CoinReach) continue;
+                    if ((State.CoinMask & (1 << c)) != 0 || Vector2.Distance(Crew[i].Position, CoinSpots[c]) > CoinReach ||
+                        Mathf.Abs(Crew[i].Depth - CoinDepth(c)) > CoinDepthTolerance) continue;
                     State.CoinMask |= 1 << c;
                     State.Wallet += CoinValue;
                     string text = $"+{CoinValue} coins";

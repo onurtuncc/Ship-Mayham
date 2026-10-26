@@ -455,6 +455,7 @@ namespace ShipMayham
             unstuckReady[i] = clock + UnstuckCooldown;
             ReleaseCrewResponsibilities(i);
             Crew[i].Swimming = false;
+            ResetDive(i);
             overboardClock[i] = 0;
             Crew[i].Position = Crew[i].OnShore ? HarborPoint(HarborAction.BoardShip) : new Vector2(-1.5f + i, -6);
             Crew[i].Velocity = Vector2.zero;

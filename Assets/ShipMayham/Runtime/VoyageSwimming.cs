@@ -24,10 +24,13 @@ namespace ShipMayham
     {
         /// <summary>Surface of the sea in world height (the deck is 1.55 m above it).</summary>
         public const float SeaLevel = -1.05f;
+        public const float LadderClimbDepth = 1.2f;
         public const float SwimSpeedFactor = .6f, LadderReach = 1.7f, LadderCooldownSeconds = .7f, OverboardLimitSeconds = 30f;
         /// <summary>The quay's x offset: harbor coordinates plus this give ship-local ones (the harbor sits 14 m to port).</summary>
         public const float QuayOffsetX = -14f;
-        public static readonly Vector2 WaterMin = new Vector2(-8f, -14f), WaterMax = new Vector2(12f, 14f);
+        public static readonly Vector2 WaterMin = new Vector2(-SwimZoneRadius, -SwimZoneRadius), WaterMax = new Vector2(SwimZoneRadius, SwimZoneRadius);
+        /// <summary>The quay slab in ship-local coordinates (the town sits on it): swimmers cannot go under it.</summary>
+        public static readonly Rect QuaySlab = Rect.MinMaxRect(HarborTownLayout.Bounds.xMin + QuayOffsetX, HarborTownLayout.Bounds.yMin, HarborTownLayout.Bounds.xMax + QuayOffsetX, HarborTownLayout.Bounds.yMax);
         /// <summary>Half extents of the hull that swimmers cannot enter.</summary>
         public static readonly Vector2 HullHalfExtents = new Vector2(5.8f, 8.8f);
 
@@ -82,8 +85,9 @@ namespace ShipMayham
 
         public static ILocomotionWorld WaterWorld { get; } = new WaterLocomotionWorld();
 
-        /// <summary>A swimmer may be anywhere in the bay except inside the hull.</summary>
-        public static bool WaterWalkable(Vector2 p) => Mathf.Abs(p.x) >= HullHalfExtents.x || Mathf.Abs(p.y) >= HullHalfExtents.y;
+        /// <summary>A swimmer may be anywhere in the round swim zone except inside the hull or under the quay.</summary>
+        public static bool WaterWalkable(Vector2 p) =>
+            p.sqrMagnitude <= SwimZoneRadius * SwimZoneRadius && !QuaySlab.Contains(p) && (Mathf.Abs(p.x) >= HullHalfExtents.x || Mathf.Abs(p.y) >= HullHalfExtents.y);
 
         private sealed class WaterLocomotionWorld : ILocomotionWorld
         {
@@ -128,6 +132,7 @@ namespace ShipMayham
             if (crew.Swimming)
             {
                 if (Vector2.Distance(crew.Position, Ladders[ladder].Base) > LadderReach) return "Swim closer to the ladder.";
+                if (crew.Depth > LadderClimbDepth) return "Swim up to the surface first.";
                 ClimbOut(slot, ladder);
                 return "Up you go!";
             }
@@ -149,6 +154,7 @@ namespace ShipMayham
             inputs[slot] = Vector2.zero;
             ladderReady[slot] = clock + LadderCooldownSeconds;
             overboardClock[slot] = 0;
+            ResetDive(slot);
         }
 
         private void ClimbOut(int slot, int ladder)
@@ -161,6 +167,7 @@ namespace ShipMayham
             inputs[slot] = Vector2.zero;
             ladderReady[slot] = clock + LadderCooldownSeconds;
             overboardClock[slot] = 0;
+            ResetDive(slot);
         }
 
         /// <summary>
@@ -227,6 +234,7 @@ namespace ShipMayham
             crew.Velocity = Vector2.zero;
             crew.JumpHeight = crew.VerticalSpeed = 0;
             overboardClock[slot] = OverboardLimitSeconds;
+            ResetDive(slot);
         }
 
         /// <summary>Rail margin (metres) inside which a wave that is not faced can sweep a crew member off the lee side.</summary>
@@ -258,11 +266,13 @@ namespace ShipMayham
         {
             for (int i = 0; i < MaxCrew; i++)
             {
+                if (!Crew[i].Swimming && (Crew[i].Depth != 0 || Crew[i].BreathUsed != 0)) ResetDive(i);
                 if (!Crew[i].Active || !Crew[i].Swimming || overboardClock[i] <= 0) continue;
                 overboardClock[i] -= dt;
                 if (overboardClock[i] > 0) continue;
                 overboardClock[i] = 0;
                 Crew[i].Swimming = false;
+                ResetDive(i);
                 Crew[i].OnShore = false;
                 Crew[i].Position = new Vector2(-1.5f + i, -6);
                 Crew[i].Velocity = Vector2.zero;

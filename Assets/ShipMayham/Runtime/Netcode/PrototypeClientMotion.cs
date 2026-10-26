@@ -18,7 +18,7 @@ namespace ShipMayham
 
         private readonly ClientMotionCore core = new ClientMotionCore();
         private Vector2 latestInput;
-        private bool jumpLatched;
+        private bool jumpLatched, diveHeld;
         private float accumulator, pingTimer;
         private DeckWorld deckWorld;
         private GUIStyle statusStyle;
@@ -50,9 +50,10 @@ namespace ShipMayham
         private void OnPong(uint echoedMs) => core.OnPong(echoedMs, Time.unscaledTime);
 
         /// <summary>Latest input for the next command; a jump press is latched until a command carries it.</summary>
-        public void SetInput(Vector2 input, bool jumpPressed)
+        public void SetInput(Vector2 input, bool jumpPressed, bool diveHeld = false)
         {
             latestInput = input;
+            this.diveHeld = diveHeld;
             if (jumpPressed) jumpLatched = true;
         }
 
@@ -76,7 +77,7 @@ namespace ShipMayham
                 float factor = crew.Swimming ? VoyageSimulation.SwimSpeedFactor : crew.OnShore ? 1 : session.LocalCarriedPassengerIndex >= 0 ? .7f : crew.Carrying == ServiceItem.Ammo ? .8f : 1;
                 ILocomotionWorld shipWorld = crew.Swimming ? VoyageSimulation.WaterWorld : (deckWorld ?? (deckWorld = new DeckWorld(session)));
                 bool gate = VoyageSimulation.GateOpen(session.Harbor != null && session.Harbor.IsOpen, crew, session.LocalCarriedPassengerIndex >= 0);
-                var packet = core.StepFixed(latestInput, jumpLatched && !crew.Swimming, factor, shipWorld, VoyageSimulation.ShoreWorld, gate);
+                var packet = core.StepFixed(latestInput, jumpLatched && !crew.Swimming, factor, shipWorld, VoyageSimulation.ShoreWorld, gate, diveHeld && crew.Swimming);
                 jumpLatched = false;
                 if (session.IsServer) session.ApplyLocalMoveCommands(packet);
                 else session.MoveCommandsRpc(packet);

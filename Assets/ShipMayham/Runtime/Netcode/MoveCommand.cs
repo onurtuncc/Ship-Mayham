@@ -10,16 +10,18 @@ namespace ShipMayham
         public uint Seq;
         public sbyte X, Y;
         public bool Jump;
+        /// <summary>Held while swimming: sink instead of floating up.</summary>
+        public bool Dive;
 
         public Vector2 Input => new Vector2(X, Y) / 127f;
 
-        public static MoveCommand Create(uint seq, Vector2 input, bool jump)
+        public static MoveCommand Create(uint seq, Vector2 input, bool jump, bool dive = false)
         {
             input = Vector2.ClampMagnitude(input, 1);
-            return new MoveCommand { Seq = seq, X = (sbyte)Mathf.RoundToInt(input.x * 127f), Y = (sbyte)Mathf.RoundToInt(input.y * 127f), Jump = jump };
+            return new MoveCommand { Seq = seq, X = (sbyte)Mathf.RoundToInt(input.x * 127f), Y = (sbyte)Mathf.RoundToInt(input.y * 127f), Jump = jump, Dive = dive };
         }
 
-        public bool Equals(MoveCommand other) => Seq == other.Seq && X == other.X && Y == other.Y && Jump == other.Jump;
+        public bool Equals(MoveCommand other) => Seq == other.Seq && X == other.X && Y == other.Y && Jump == other.Jump && Dive == other.Dive;
     }
 
     /// <summary>
@@ -44,7 +46,7 @@ namespace ShipMayham
                 var command = recent[recent.Count - count + i];
                 packet.Data[i * 3] = (byte)command.X;
                 packet.Data[i * 3 + 1] = (byte)command.Y;
-                packet.Data[i * 3 + 2] = (byte)(command.Jump ? 1 : 0);
+                packet.Data[i * 3 + 2] = (byte)((command.Jump ? 1 : 0) | (command.Dive ? 2 : 0));
                 packet.LastSeq = command.Seq;
             }
             return packet;
@@ -57,7 +59,7 @@ namespace ShipMayham
             return new MoveCommand
             {
                 Seq = LastSeq - (uint)(count - 1 - k),
-                X = (sbyte)Data[k * 3], Y = (sbyte)Data[k * 3 + 1], Jump = (Data[k * 3 + 2] & 1) != 0
+                X = (sbyte)Data[k * 3], Y = (sbyte)Data[k * 3 + 1], Jump = (Data[k * 3 + 2] & 1) != 0, Dive = (Data[k * 3 + 2] & 2) != 0
             };
         }
 

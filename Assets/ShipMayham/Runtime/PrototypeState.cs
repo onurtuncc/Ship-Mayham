@@ -98,6 +98,8 @@ namespace ShipMayham
         public bool Swimming;
         /// <summary>The skill game this crew member is playing, so everyone else sees them fishing, digging or picking a lock.</summary>
         public MiniGameKind Doing;
+        /// <summary>Metres below the surface while swimming (0 = at the surface) and seconds of breath used up under water.</summary>
+        public float Depth, BreathUsed;
         public ulong ClientId;
         public Vector2 Position;
         public ServiceItem Carrying;
@@ -119,12 +121,13 @@ namespace ShipMayham
             s.SerializeValue(ref AtCrane);
             s.SerializeValue(ref Swimming);
             s.SerializeValue(ref Doing);
+            s.SerializeValue(ref Depth); s.SerializeValue(ref BreathUsed);
             s.SerializeValue(ref JumpHeight); s.SerializeValue(ref VerticalSpeed);
             s.SerializeValue(ref Velocity); s.SerializeValue(ref InputAck); s.SerializeValue(ref TimeMs);
         }
         public bool Equals(CrewState other) => Active == other.Active && AtHelm == other.AtHelm &&
             ClientId == other.ClientId && Position.Equals(other.Position) && Carrying == other.Carrying && AtCannon == other.AtCannon &&
-            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane && Swimming == other.Swimming && Doing == other.Doing &&
+            JumpHeight.Equals(other.JumpHeight) && VerticalSpeed.Equals(other.VerticalSpeed) && OnShore == other.OnShore && AtCrane == other.AtCrane && Swimming == other.Swimming && Doing == other.Doing && Depth.Equals(other.Depth) && BreathUsed.Equals(other.BreathUsed) &&
             Velocity.Equals(other.Velocity) && InputAck == other.InputAck && ServiceUnits == other.ServiceUnits;
     }
 

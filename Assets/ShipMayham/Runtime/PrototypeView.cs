@@ -173,6 +173,9 @@ namespace ShipMayham
         public float SwimBodyOffset = -.75f;
         public float SwimEyeAboveWater = .4f;
         private bool[] displayedSwim;
+        private float[] crewDepth;
+        /// <summary>Metres the local player's eyes are below the sea surface (0 when above it); drives the underwater look.</summary>
+        public float LocalEyeDepth { get; private set; }
         private bool[] crewFromNet;
         private Vector3 shipNetVelocity; private float shipNetTurnRate;
         private bool shipFromNet;
@@ -247,6 +250,7 @@ namespace ShipMayham
             displayedItems = new ServiceItem[CrewRoots.Length];
             displayedShore = new bool[CrewRoots.Length]; crewSmootherShore = new bool[CrewRoots.Length];
             displayedSwim = new bool[CrewRoots.Length];
+            crewDepth = new float[CrewRoots.Length];
             crewActiveLastFrame = new bool[CrewRoots.Length];
             crewBlend = new Vector3[CrewRoots.Length]; crewLastRender = new Vector3[CrewRoots.Length];
             crewWorldLast = new Vector3[CrewRoots.Length]; crewGlide = new Vector3[CrewRoots.Length]; crewWorldKnown = new bool[CrewRoots.Length];
@@ -497,7 +501,9 @@ namespace ShipMayham
                     else Session.JumpRpc();
                 }
             }
-            if (clientMotion != null) clientMotion.SetInput(input, jumpRequested);
+            bool diveHeld = Application.isFocused && Cursor.lockState == CursorLockMode.Locked && !WheelOpen && Session.Crew[local].Swimming &&
+                (keyboard?.spaceKey.isPressed == true || pad?.buttonWest.isPressed == true);
+            if (clientMotion != null) clientMotion.SetInput(input, jumpRequested, diveHeld);
             jumpRequested = false;
             sendTimer -= Time.deltaTime;
             if (sendTimer <= 0)
@@ -628,7 +634,8 @@ namespace ShipMayham
                 // The predicted or interpolated position can be in the other area a moment before the crew list says so (walking
                 // the gangway): place the body in the area its coordinates belong to.
                 bool onShore = fromNet ? netShore : crew.OnShore;
-                float swimHeight = VoyageSimulation.SeaLevel + SwimBodyOffset;
+                crewDepth[i] = Mathf.Lerp(crewDepth[i], crew.Swimming ? crew.Depth : 0, 1f - Mathf.Exp(-14f * dt));
+                float swimHeight = VoyageSimulation.SeaLevel + SwimBodyOffset - crewDepth[i];
                 var target = new Vector3(crew.Position.x, (crew.Swimming ? swimHeight : WalkHeight(crew.Position, crew.OnShore)) + crew.JumpHeight, crew.Position.y);
                 // Smooth in the frame the crew member walks in (deck or quay), then place that frame; smoothing in world space made
                 // crew slide across the deck whenever the ship moved. The area change at the gangway is exact, so a snap is invisible.
@@ -681,6 +688,7 @@ namespace ShipMayham
                 }
                 if (crew.Carrying != ServiceItem.None) CrewLabels[i].text += "\n" + crew.Carrying;
             }
+            LocalEyeDepth = 0;
             Camera.fieldOfView = firstPerson ? FirstPersonFieldOfView : 55;
             Camera.nearClipPlane = .05f;
             if (ChaseCameraActive) PlaceChaseCamera(ship, state, dt);
@@ -692,11 +700,12 @@ namespace ShipMayham
                 wasAtCrane = atCrane;
                 Vector3 eye = CrewRoots[local].position + (atCrane ? CraneCameraOffset : ship.up * EyeHeight);
                 // A swimmer's eyes sit just above the waves, wherever the body root is hanging.
-                if (Session.Crew[local].Swimming) eye = new Vector3(eye.x, VoyageSimulation.SeaLevel + SwimEyeAboveWater, eye.z);
+                if (Session.Crew[local].Swimming) eye = new Vector3(eye.x, VoyageSimulation.SeaLevel + SwimEyeAboveWater - crewDepth[local], eye.z);
                 Camera.transform.SetPositionAndRotation(eye,
                     (Session.Crew[local].OnShore ? Quaternion.identity : ship.rotation) * Quaternion.Euler(lookPitch, lookYaw, 0));
                 CarriedItems[local].SetPositionAndRotation(Camera.transform.TransformPoint(HeldItemOffset), Camera.transform.rotation);
                 FindTarget(Session.Crew[local]);
+                LocalEyeDepth = Mathf.Max(0, VoyageSimulation.SeaLevel - eye.y);
             }
             else
             {

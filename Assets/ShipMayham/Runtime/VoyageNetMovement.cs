@@ -87,10 +87,10 @@ namespace ShipMayham
                 inputExpires[i] = clock + .35f;
                 return;
             }
-            StepWalker(i, input, command.Jump, CrewLocomotion.StepSeconds);
+            StepWalker(i, input, command.Jump, CrewLocomotion.StepSeconds, command.Dive);
         }
 
-        private void StepWalker(int i, Vector2 input, bool jump, float dt)
+        private void StepWalker(int i, Vector2 input, bool jump, float dt, bool dive = false)
         {
             if (Crew[i].Doing != MiniGameKind.None) { input = Vector2.zero; jump = false; }       // busy with a skill game: standing still
             var state = new CrewMotionState
@@ -110,6 +110,7 @@ namespace ShipMayham
             Crew[i].JumpHeight = state.JumpHeight; Crew[i].VerticalSpeed = state.VerticalSpeed;
             Crew[i].OnShore = state.OnShore;
             lastWalkPosition[i] = state.Position;
+            if (Crew[i].Swimming) StepDive(i, dive, dt);
         }
 
         // One crew member's share of Tick: stations use the held input, walkers are advanced here only when no command stream
